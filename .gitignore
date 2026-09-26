@@ -1,0 +1,28 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Dependencies and outputs
+node_modules/
+.expo/
+dist/
+build/
+bin/
+obj/
+coverage/
+# IDE and operating system
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+# Local runtime data
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.log
+uploads/
+local-data/
