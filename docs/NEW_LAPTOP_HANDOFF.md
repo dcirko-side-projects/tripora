@@ -7,7 +7,7 @@ Datum: 2026-10-18. Ovaj dokument zamjenjuje potrebu za prethodnim Codex chatom.
 Najnoviji razvoj je na grani `codex/offline-foundation`. `main` sadrži početnu dokumentaciju.
 
 ```sh
-git clone --branch codex/offline-foundation https://github.com/dcirko/tripora.git
+git clone --branch codex/offline-foundation https://github.com/dcirko-side-projects/tripora.git
 cd tripora
 ```
 
