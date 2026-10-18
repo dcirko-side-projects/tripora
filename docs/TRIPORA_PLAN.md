@@ -1,7 +1,7 @@
 # Tripora — plan razvoja
 
 Datum: 2026-09-26
-Status: prijedlog faza; nema odobrenja za implementaciju aplikacije niti zakljucanog stacka.
+Status 2026-09-28: korisnik je zatrazio nastavak faza. Pokrenut je izvrsivi tehnicki prototip; faze 0–2 nisu proglasene potpuno dovrsenima. Detalji i provjere: IMPLEMENTATION_CHECKLIST.md i STATUS.md.
 
 ## Potvrdjeni zahtjevi
 
@@ -14,11 +14,11 @@ Status: prijedlog faza; nema odobrenja za implementaciju aplikacije niti zakljuc
 - Raniji dokument dodatno predlaze itinerary, packing i budzet. Zadrzani su u ovom prijedlogu, uz potvrdu u fazi 0.
 - Desktop iskustvo iz izvornog briefa ostaje otvoreno pitanje prioriteta; nije automatski uklonjeno.
 
-## Predlozeni tehnicki smjer — nije zakljucan
+## Tehnicki smjer — prototip zapocet, produkcijske odluke otvorene
 
-- React Native + Expo + TypeScript za mobilni klijent.
+- React Native + Expo + TypeScript koristi se u pocetnom mobilnom prototipu.
 - SQLite na uredjaju: lokalno citanje i spremanje, trajni red promjena za sinkronizaciju.
-- ASP.NET Core backend, PostgreSQL i EF Core kao kandidati.
+- ASP.NET Core backend ima liveness endpoint. PostgreSQL i EF Core jos nisu uvedeni.
 - Privatna objektna pohrana fotografija; metapodaci u bazi, lokalne kopije za offline.
 - Jedan backend i jedan repo; organizacija po funkcionalnostima.
 - Autentifikacija prilagodjena mobilnim klijentima, sigurna pohrana vjerodajnica, obnova i opoziv sesija. Ne prenositi raniji prijedlog web cookie autentifikacije bez nove procjene.
@@ -65,8 +65,8 @@ Zavrsetak: pregledan prototip glavnih tokova na dimenzijama Androida i iPhonea.
 
 ## Faza 2 — Tehnicki temelj i dokaz offline rada
 
-- [ ] Tek nakon dogovora kreirati aplikacijske projekte i CI.
-- [ ] Uvesti lokalnu bazu, migracije i transakcijski red promjena.
+- [x] Kreirati pocetne aplikacijske projekte i CI definiciju; hosted CI jos nije potvrden.
+- [x] Uvesti lokalnu bazu, pocetnu migraciju i transakcijski red promjena za prototip putovanja.
 - [ ] Napraviti mali tok: spremi zapis offline, zatvori aplikaciju, ponovno otvori, sinkroniziraj.
 - [ ] Provjeriti ponovljeno slanje bez duplikata i oporavak nakon prekida.
 - [ ] Provjeriti pristup fotografiji kopiranoj u trajnu lokalnu pohranu.

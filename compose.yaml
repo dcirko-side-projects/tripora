@@ -1,0 +1,19 @@
+name: tripora
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: tripora
+      POSTGRES_USER: tripora
+      POSTGRES_PASSWORD: ${TRIPORA_DB_PASSWORD:?Set TRIPORA_DB_PASSWORD in the process environment}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - tripora_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tripora -d tripora"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+volumes:
+  tripora_pg:

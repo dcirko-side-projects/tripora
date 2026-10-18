@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Tripora",
+    "slug": "tripora",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
+}

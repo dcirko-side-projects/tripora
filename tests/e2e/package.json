@@ -1,0 +1,11 @@
+{
+  "name": "tripora-integration-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node auth-sync.mjs"
+  },
+  "devDependencies": {
+    "embedded-postgres": "17.10.0-beta.17"
+  }
+}

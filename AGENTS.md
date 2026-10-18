@@ -2,7 +2,7 @@
 
 ## Read before work
 
-Read PRD.md, Architecture-essentials.md and the current checklist in docs/TRIPORA_PLAN.md.
+Read docs/NEW_LAPTOP_HANDOFF.md, docs/STATUS.md, PRD.md, Architecture-essentials.md and the current checklist in docs/TRIPORA_PLAN.md.
 For structural, sync, auth or media changes, read the relevant Architecture.md sections.
 Follow explicit user decisions over drafts; record changed decisions in both architecture files.
 The parent directory contains legacy work. This directory is the clean restart.
@@ -22,8 +22,10 @@ Do not spawn subagents unless the user explicitly requests delegation.
 ## Verification
 
 For documentation/layout-only changes, check relative links, required files, consistency and git diff --check.
-No runtime is scaffolded yet: do not invent npm, dotnet or CI commands.
-When runtime projects are created, add their exact working build/lint/typecheck/test commands here.
+Mobile (from apps/mobile): npm ci; npm run typecheck; npm test; npm run export:android; npm run export:ios.
+API (from repo root): dotnet build services/api/Tripora.Api.csproj --configuration Release; node tests/e2e/api-health.mjs.
+Use Node >=22.13 and .NET 10. On this Windows host the roaming npm shim is broken; use C:/Program Files/nodejs/npm.cmd when necessary.
+No lint script exists yet. Do not claim a lint run or native device test based on bundling.
 For sync changes verify restart persistence, retries, conflicts, deletions and access enforcement.
 For media changes verify durable local storage and interrupted uploads.
 Run relevant checks as features evolve; report what was and was not tested.

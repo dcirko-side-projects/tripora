@@ -1,10 +1,10 @@
 # Architecture essentials
 
-Status: proposed baseline. Architecture.md is authoritative; update both when decisions change.
+Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
 - Android and iPhone, offline read/write, shared trips and memories are confirmed.
-- Proposed stack: React Native/Expo/TypeScript, local SQLite, ASP.NET Core/EF Core/PostgreSQL.
-- Auth provider, sync implementation, package versions and hosting are not selected.
+- Working prototype: Expo SDK 57/React Native/TypeScript, local SQLite, ASP.NET Core .NET 10.
+- EF Core/PostgreSQL and Identity opaque bearer/refresh tokens are implemented on the development server; hosting remains unselected.
 - One mobile client, one backend; feature-based organization.
 - UI reads local data. Save entity and outbox operation in one local transaction.
 - Stable client IDs, operation deduplication, record versions, tombstones and server pull cursor.
@@ -19,4 +19,8 @@ Status: proposed baseline. Architecture.md is authoritative; update both when de
 - Images need durable local copies, private remote storage and a separate upload queue.
 - No promises of synchronization while the app is closed.
 - No microservices, CQRS framework, chat, AI, booking or debt settlement in initial scope.
-- Runtime scaffold, tests and builds do not exist yet; placeholders are not working features.
+- Current mobile UI: local trip creation/list with atomic outbox. New account/session/sync core modules are not wired to App.tsx.
+- Server: owner-only trip push/pull, receipts, versions and tombstones. No invitation/shared-membership flow or media yet.
+- Consult docs/NEW_LAPTOP_HANDOFF.md before continuing; do not treat the new modules as a finished mobile auth/sync feature.
+- Prototype data uses tripora-prototype.db; do not reuse it as an authenticated account database.
+- Automated desktop SQLite tests and mobile bundle exports are not native-device persistence proof.

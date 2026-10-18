@@ -1,25 +1,29 @@
 # Tripora — Architecture
 
-Status: proposed technical baseline, not an assertion that the user approved a stack.
+Status: development checkpoint 2026-10-18. Read docs/NEW_LAPTOP_HANDOFF.md and docs/decisions/0001-auth-sync.md for the current implementation and unfinished integration.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
 ## 1. Decision register
 
 | Area | Proposal | Reason | Status |
 | --- | --- | --- | --- |
-| Mobile | React Native, Expo, TypeScript | Android/iPhone UI, device media, shared client | Proposed |
-| Local data | SQLite | Transactional persistent offline records and outbox | Proposed |
-| Backend | ASP.NET Core, EF Core | One maintainable API and learning C# | Proposed |
-| Server data | PostgreSQL | Relationships, constraints and transactions | Proposed |
+| Mobile | React Native, Expo, TypeScript | Android/iPhone UI, device media, shared client | Prototype implemented |
+| Local data | SQLite | Transactional persistent offline records and outbox | Prototype implemented |
+| Backend | ASP.NET Core, EF Core | One maintainable API and learning C# | Implemented development backend |
+| Server data | PostgreSQL | Relationships, constraints and transactions | Migration and HTTP tests implemented |
 | Media | Private object storage | Keep image bytes separate from relational data | Provider open |
-| Auth | Standard mobile authentication with secure token storage | Native clients differ from browser cookie clients | Provider/protocol details open |
-| Sync | Explicit versioned operations and incremental pull | Offline writes and collaboration need a defined contract | Spike required |
+| Auth | Identity opaque bearer/refresh tokens, SecureStore adapter | No external provider needed for the private spike | Server implemented; mobile UI integration pending |
+| Sync | Explicit versioned operations and incremental pull | Offline writes and collaboration need a defined contract | Owned-trip server spike implemented; mobile integration pending |
 | Desktop | Separate delivery decision | Initial brief requests a useful desktop experience | Open |
 
 Alternative clients: Flutter, or Ionic/Capacitor if sharing a web UI becomes decisive.
 PWA remains viable but is no longer the leading proposal after native/mobile, offline and media requirements.
 A managed synchronization service must be evaluated against custom sync in the spike; do not adopt a vendor by accident.
-No concrete package versions are locked until the runtime scaffold is approved and compatibility is verified.
+Expo SDK 57, React 19.2.3, React Native 0.86.3 and TypeScript 6 are locked through apps/mobile/package-lock.json after checking the official template and Expo compatibility. Backend targets .NET 10. Auth/sync vendors and paid infrastructure remain unselected.
+
+### Current implementation boundary
+
+App.tsx still creates and lists anonymous prototype trips in tripora-prototype.db. New accountDatabase/accountStore/sessionClient/session/sync modules exist but are NOT wired to App.tsx and lack dedicated runtime tests. The server now has Identity, PostgreSQL migrations and owner-only trip synchronization. Do not call the current mobile UI synchronized or authenticated. Media, invitations and membership remain future work. Croatian UI is a reversible prototype default.
 
 ## 2. Boundaries and layout
 
@@ -90,8 +94,8 @@ A pull must not overwrite dirty local records; retain the pending change and exp
 
 ## 6. Authentication and authorization
 
-Select a supported mobile auth flow before implementing login.
-An OIDC provider with Authorization Code + PKCE is a candidate; local Identity-based accounts need an explicit session/token design.
+The private spike uses ASP.NET Core Identity opaque bearer/refresh tokens; see docs/decisions/0001-auth-sync.md.
+An OIDC provider with Authorization Code + PKCE remains an alternative for future federation; it is not the implemented flow.
 Store refresh/session secrets using platform secure storage, never ordinary SQLite, source code or logs.
 Do not carry the old web-cookie recommendation into the mobile client unchanged.
 Local databases are scoped to the signed-in account.
@@ -127,7 +131,7 @@ Show pending count and actionable errors without presenting a failed upload as s
 
 Local development and private test environment precede production distribution.
 API host, managed database, object storage, email and auth costs are reviewed before provisioning.
-CI runs only commands that actually exist in generated projects; there is no executable application yet.
+CI runs the actual typecheck, SQLite tests, mobile exports, API build and HTTP smoke check defined in .github/workflows/ci.yml. Local results and hosted CI results must be reported separately.
 Use synthetic travel data.
 Test local migrations with unsent changes, idempotency, money, membership enforcement,
 conflicts, delete/update races, media interruption and offline restart.
@@ -149,9 +153,9 @@ A build is not a physical-device test. Windows cannot be assumed to provide an i
 | Too many backend layers | One service with feature boundaries |
 | Arbitrary device clocks reorder changes | Server cursor and server-assigned versions |
 
-## 11. Decisions needed before runtime setup
+## 11. Decisions needed before authenticated synchronization
 
-Confirm mobile stack and auth/sync approach; UI language; desktop timeline; packing ownership;
+Confirm auth/sync approach; final UI language; desktop timeline; packing ownership;
 expense/memory edit permissions; photo limits; hosting budget; physical-device availability.
 Open product decisions should block only the feature they affect, not unrelated documentation work.
 

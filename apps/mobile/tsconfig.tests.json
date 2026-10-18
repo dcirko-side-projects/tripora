@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": ".test-build",
+    "rootDir": "src",
+    "ignoreDeprecations": "6.0"
+  },
+  "include": [
+    "src/core/localStore.ts"
+  ]
+}
