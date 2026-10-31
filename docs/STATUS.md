@@ -2,6 +2,14 @@
 
 Updated: 2026-10-31. Development branch: codex/offline-foundation.
 
+## Latest checkpoint — source checkpoint published to GitHub
+
+Committed all 132 current changed/new files as `0b1b3b294b63551cccc9ac5b063daad6a0bb3ffe` (feat: add shared trip planning, maps and card-free beta setup), with an English summary/body and refreshed English README description. Includes AGENTS.md as explicitly authorized. Normal push to origin codex/offline-foundation succeeded; git ls-remote confirmed the exact same SHA. Main remains `b8397cdcc4891f61883815bf9e3e883b785195c4`; no legacy parent repository/history transferred. Worktree was clean after the source push; this small documentation follow-up records that verified result.
+
+Staged diff checks additionally found and removed trailing empty lines in two tests and one checklist; no behavior changed and no tests rerun for that whitespace/docs-only cleanup. Earlier 83-mobile/48-HTTP/native-build evidence remains applicable. Final staged whitespace and documentation links pass, with runtime files/credentials excluded. Hosted CI results have not been checked; no live deployment/email/private-storage or new map physical acceptance is implied.
+
+Next: user connects the public Tripora repository in Render and selects **codex/offline-foundation**, Docker, services/api/Dockerfile, repo-root context, Frankfurt and Free with auto-deploy off. Configure provider secrets directly in Render, then run the live acceptance gates. Public source publication does not activate the API by itself.
+
 ## Latest checkpoint — user authorized publication of all current changes
 
 User explicitly requested committing and pushing all current Tripora changes with an English description, confirmed the repository is now public, and will connect it to Render personally. The publication target remains codex/offline-foundation; main and parent legacy history are unchanged. Includes updated AGENTS.md verification instructions, all implemented mobile/API features and tests, deployment adapters/configuration and documentation. English README summary and commit description cover the actual final scope.

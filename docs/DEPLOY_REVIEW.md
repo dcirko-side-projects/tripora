@@ -1,6 +1,6 @@
 # Pregled pripreme za prvu internetsku objavu
 
-Datum: 2026-10-31. Status: **korisnik je odobrio commit/push svih promjena**; Render servis još nije kreiran. Postojeći drugi Render servis ostaje netaknut.
+Datum: 2026-10-31. Status: **kod je commitan i pushan na razvojnu granu**; Render servis još nije kreiran. Postojeći drugi Render servis ostaje netaknut.
 
 ## Izvor i grana
 
@@ -41,3 +41,5 @@ Tajne se naknadno unose izravno u Render environment/secrets. Ovaj commit/push n
 Nakon stvarnog deploymenta slijede readiness, email/reset, anonimno odbijanje privatnih slika, sintetička dva klijenta, buđenje nakon neaktivnosti i novi mobilni build sa stvarnim HTTPS endpointom. Do tada aplikacija nije laptop-neovisna.
 
 Korisnik je potvrdio da je repozitorij učinio javnim i da će ga sam povezati s Renderom. Commit opis i sažetak README-a su na engleskom. Za Render izabrati razvojnu granu codex/offline-foundation; main nije izvor ovog checkpointa.
+
+Objavljeno: `0b1b3b294b63551cccc9ac5b063daad6a0bb3ffe`, 132 datoteke, engleski commit opis. GitHub remote head potvrđen jednakim lokalnom commitu; main ostaje b8397cd. Render servis i tajne još nisu povezani.
