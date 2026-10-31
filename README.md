@@ -11,11 +11,11 @@ Logout retains pending work for the same account. Owners and members maintain pl
 including offline editing, visited status, filtering and explicit conflict resolution. Prepare for offline confirms a complete
 metadata download; images require explicit download and offline maps are not included. Daily plans link saved places,
 packing is personal per participant, expenses use exact totals and one trip currency, and memories support text and private photos.
-Account confirmation/recovery/deletion and free hosted adapters are implemented and locally tested; real email/internet deployment remains pending. Android has bounded physical acceptance with QA9 branding; iPhone is deferred. See [current release phases](docs/RELEASE_PHASES.md), [card-free beta setup](docs/NO_CARD_SETUP.md) and the earlier [phase 6–8 evidence](docs/PHASES_6_8_CHECKLIST.md).
+Account confirmation/recovery/deletion and free hosted adapters are implemented and locally tested. The API is now live, with real email test delivery and private-photo transport verified; complete hosted account/device acceptance remains pending. Android has bounded physical acceptance with QA9 branding; iPhone is deferred. See [the live hosting checkpoint](docs/HOSTED_BETA_2026-10-31.md), [current release phases](docs/RELEASE_PHASES.md) and [card-free beta setup](docs/NO_CARD_SETUP.md).
 
 Place lookup searches a public name plus city on demand and lets the user confirm a result. Saved coordinates synchronize with the trip and appear on the native map; downloaded lists remain usable offline. Online maps and place lookup use OpenStreetMap services within their beta usage limits, without a Google API key.
 
-The prepared zero-cost hosting stack is Render, Neon PostgreSQL, authenticated Cloudinary storage and Brevo email. Provider accounts are registered, but real secrets, deployment, delivery and idle/wake acceptance are still pending. The repository is public; credentials and local runtime data stay excluded. Current evidence: 83 mobile tests, 48 PostgreSQL/HTTP scenarios, both platform exports and an Android QA10 build. New map behavior has not yet passed physical-device acceptance.
+The zero-cost hosting stack is Render, Neon PostgreSQL, authenticated Cloudinary storage and Brevo email. The API is live at [tripora-l4c7.onrender.com](https://tripora-l4c7.onrender.com), with provider secrets stored server-side. It provides API endpoints, not a browser UI. The repository is public; credentials and local runtime data stay excluded. Current source evidence: 83 mobile tests, 48 PostgreSQL/HTTP scenarios, both platform exports and an Android QA10 build. New map behavior has not yet passed physical-device acceptance. Availability, mobile beta build and remaining cloud acceptance are tracked in [STATUS](docs/STATUS.md).
 
 **Moving to another laptop or a new Codex chat? Read [NEW_LAPTOP_HANDOFF.md](docs/NEW_LAPTOP_HANDOFF.md).**
 Latest development is on `codex/offline-foundation`, not `main`.
@@ -72,7 +72,7 @@ If there are multiple network interfaces, set TRIPORA_DEV_HOST to the intended l
 Ctrl+C stops the runner; local-data/development is ignored and retains the database, private media and generated DB credentials.
 For a background runner use `node tests/e2e/dev-stop.mjs`. The runner and backup tools share an exclusive maintenance lock.
 For later sessions rerun the command; the laptop must remain on and firewall/network access must permit the ports.
-No public service is provisioned. Register a synthetic account in the app; there is no seeded password.
+This local runner is separate from the hosted beta. Register a synthetic account for local tests; there is no seeded password. To build a client for the hosted beta, set EXPO_PUBLIC_API_URL=https://tripora-l4c7.onrender.com before bundling, then verify the embedded origin. Server/user scopes isolate local and hosted accounts; local trips are not migrated automatically.
 
 ## Backend
 

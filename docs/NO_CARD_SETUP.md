@@ -1,5 +1,7 @@
 # Internetska beta bez bankovne kartice
 
+Najnovije 2026-10-31: sva četiri računa sada su povezana. Render Free API je live na https://tripora-l4c7.onrender.com; Neon migracije/readiness, nastavak nakon 17 minuta neaktivnosti klijenta, stvarna Brevo testna dostava i privatni Cloudinary upload/download/cleanup prolaze. Tripora Beta 11 APK je izrađen, nije instaliran; stvarni cold start još nije potvrđen. [Aktualna konfiguracija i preostali prihvat](HOSTED_BETA_2026-10-31.md) zamjenjuju povijesne checkpointove ispod; koraci registracije ostaju referenca. Ne unositi karticu.
+
 Checkpoint — sva četiri računa su registrirana; Brevo telefon je potvrđen i postojeći pošiljatelj verificiran (freemail dostavu još treba testirati). Render zasad nema pristup Tripora repozitoriju; pripremljen je [pregled objave](DEPLOY_REVIEW.md). Čekaju korisnikovo odobrenje commit/pusha na razvojnu granu i povezivanje samo tog repozitorija s Renderom. Ključevi još nisu preneseni niti je servis deployan.
 
 Checkpoint — Cloudinary račun također je otvoren: potvrđeni Free, ukupno 0 USD, 25 kredita i jedno aktivno okruženje. API secret nije otkriven niti prenesen; stvarni privatni upload još treba potvrditi. Brevo registracija otvorena je za korisnikov nastavak.
@@ -50,8 +52,8 @@ Free ima dnevnu kvotu poruka. Stvarna dostavljivost bez vlastite domene još nij
 ## 4. Render — registracija, pa deployment
 
 1. Registriraj se na [Render](https://render.com/) bez dodavanja metode plaćanja. Možeš zasad stati na praznom dashboardu.
-2. Nemoj još objavljivati stari GitHub main. Aktualne promjene su lokalno, bez commita/pusha. Prvo se priprema i pregledava namijenjeni izvor; push se obavlja tek uz korisnikovu autorizaciju.
-3. Kad izvor bude spreman u dogovorenoj grani, kreirati Free web service iz [render.yaml](../render.yaml): Docker, automatski deployment isključen, port 8080. Renderov Free PostgreSQL ne koristiti jer istječe.
+2. Aktualni pregledani izvor već je objavljen uz korisnikovu autorizaciju na **codex/offline-foundation**. Stari GitHub main nije izvor za ovaj deployment. Ne objavljivati legacy roditeljski projekt.
+3. Free servis `tripora` već je kreiran prema [render.yaml](../render.yaml): Docker, automatski deployment isključen, port 8080. Renderov Free PostgreSQL ne koristiti jer istječe.
 4. Postaviti tajne iz [predloška](../deploy/.env.example). PublicUrl je stvarni `https://...onrender.com` origin. DatabaseProvider je Neon, Storage Mode Cloudinary, Email Mode Brevo. Autentifikacija i potvrda emaila ostaju uključene.
 5. Za Identity ključeve postojeći [generator certifikata](../deploy/create-key-certificate.ps1) stvara privatne datoteke u ignored local-data/hosted-beta. Ako već postoje, ne prepisivati ih i ne regenerirati bez postupka rotacije. Base64 PFX i njegova lozinka postavljaju se kao Render secrets.
 6. Startup izvršava migracije i odbija nepotpunu hosted konfiguraciju/neprovjeren DB TLS. Readiness provjerava bazu; ne dokazuje email niti privatne fotografije.
@@ -70,7 +72,7 @@ OSM podloga je best-effort, uz identifikaciju Tripora/0.1, vidljivu atribuciju i
 
 ## Prije proglašenja internetske bete spremnom
 
-- [ ] Sva četiri stvarna računa rade bez kartice; tajne unesene samo server-side.
+- [x] Sva četiri stvarna računa rade bez kartice; tajne unesene samo server-side.
 - [ ] Deployan namijenjeni izvor; /health/ready radi preko interneta, laptop ugašen/nepotreban.
 - [ ] Prva prijava/potvrda/reset emaila stvarno rade; stari tokeni nakon reseta odbijeni.
 - [ ] Nakon više od 15 min neaktivnosti app automatski nastavlja, bez ručnog pokretanja; zasebno višednevna provjera.

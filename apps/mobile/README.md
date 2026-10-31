@@ -1,6 +1,6 @@
 # Mobile prototype
 
-Free hosted-beta preparation and account confirmation/recovery/deletion: [setup](../../docs/FREE_BETA_SETUP.md). Current acceptance: [status](../../docs/STATUS.md). Real internet deployment/email delivery remains pending. Rebuild icon PNGs from the original suitcase/airplane SVG with `npm run branding`; Android adaptive foreground has safe mask margins. A native rebuild is required to update the launcher icon.
+Hosted beta uses Render Free, Neon, Cloudinary and Brevo: [live setup and evidence](../../docs/HOSTED_BETA_2026-10-31.md). Current acceptance: [status](../../docs/STATUS.md). The API is live and real test email/private-photo transport pass; full hosted account and native-device acceptance remains pending. Build the hosted client with EXPO_PUBLIC_API_URL=https://tripora-l4c7.onrender.com and verify its embedded origin. Local data is not migrated automatically. Rebuild icon PNGs from the original suitcase/airplane SVG with `npm run branding`; Android adaptive foreground has safe mask margins. A native rebuild is required to update the launcher icon.
 
 Expo SDK 57 / React Native / TypeScript. App.tsx uses account-scoped SQLite and native SecureStore sessions.
 

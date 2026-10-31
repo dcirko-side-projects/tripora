@@ -1,5 +1,7 @@
 # Pregled pripreme za prvu internetsku objavu
 
+Najnovije 2026-10-31: objavljen je upravo pregledani razvojni izvor `4890618` (uključuje feature commit `0b1b3b2`). Render servis `tripora` radi na https://tripora-l4c7.onrender.com, Docker/Frankfurt/Free, auto-deploy Off, readiness `/health/ready`. Provider tajne povezane su uz izričito korisnikovo odobrenje. [Stvarni rezultat i preostali testovi](HOSTED_BETA_2026-10-31.md). Ostatak ovog pregleda čuva stanje prije objave.
+
 Datum: 2026-10-31. Status: **kod je commitan i pushan na razvojnu granu**; Render servis još nije kreiran. Postojeći drugi Render servis ostaje netaknut.
 
 ## Izvor i grana
