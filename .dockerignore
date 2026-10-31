@@ -1,0 +1,13 @@
+**
+!services/
+!services/api/
+!services/api/**
+services/api/bin/
+services/api/obj/
+services/api/local-data/
+services/api/.env*
+**/*.pfx
+**/*.pem
+**/*.key
+**/*.db
+**/*.log

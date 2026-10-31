@@ -7,6 +7,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "branding": "node scripts/generate-branding.cjs",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -16,17 +17,31 @@
     "export:ios": "expo export --platform ios"
   },
   "dependencies": {
-    "expo": "~57.0.25",
-    "expo-crypto": "~57.0.0",
+    "@maplibre/maplibre-react-native": "11.5.1",
+    "@react-native-community/datetimepicker": "9.1.0",
+    "expo": "~57.0.31",
+    "expo-crypto": "~57.0.4",
+    "expo-file-system": "~57.0.7",
+    "expo-image-manipulator": "~57.0.21",
+    "expo-image-picker": "~57.0.20",
     "expo-secure-store": "~57.0.0",
-    "expo-sqlite": "~57.0.3",
+    "expo-sqlite": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-native": "0.86.3",
-    "react-native-safe-area-context": "~5.7.0"
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "2.6.2",
     "@types/react": "~19.2.2",
+    "react-test-renderer": "19.2.3",
     "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "node-forge": "1.4.2",
+    "@expo/cli": {
+      "zod": "4.6.6"
+    }
   }
 }

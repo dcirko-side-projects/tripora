@@ -18,6 +18,7 @@ jobs:
           cache: npm
           cache-dependency-path: apps/mobile/package-lock.json
       - run: npm ci
+      - run: npm audit --audit-level=high
       - run: npm run typecheck
       - run: npm test
       - run: npm run export:android
@@ -34,3 +35,8 @@ jobs:
           node-version: '22.22.0'
       - run: dotnet build services/api/Tripora.Api.csproj --configuration Release
       - run: node tests/e2e/api-health.mjs
+      - run: npm ci --prefix apps/mobile
+      - run: npm test --prefix apps/mobile
+      - run: npm ci --prefix tests/e2e
+      - run: node --test tests/e2e/local-backup.test.mjs
+      - run: node --experimental-sqlite tests/e2e/auth-sync.mjs

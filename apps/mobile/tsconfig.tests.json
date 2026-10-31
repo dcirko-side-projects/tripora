@@ -10,6 +10,6 @@
     "ignoreDeprecations": "6.0"
   },
   "include": [
-    "src/core/localStore.ts"
+    "src/core/localStore.ts", "src/core/accountStore.ts", "src/core/sessionClient.ts", "src/core/sync.ts", "src/core/accountSync.ts", "src/core/tripOverview.ts", "src/core/actionError.ts"
   ]
 }

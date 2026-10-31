@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: tripora-beta
+    runtime: docker
+    plan: free
+    autoDeployTrigger: off
+    dockerfilePath: ./services/api/Dockerfile
+    healthCheckPath: /health/ready
+    envVars:
+      - key: PORT
+        value: "8080"
+      - key: Tripora__EnableHostedBeta
+        value: "true"
+      - key: Tripora__RequireConfirmedEmail
+        value: "true"
+      - key: Tripora__DatabaseKeys
+        value: "true"
+      - key: Tripora__DatabaseProvider
+        value: Neon
+      - key: Tripora__Storage__Mode
+        value: Cloudinary
+      - key: Tripora__Email__Mode
+        value: Brevo
+      - key: Tripora__PublicUrl
+        sync: false
+      - key: ConnectionStrings__Tripora
+        sync: false
+      - key: Tripora__Storage__CloudName
+        sync: false
+      - key: Tripora__Storage__ApiKey
+        sync: false
+      - key: Tripora__Storage__ApiSecret
+        sync: false
+      - key: Tripora__Email__From
+        sync: false
+      - key: Tripora__Email__ApiKey
+        sync: false
+      - key: Tripora__KeyCertificate
+        sync: false
+      - key: Tripora__KeyCertificatePassword
+        sync: false

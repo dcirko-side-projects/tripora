@@ -1,23 +1,27 @@
-# Auth and server-sync iteration — 2026-09-30
+# Auth and trip-sync iteration
 
-User requested the next two phases and deferred physical-device testing.
+Updated: 2026-10-21. Private development scope; physical-device testing deferred by the user.
 
 ## Phase A — authentication and account isolation
-- [x] Record Identity token/session choice and its limits.
-- [x] Registration, login, refresh and authenticated identity endpoint (server).
-- [ ] SecureStore session persistence, expiry handling and account-scoped SQLite.
-- [ ] Explicit logout handling with unsent changes retained for the same account.
-- [x] Verify anonymous/invalid-token rejection and cross-account isolation on server; mobile validation remains open.
+- [x] Identity register/login/refresh/me on server; mobile registration/login UI.
+- [x] SecureStore adapter connected, session restore/expiry handling and account-scoped SQLite.
+- [x] Confirmed logout retains unsent work for the same account and clears the active session.
+- [x] Automated session/account isolation, concurrent refresh and logout-during-refresh tests.
+- [ ] Native secure-storage and device lifecycle verification.
+- [ ] Email verification and account recovery before production.
 
 ## Phase B — PostgreSQL and guarded trip synchronization
-- [x] EF Core migration, isolated PostgreSQL tests and API restart persistence.
-- [x] Atomic mutation receipts, version checks, deletion markers and ordered pull (server).
-- [ ] Mobile outbox upload, acknowledgement and pull without overwriting dirty data.
-- [ ] Visible conflicts with deliberate resolution; retry retains operation IDs.
-- [x] HTTP integration tests against PostgreSQL: auth, replay, changed replay, conflict, authorization, deletion and restart (10 scenarios passed again on 2026-10-18).
-- [ ] Client tests for migration, account isolation, lost acknowledgements and conflict preservation.
-- [ ] Typecheck, bundles, documentation and CI commands.
+- [x] EF Core migration, isolated PostgreSQL integration and API restart persistence.
+- [x] Atomic receipts, version checks, deletion markers and ordered pull.
+- [x] Mobile immutable outbox upload, acknowledgement and dirty-data protection.
+- [x] Visible conflicts with deliberate, confirmed server/local choices; no tombstone resurrection.
+- [x] One sync at a time; auth/restore, foreground resume, 30-second foreground retries and manual sync.
+- [x] Client tests for persistence, migrations, rollback, isolation, lost acknowledgements and conflict preservation.
+- [x] Actual mobile core against HTTP/PostgreSQL with two device stores, conflict resolution, deletion and logout/relogin.
+- [x] App.tsx component journey with mocked native adapters.
+- [x] Typecheck, 20 mobile tests, 11 PostgreSQL scenarios, Android/iOS exports and Release build passed locally.
+- [x] CI definition includes mobile-core HTTP integration; hosted run not verified.
+- [x] Persistent development runner and verified local launcher/manifest/bundle responses.
+- [ ] Physical Android/iPhone acceptance, intentionally postponed.
 
-Boundary: private development spike, no paid/cloud provisioning, no invitation UI or collaborative roles yet.
-Device QA stays deferred at the user's request. User requested commit/push on 2026-10-18 for a new laptop.
-New client modules are drafted, but UI integration and dedicated client tests remain incomplete.
+No invitation roles, media, paid/cloud provisioning or production release in this iteration.

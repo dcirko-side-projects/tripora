@@ -3,6 +3,7 @@
     "name": "Tripora",
     "slug": "tripora",
     "version": "0.1.0",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": [
@@ -12,8 +13,25 @@
     "ios": {
       "supportsTablet": true
     },
+    "android": {
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0593C6"
+      }
+    },
     "plugins": [
-      "expo-sqlite"
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Dopusti Tripori odabir fotografije za uspomenu s putovanja.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      "@maplibre/maplibre-react-native"
     ]
   }
 }

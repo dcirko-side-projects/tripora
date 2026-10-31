@@ -24,6 +24,9 @@ Do not spawn subagents unless the user explicitly requests delegation.
 For documentation/layout-only changes, check relative links, required files, consistency and git diff --check.
 Mobile (from apps/mobile): npm ci; npm run typecheck; npm test; npm run export:android; npm run export:ios.
 API (from repo root): dotnet build services/api/Tripora.Api.csproj --configuration Release; node tests/e2e/api-health.mjs.
+Auth/sync integration (from repo root, after mobile npm test): npm ci --prefix tests/e2e; node --experimental-sqlite tests/e2e/auth-sync.mjs.
+Backup guards (from repo root, development stack stopped): node --test tests/e2e/local-backup.test.mjs. Use node tests/e2e/dev-stop.mjs for managed development shutdown before maintenance.
+Full local development stack (after dependencies/API build): node tests/e2e/dev.mjs. Use synthetic accounts on trusted LAN; generated credentials/data stay under ignored local-data/.
 Use Node >=22.13 and .NET 10. On this Windows host the roaming npm shim is broken; use C:/Program Files/nodejs/npm.cmd when necessary.
 No lint script exists yet. Do not claim a lint run or native device test based on bundling.
 For sync changes verify restart persistence, retries, conflicts, deletions and access enforcement.

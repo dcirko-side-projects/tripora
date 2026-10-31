@@ -14,3 +14,7 @@ export function openAccountDatabase(scope: string): { db: LocalDatabase; close: 
   try { initAccountStore(db); return { db, close: () => sqlite.closeSync() }; }
   catch (error) { sqlite.closeSync(); throw error; }
 }
+export async function deleteAccountDatabase(scope: string): Promise<void> {
+  if (!/^[a-f0-9]{64}$/.test(scope)) throw new Error('Neispravan identifikator računa.');
+  await SQLite.deleteDatabaseAsync('tripora-account-' + scope + '.db');
+}

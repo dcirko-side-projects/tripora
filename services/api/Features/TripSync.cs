@@ -10,9 +10,9 @@ namespace Tripora.Api.Features;
 public record TripData(string Name, string Destination, DateOnly StartDate, DateOnly EndDate);
 public record TripMutation(Guid OperationId, Guid TripId, string Kind, long BaseVersion, TripData? Data);
 public record TripView(Guid Id, string Name, string Destination, DateOnly StartDate, DateOnly EndDate,
-    DateTime CreatedAt, long Version, bool Deleted)
+    DateTime CreatedAt, long Version, bool Deleted, string OwnerId)
 {
-    public static TripView From(TripRecord t) => new(t.Id, t.Name, t.Destination, t.StartDate, t.EndDate, t.CreatedAt, t.Version, t.Deleted);
+    public static TripView From(TripRecord t) => new(t.Id, t.Name, t.Destination, t.StartDate, t.EndDate, t.CreatedAt, t.Version, t.Deleted, t.OwnerId);
 }
 public static class TripSync
 {
@@ -24,10 +24,15 @@ public static class TripSync
             var cursor = after ?? 0;
             if (cursor < 0) return Results.BadRequest(new { code = "invalid_cursor" });
             var id = actor.FindFirstValue(ClaimTypes.NameIdentifier)!;
-            var rows = await db.Trips.AsNoTracking().Where(t => t.OwnerId == id && t.Version > cursor)
+            await using var transaction = await db.Database.BeginTransactionAsync();
+            await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(81724031)");
+            var available = db.Trips.AsNoTracking().Where(t => t.OwnerId == id || db.TripMembers.Any(m => m.TripId == t.Id && m.UserId == id && m.Active));
+            var access = await available.Select(t => new { t.Id, role = t.OwnerId == id ? "owner" : "member" }).ToListAsync();
+            var rows = await available.Where(t => t.Version > cursor)
                 .OrderBy(t => t.Version).Take(101).ToListAsync();
             var items = rows.Take(100).Select(TripView.From).ToList();
-            return Results.Ok(new { items, cursor = items.Count == 0 ? cursor : items[^1].Version, hasMore = rows.Count > 100 });
+            await transaction.CommitAsync();
+            return Results.Ok(new { items, access, cursor = items.Count == 0 ? cursor : items[^1].Version, hasMore = rows.Count > 100 });
         });
     }
     private static async Task<IResult> Push(TripMutation request, ClaimsPrincipal actor, TriporaDb db)
@@ -45,8 +50,13 @@ public static class TripSync
         await using var transaction = await db.Database.BeginTransactionAsync();
         // Deliberately serialized tiny spike. Prevents receipt races AND out-of-order cursor commits.
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(81724031)");
+        if (!await db.Users.AnyAsync(u => u.Id == actorId && u.PasswordHash != null)) return Results.Unauthorized();
         var trip = await db.Trips.SingleOrDefaultAsync(t => t.Id == request.TripId);
-        if (trip is not null && trip.OwnerId != actorId) return Results.NotFound(new { code = "trip_unavailable" });
+        if (trip is not null && trip.OwnerId != actorId)
+        {
+            var member = await db.TripMembers.AnyAsync(m => m.TripId == trip.Id && m.UserId == actorId && m.Active);
+            return member ? Results.Json(new { code = "owner_required" }, statusCode: 403) : Results.NotFound(new { code = "trip_unavailable" });
+        }
         var prior = await db.Receipts.FindAsync(actorId, request.OperationId);
         if (prior is not null)
             return prior.Digest == digest ? Results.Content(prior.ResponseJson, "application/json") :
@@ -70,10 +80,23 @@ public static class TripSync
         {
             trip.Name = data!.Name.Trim();
             trip.Destination = data.Destination.Trim();
+            foreach (var activity in await db.Entries.Where(e => e.TripId == trip.Id && e.Feature == "plan" && !e.Deleted).ToListAsync())
+            {
+                var plan = JsonSerializer.Deserialize<PlanData>(activity.DataJson, Json)!;
+                if (plan.Date.Length > 0 && (!DateOnly.TryParse(plan.Date, out var date) || date < data.StartDate || date > data.EndDate))
+                    return Results.Conflict(new { code = "activities_outside_dates" });
+            }
             trip.StartDate = data.StartDate;
             trip.EndDate = data.EndDate;
         }
         var clock = await db.SyncClocks.SingleAsync(c => c.Id == 1);
+        if (trip.Deleted)
+        {
+            foreach (var place in await db.Places.Where(p => p.TripId == trip.Id && !p.Deleted).ToListAsync())
+            { place.Deleted = true; place.Version = ++clock.Value; }
+            foreach (var entry in await db.Entries.Where(e => e.TripId == trip.Id && !e.Deleted).ToListAsync())
+            { entry.Deleted = true; entry.Version = ++clock.Value; }
+        }
         trip.Version = ++clock.Value;
         var json = JsonSerializer.Serialize(TripView.From(trip), Json);
         db.Receipts.Add(new MutationReceipt { ActorId = actorId, OperationId = request.OperationId, Digest = digest, ResponseJson = json });

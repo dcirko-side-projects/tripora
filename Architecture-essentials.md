@@ -2,9 +2,15 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+- User decisions 2026-10-30: zero-cost internet beta using Render Free, Supabase Free PostgreSQL/private objects and Brevo Free transactional email. Identity remains the auth system; no Supabase Auth/sync. Provider accounts/credentials, delivery and real deployment are not provisioned. See docs/FREE_BETA_SETUP.md.
+- Confirmed-email login is required in hosted mode; local private outbox supports synthetic tests. Native confirmation/resend/reset forms use Identity codes (one hour). Password reset revokes prior access/refresh tokens.
+- User-requested deletion requires password, exact phrase and final confirmation; erases owned trips plus own contributions in other trips. Persist erased tombstones/minimal credential-free identity stub, revoke sessions/membership/invitations, clear receipt/PII, purge this device's account scope. Pending remote byte deletion remains tracked/retriable; downloaded copies/backups are not remotely erased.
+- Place creator IDs are persisted/backfilled from earliest retained receipts. Hosted keys persist in PostgreSQL and are certificate-encrypted; photo bytes use a private Supabase bucket. Startup checks closed Data API schema/private bucket, HTTPS origins and verified DB TLS. API ephemeral disk is not durable storage.
+- Launcher branding is a source SVG suitcase/airplane with generated ordinary/adaptive PNGs in the existing theme. No paid assets.
+
 - Android and iPhone, offline read/write, shared trips and memories are confirmed.
 - Working prototype: Expo SDK 57/React Native/TypeScript, local SQLite, ASP.NET Core .NET 10.
-- EF Core/PostgreSQL and Identity opaque bearer/refresh tokens are implemented on the development server; hosting remains unselected.
+- EF Core/PostgreSQL and Identity opaque bearer/refresh tokens are implemented; the user selected free hosted providers above, but deployment remains pending.
 - One mobile client, one backend; feature-based organization.
 - UI reads local data. Save entity and outbox operation in one local transaction.
 - Stable client IDs, operation deduplication, record versions, tombstones and server pull cursor.
@@ -14,13 +20,59 @@ Status: executable prototype started 2026-09-28. Architecture.md is authoritativ
 - Offline revocation is not instantaneous; do not claim it is.
 - Keep credentials in platform secure storage; local data is account-scoped.
 - Money uses exact representation; one currency per trip initially.
+- Implemented money: canonical integer-minor-unit strings, server Int64 validation and client BigInt totals. EUR/USD/GBP have two decimals; owner sets currency/budget, currency locks after any expense. Payer differs from immutable author; no debt settlement.
 - Calendar dates/local itinerary times differ from UTC audit timestamps.
 - Places/Food/Nightlife are separate views over a shared place concept.
 - Images need durable local copies, private remote storage and a separate upload queue.
+- User confirmed personal packing on 2026-10-22. Only its author sees/changes it, including against owner access. Active members share plan edits; expense/memory author edits own content and owner can moderate (prototype default).
+- Plan uses optional calendar date/local HH:mm and references places. Shortening a trip rejects activities outside the new dates until explicitly adjusted/unscheduled.
+- SQLite v3 adds validated entry payloads, queue/follow-up state and local-media metadata without losing old queues. Old readiness timestamps are invalidated. Sync: trips/access → places → referenced image uploads → entries (budget first) → acknowledged cleanup.
+- Photos: native gallery → bounded PNG 1280 px + thumbnail 320 px → account document storage → hashed, idempotent private upload. Limits: one image/memory, 100 assets/trip, 8 MiB image and 1 MiB thumbnail. Supabase Free private objects selected for hosted beta; local filesystem remains for development.
+- Photo sizing uses decoded dimensions after EXIF rotation. Pending oversized PNGs rejected with 400/invalid_media can be hash-verified and prepared at new paths without changing the asset ID or immutable entry outbox; persisted repaired copies survive retries/restarts, while tracked originals remain until guarded cleanup. Accepted/downloaded media and other errors are excluded. No schema/API change.
+- API validates PNG structure/CRC/decompression bounds, checks membership/publication on downloads and returns private/no-store responses. Downloads are explicit/hash-verified; metadata readiness excludes image bytes. Interrupted uploads retry whole files.
+- Unreferenced confirmed-deleted media is cleaned only when no active/pending reference needs it. Other orphans expire after seven days; .part files after one day on foreground/manual cleanup. Uploader/owner moderation is enforced.
 - No promises of synchronization while the app is closed.
 - No microservices, CQRS framework, chat, AI, booking or debt settlement in initial scope.
-- Current mobile UI: local trip creation/list with atomic outbox. New account/session/sync core modules are not wired to App.tsx.
-- Server: owner-only trip push/pull, receipts, versions and tombstones. No invitation/shared-membership flow or media yet.
-- Consult docs/NEW_LAPTOP_HANDOFF.md before continuing; do not treat the new modules as a finished mobile auth/sync feature.
+- Current mobile UI: registration/login, persisted session, account-scoped trip create/list/update/delete, synchronization and explicit conflict choices.
+- UX redesign 2026-10-23: global Trips/Sync/Account navigation is separate from selected-trip Overview/Plan/Places/Expenses/More. Personal packing, memories, membership and settings are routed from More/overview shortcuts. Existing React state navigation gains typed sections and Android back handling; forms/details use native modals, shared raspberry/pale-sky tokens and SVG icons. Native SDK 57 date/time controls preserve calendar-only YYYY-MM-DD/HH:mm payloads; no DB/API/sync contract changes. See docs/UX_REDESIGN.md for acceptance and device limits.
+- Server: owners write trip metadata; accepted members can pull shared trips. Owners and active members maintain shared places/food/nightlife and plan. Invitations, revocation and member removal are online; authenticated private media is implemented for development.
+- Places use one category model, separate views, notes/address/HTTP(S) link, visited filter/status and local CRUD. Account SQLite v2 adds place tables/cursor without losing v1 queued work.
+- Offline place edits keep the first request immutable and stage a follow-up ID. Acknowledgement atomically queues the latest draft against its server version; conflicts retain that draft and require an explicit choice.
+- Sync reconciles parent trips/access before places. Membership grant bumps child versions; trip deletion atomically tombstones children. Place API rechecks membership/parent on every operation under the existing transaction lock.
+- Prepare for offline records a persisted metadata snapshot timestamp only after trip/place/entry paginated downloads finish. Interrupted pulls resume. Photos require explicit download; the timestamp does not promise offline maps, image bytes or native cold-start proof.
+- Invitations: existing registered recipient, manually shared 256-bit code, seven-day expiry, SHA-256 hash stored; invitations are not emailed. Account verification/recovery has the separate email adapter above. Only owner manages base trip metadata/membership.
+- Accept/revoke/remove and sync use one transaction lock. Acceptance bumps trip version; every pull atomically reconciles a full accessible ID/role snapshot. Revoked copies/pending work remain local and visibly stop uploading; offline erasure is not promised.
+- Logout confirms retention of unsent work; session expiry preserves local data and requests reauthentication. Foreground sync retries every 30 seconds and on resume/manual action; overlapping sync/refresh calls share work.
+- Automated SQLite, component and mobile-core HTTP tests pass; native SecureStore/SQLite bridges and physical devices remain unverified. Consult docs/STATUS.md before continuing.
 - Prototype data uses tripora-prototype.db; do not reuse it as an authenticated account database.
 - Automated desktop SQLite tests and mobile bundle exports are not native-device persistence proof.
+- Phase 9: local trip overview includes pending-inclusive exact money, personal packing and explicit image availability. Storage failures keep previous commits/queues; native photo preparation uses an advisory 32 MiB free-space check and error cleanup.
+- Secure-storage writes/clear are serialized and generation-guarded against logout races. Auth/API responses use private/no-store. Development Data Protection keys live in Tripora:KeyRoot beside DB/media; switching from host-default keys requires reauthentication.
+- Session restore waits for queued storage changes and checks the session generation after asynchronous reads/scope validation. Requests and their one authorized retry stay bound to the starting generation; late responses cannot be applied or retried under another account. Refresh coalescing is generation-scoped; logout immediately blocks new requests.
+- Local backup/restore uses a runner/maintenance lock, clean pg_ctl shutdown and SHA-256 manifests for PostgreSQL 17, media, keys and settings. Restore only into a new local-data folder on the same platform/architecture. No overwrite, encrypted/off-host backup or phone-outbox backup is implied; private beta still needs device and production recovery/distribution decisions.
+
+## Visual and connection update — 2026-10-31
+
+The explicit user palette supersedes raspberry/pale-sky: primary #0593C6, surface #FCFFFF, accent #D83995, with darker text variants and blue/pink tinted panels. Existing global/trip navigation, account scopes, DB/API/sync payloads remain. Shared tokens, cards, controls, day selector and launcher assets follow this palette.
+
+SessionClient bounds each JSON request, including response-body consumption, with AbortController and a cleared 75-second timer instead of the old 15-second fetch-only AbortSignal.timeout. This accommodates an approximately one-minute free-host cold start; it is no availability guarantee. Arbitrary POSTs are not automatically replayed on network failures. Existing immutable sync operation IDs, foreground/resume retry and session-generation checks remain. Failure preserves account credentials and local outbox. The UI's existing global busy lock can remain active while a slow request waits; independent editing during sync needs a separate bounded change.
+
+The current QA endpoint is a local computer HTTPS service, not internet hosting. No hosted URL/credentials are provisioned. Stopped laptop processes, stale runner locks, missing USB forwarding or laptop sleep can make it unreachable. Render Free wakes on demand after idle; Supabase Free can pause after prolonged inactivity. There is no zero-cost always-on guarantee. No paid hosting, OS auto-start service or keepalive automation has been enabled.
+
+Maps remain proposal-only: no dependencies, schema, endpoints or map UI added. See [map research](docs/MAP_RESEARCH.md) and [connection evidence](docs/DESIGN_CONNECTION_2026-10-31.md). Provider, persistence rights, EEA rules and costs require agreement before implementation.
+
+## Maps and card-free beta — accepted 2026-10-31
+
+This section supersedes the earlier research-only map boundary and the Supabase-based hosting proposal. The user authorized implementation of name+city lookup with candidate confirmation, an online trip map, offline saved lists, zero cost and no bank card even for hosting. Small initial audience; market release requires a new capacity review. Full decision: [0005](docs/decisions/0005-maps-and-no-card-beta.md).
+
+MapLibre 11.5.1 adds a native Popis/Karta view within Places, category/status filters, numbered category-colored markers, existing details and external Google Maps directions by coordinates (no Google API key). SDK 57/new architecture compatibility is checked through typecheck/exports and Android compilation; new native install required. Runtime config provides tile URL/attribution; the beta default is OSM raster with application User-Agent, visible attribution and normal HTTP cache, without offline packs/prefetch. Saved lists remain available when the map/provider cannot load.
+
+Authenticated /api/places/search accepts a trip, public place name and city only after a user action; it checks current trip membership. Nominatim-compatible responses yield at most five finite/bounded, deduplicated OSM candidates. Global PostgreSQL transaction advisory lock and persisted timestamps gate upstream calls (1.1 seconds), 30-day hashed-query cache survives API restarts, per-account limiter is 12/minute, and default upstream cap is 200/day. No autocomplete, bulk backfill or confidential notes sent to providers. Search and map tile origins are server-configurable. Cache rows retain public results, not raw queries or account identities. Public OSM service limits are not a production SLA.
+
+Place location is optional latitude/longitude/displayName/provider/providerId, stored in existing SQLite JSON and server nullable LocationJson via an additive migration, plus PlaceSearchCache. No existing outbox rewrite/local DB version bump. Existing entity+operation atomic writes, immutable IDs/follow-ups, retry, pull, conflicts, removals and tombstones carry coordinates. Null location is omitted from server mutation serialization to preserve old receipt digest shapes. Renaming/address/city changes clear stale location; asynchronous search generations prevent old results attaching to a new draft. Conflict descriptions include both coordinate versions. Place/account deletion clears server coordinates.
+
+Prepared hosting now uses Render Free API, Neon Free PostgreSQL, Cloudinary Free authenticated original/thumbnail objects and Brevo Free email; no accounts, secrets or live deployment exist. Supabase support remains optional for prior environments. Neon does not replace Identity/auth/sync. Production still requires hosted opt-in, confirmed email, durable certificate-encrypted DB keys and verified DB TLS; Neon mode rejects unexpected exposed Data API roles without requiring Supabase roles. Cloudinary signed upload/download/delete and inventory operate server-side; provider URLs/credentials never reach clients. Stable IDs, exact PNG/hash checks, existing API authorization and retriable byte deletion remain. Inventory is limited to every 30 minutes per process; confirmed deletions are independent. Setup and all external gates: [no-card guide](docs/NO_CARD_SETUP.md).
+
+The user explicitly has no provider accounts and requested registration steps. Card-required registration, quotas or provider rejection cannot be hidden by a paid upgrade. Short automatic cold start is acceptable, but unattended availability/real email/privacy and hosted combined backup must be proven after configuration. No keepalive automation or OS autostart is introduced.
+
+Publication checkpoint — 2026-10-31: user made the repository public and authorized commit/push of all current changes to codex/offline-foundation. The four provider accounts now exist; secrets are not connected and no hosted deployment or live acceptance is complete. Main and parent legacy history remain unchanged. Current setup state is in docs/STATUS.md.

@@ -1,5 +1,13 @@
 # Tripora — plan razvoja
 
+Aktualno: sva četiri provider računa su registrirana, Neon je konfiguriran, Brevo telefon/sender potvrđeni. Korisnik je repozitorij učinio javnim i izričito odobrio commit/push svih trenutnih promjena s engleskim opisom. Izvor za Render je **codex/offline-foundation**; još nema stvarnog deploymenta ni povezanih tajni. Korisnik povezuje repozitorij u Renderu. Aktualni dokaz i sljedeći korak: [STATUS](STATUS.md).
+
+Aktualno 2026-10-31 — korisnik je odobrio i implementirani su pretraga mjesta po nazivu/gradu, odabir rezultata, koordinate kroz offline sync i native MapLibre karta. Prolaze 83 mobilna / 48 HTTP scenarija te QA10 Android build; APK nije instaliran/fizički prihvaćen. Zahtjev je 0 € bez bankovne kartice i bez laptopa: pripremljen Render/Neon/Cloudinary/Brevo; korisnik nema račune i tražio je [korake registracije](NO_CARD_SETUP.md). Nema stvarnog deploymenta. [Odluka 0005](decisions/0005-maps-and-no-card-beta.md) i [STATUS](STATUS.md) zamjenjuju raniji research-only/Supabase checkpoint.
+
+Aktualno 2026-10-31: plava #0593C6 / svijetla #FCFFFF / ružičasta #D83995 zamjenjuju staru paletu. Lokalni razvojni i QA HTTPS API ponovno pokrenuti nakon provjere zaostale brave; JSON timeout obuhvaća tijelo odgovora i dopušta 75 s za buđenje. [Promjene i dokazi](DESIGN_CONNECTION_2026-10-31.md), [istraživanje karte bez implementacije](MAP_RESEARCH.md), [aktualni status](STATUS.md). Nova tema još nije instalirana/fizički prihvaćena na telefonu. Cloud deployment ostaje otvoren; nema obećanja stalne dostupnosti Free hostinga.
+
+Aktualno 2026-10-30: korisnik je pokrenuo prve tri release faze; provedeni koraci, otvorene stavke i iduće faze su u [RELEASE_PHASES.md](RELEASE_PHASES.md). Odabrani su besplatni Render/Supabase/Brevo i potvrđen životni ciklus računa ([odluka 0004](decisions/0004-free-beta-and-account-lifecycle.md)). QA9 s novom ikonom instaliran je na Android. iPhone je odgođen. Starije otvorene odluke ispod čitati uz ovaj checkpoint i STATUS.
+
 Datum: 2026-09-26
 Status 2026-09-28: korisnik je zatrazio nastavak faza. Pokrenut je izvrsivi tehnicki prototip; faze 0–2 nisu proglasene potpuno dovrsenima. Detalji i provjere: IMPLEMENTATION_CHECKLIST.md i STATUS.md.
 
@@ -18,11 +26,11 @@ Status 2026-09-28: korisnik je zatrazio nastavak faza. Pokrenut je izvrsivi tehn
 
 - React Native + Expo + TypeScript koristi se u pocetnom mobilnom prototipu.
 - SQLite na uredjaju: lokalno citanje i spremanje, trajni red promjena za sinkronizaciju.
-- ASP.NET Core backend ima liveness endpoint. PostgreSQL i EF Core jos nisu uvedeni.
+- ASP.NET Core backend ima Identity autentifikaciju, PostgreSQL/EF Core migraciju i sinkronizaciju vlastitih putovanja. Mobilni UI povezan je 2026-10-21; fizicki uredjaji jos nisu provjereni.
 - Privatna objektna pohrana fotografija; metapodaci u bazi, lokalne kopije za offline.
 - Jedan backend i jedan repo; organizacija po funkcionalnostima.
 - Autentifikacija prilagodjena mobilnim klijentima, sigurna pohrana vjerodajnica, obnova i opoziv sesija. Ne prenositi raniji prijedlog web cookie autentifikacije bez nove procjene.
-- Hosting, autentifikacijski provider, biblioteka za sinkronizaciju i precizne verzije biraju se u fazi 0 nakon provjere kompatibilnosti i troskova.
+- Privatni razvojni prototip koristi Identity tokene i eksplicitan protokol sinkronizacije; verzije su u lockfileu. Hosting, email/recovery i produkcijski uvjeti ostaju otvoreni.
 - Alternative: Flutter; Ionic/Capacitor za web pristup; PWA ako se prioriteti vrate prema webu. Usporediti offline pohranu, fotografije, razvojno iskustvo, desktop i distribuciju.
 
 ## Sekcije proizvoda
@@ -57,7 +65,7 @@ Zavrsetak: prihvacen opseg i tehnicki zapis; sve nerijesene odluke jasno oznacen
 ## Faza 1 — Mobilni UX
 
 - [ ] Skicirati tokove: novo putovanje, obilazak, trosak, poziv sudioniku, fotografija.
-- [ ] Dogovoriti navigaciju bez pretrpavanja donje trake svim sekcijama.
+- [x] Implementirana odvojena globalna i navigacija unutar putovanja prema korisnikovom redizajn briefu 2026-10-23; native UX prihvat ostaje otvoren (UX_REDESIGN.md).
 - [ ] Skicirati stanja bez podataka, ucitavanje, greske, offline i sinkronizaciju.
 - [ ] Provjeriti velike dodirne povrsine, tipkovnicu, citljivost i pristupacnost.
 
@@ -86,65 +94,81 @@ Zavrsetak: korisnik upravlja svojim putovanjem; drugi korisnik bez clanstva ne m
 
 ## Faza 4 — Sinkronizacija i zajednicka putovanja
 
-- [ ] Poziv i prihvacanje clanstva online; vlasnik i clan.
-- [ ] Sinkronizacija izmedju barem dva racuna i dva uredjaja.
-- [ ] Verzije zapisa, identifikatori operacija i evidentiranje brisanja.
-- [ ] Prikaz i rjesavanje konflikata bez tihog gubitka podataka.
-- [ ] Obrada uklonjenog clana: odbiti buduce neovlastene promjene, jasno prikazati status.
-- [ ] Uvaziti da se vec preuzeti podaci ne mogu trenutno opozvati na uredjaju bez mreze.
-- [ ] Sinkronizacija pri otvaranju i povratku veze; pozadinski rad nije jamstvo.
+- [x] Poziv i prihvacanje clanstva online; vlasnik i clan (razvojni defaulti: MEMBERSHIP_CHECKLIST.md).
+- [ ] Sinkronizacija izmedju barem dva racuna i dva fizicka uredjaja. Automatizirana dva racuna/lokalne baze prolaze; fizicki uredjaji odgodjeni.
+- [x] Verzije zapisa, identifikatori operacija i evidentiranje brisanja.
+- [x] Prikaz i rjesavanje konflikata bez tihog gubitka podataka (automatizirane provjere).
+- [x] Obrada uklonjenog clana: odbiti buduce neovlastene promjene, jasno prikazati status i sacuvati lokalni red.
+- [x] Uvaziti da se vec preuzeti podaci ne mogu trenutno opozvati na uredjaju bez mreze.
+- [x] Sinkronizacija pri otvaranju/foreground resume i periodicki retry u foregroundu; povratak veze na mobitelu jos treba fizicki provjeriti. Pozadinski rad nije jamstvo.
 
 Zavrsetak: oba clana vide dozvoljene promjene; offline konflikti i ponovni pokusaji imaju testove.
 
 ## Faza 5 — Mjesta, hrana i izlasci
 
-- [ ] Odvojeni prikazi za korisnika uz zajednicku strukturu podataka.
-- [ ] Naziv, kategorija, biljeska, adresa/link, status za posjetiti/posjeceno.
-- [ ] Rucni unos, filtriranje i offline spremanje; vanjske preporuke nisu uvjet.
-- [ ] Povezivanje mjesta s planom bez kopiranja zapisa.
+- [x] Odvojeni prikazi Mjesta/Hrana/Izlasci uz zajednicku strukturu podataka.
+- [x] Naziv, kategorija, biljeska, adresa/link, status za posjetiti/posjeceno.
+- [x] Rucni unos, filtriranje i offline spremanje; vanjske preporuke nisu uvjet.
+- [x] Povezivanje mjesta s planom bez kopiranja zapisa.
 
-Zavrsetak: clanovi mogu dodavati i pregledavati mjesta offline te razmijeniti promjene online.
+Automatizirano potvrdeno 2026-10-22: clanovi dodaju/ureduju/brisu mjesta offline te razmjenjuju promjene online, uz restart, retry, konflikte i opoziv pristupa. Pripremi za offline oznacava tek dovrseno preuzimanje metapodataka putovanja, mjesta i novih sekcija; fotografije se preuzimaju posebno. Povezivanje s planom implementirano je u fazi 6; fizicki uredjaji ostaju otvoreni; dokazi: PLACES_OFFLINE_CHECKLIST.md.
 
 ## Faza 6 — Plan i packing
 
-- [ ] Raspored po danima, opcionalno vrijeme i nerasporedjene aktivnosti.
-- [ ] Transport i smjestaj kao kategorije; lokacije mogu voditi na vanjsku kartu.
-- [ ] Packing lista; prije implementacije odabrati osobnu ili zajednicku semantiku.
-- [ ] Obrada promjene datuma putovanja kad vec postoje aktivnosti.
+- [x] Raspored po danima, opcionalno vrijeme i nerasporedjene aktivnosti.
+- [x] Transport i smjestaj kao kategorije; lokacije mogu voditi na vanjsku kartu.
+- [x] Osobna packing lista svakog sudionika; korisnik potvrdio 2026-10-22.
+- [x] Obrada promjene datuma putovanja kad vec postoje aktivnosti.
 
 Zavrsetak: moze se pripremiti i pratiti konkretno visednevno putovanje offline.
 
 ## Faza 7 — Troskovi i budzet
 
-- [ ] Brz unos iznosa, naziva, datuma, kategorije i opcionalne biljeske.
-- [ ] Evidencija autora i po dogovoru platitelja; bez automatskog racunanja dugova.
-- [ ] Jedna valuta po putovanju i precizna novcana aritmetika.
-- [ ] Lokalni zbroj ukljucuje promjene na cekanju; server provjerava podatke.
-- [ ] Testovi duplikata, konkurentnih izmjena, brisanja i zbrojeva.
+- [x] Brz unos iznosa, naziva, datuma, kategorije i opcionalne biljeske.
+- [x] Evidencija autora i po dogovoru platitelja; bez automatskog racunanja dugova.
+- [x] Jedna valuta po putovanju i precizna novcana aritmetika.
+- [x] Lokalni zbroj ukljucuje promjene na cekanju; server provjerava podatke.
+- [x] Testovi duplikata, konkurentnih izmjena, brisanja i zbrojeva.
 
 Zavrsetak: unos je praktican na mobitelu, a nakon sinkronizacije svi imaju uskladjene iznose.
 
 ## Faza 8 — Uspomene
 
-- [ ] Fotografija i tekstualna uspomena povezana s putovanjem, opcionalno mjestom.
-- [ ] Trajna lokalna kopija, umanjene slike i granice velicine/broja.
-- [ ] Odvojeni red slanja medija s ponovnim pokusajima i jasnim statusom.
-- [ ] Privatna serverska pohrana i pristup samo ovlastenim clanovima.
-- [ ] Izbor sto se preuzima za offline; nenabavljene slike nisu dostupne bez mreze.
-- [ ] Pravila brisanja originala, lokalnih kopija i napustenih uploada.
+- [x] Fotografija i tekstualna uspomena povezana s putovanjem, opcionalno mjestom.
+- [x] Trajna lokalna kopija, umanjene slike i granice velicine/broja.
+- [x] Odvojeni red slanja medija s ponovnim pokusajima i jasnim statusom.
+- [x] Privatna serverska pohrana i pristup samo ovlastenim clanovima.
+- [x] Izbor sto se preuzima za offline; nenabavljene slike nisu dostupne bez mreze.
+- [x] Pravila brisanja originala, lokalnih kopija i napustenih uploada.
 
 Zavrsetak: fotografija dodana offline prezivi restart, prenese se i postane dostupna drugim clanovima.
 
+Implementacija i automatizirani dokazi faza 6–8: [PHASES_6_8_CHECKLIST.md](PHASES_6_8_CHECKLIST.md). Zavrsni kriteriji na fizickim uredjajima i stvarnom visednevnom putovanju jos nisu potvrdeni; pripadaju privatnoj beti.
+
 ## Faza 9 — Integracija i privatna beta
 
-- [ ] Dovrsiti pregled putovanja i tokove izmedju sekcija.
+Završni dostupan Android krug 2026-10-29 dovršen: članski trošak, native konflikti s restartom/oba izbora/brisanje, simulirani manjak prostora, WebP/HEIC i trajnost, font 1.5 te osnovni TalkBack fokus. [Dokaz i granice](ANDROID_ACCEPTANCE_2026-10-29.md). Fizički puni disk, pravi LAN denial i puni accessibility audit nisu zamijenjeni simulacijom. Korisnik je izričito odgodio današnji iPhone; zajednička dva fizička uređaja i višednevni beta prihvat ostaju otvoreni. Sljedeći razvojni korak: dependency nalazi te account recovery/HTTPS privatna distribucija.
+
+Aktualno 2026-10-29: QA5 EXIF priprema i oporavak stare prevelike slike u nepromjenjivom redu imaju fizički Samsung PASS. Red=0, jedna uspomena, privatni 800×1280/200×320 PNG-ovi i cold start bez API-ja nakon uklanjanja današnjeg sintetičkog izvornika. Prolaze 73 mobilna testa, oba izvoza i svih 35 PostgreSQL/HTTP scenarija. Telefon vraćen na spremljene postavke. [Dokaz](ANDROID_MEDIA_RECOVERY_2026-10-29.md). Slijede ranije sačuvani članski trošak, ostatak native prihvata i iPhone/dva uređaja; široki kriteriji faze 9 ostaju otvoreni.
+
+Aktualni checkpoint 2026-10-28: QA2 upgrade s neposlanim podacima, upload retry te drugi račun/native offline download i prekinuti download/retry imaju PASS. Native packing unos i ekran nakon opoziva sesije provjereni; pronađeno istiskivanje packing teksta punim edit gumbom. Kod popravljen, svih 71 testova i oba izvoza prolaze, QA3 izrađen; fizička potvrda čeka USB reconnect/instalaciju. [Dokaz i ostatak matrice](ANDROID_DEVICE_QA_2026-10-28.md). Široke stavke ispod ostaju otvorene zbog preostalih uvjeta.
+
+Nastavak device matrice 2026-10-28: potvrđen prekid stvarnog uploada prije kraja tijela zahtjeva i očuvan red nakon cold starta u airplane modeu. USB veza zatim izgubljena; prvo vratiti uređaj/mrežne postavke, potom provjeriti izrađenu QA2 nadogradnju, uspješan retry i native download drugog računa. [Stanje i preostale provjere](ANDROID_DEVICE_QA_2026-10-28.md). Široki kriteriji ispod ostaju otvoreni.
+
+Napredak 2026-10-28: Samsung native PASS za sintetičku PNG uspomenu, odustajanje/odabir u galeriji, trajnu sliku nakon uklanjanja testnog izvornika i cold starta bez API-ja te prijenos bez duplikata. Serverski potvrđene dimenzije/hashovi i odbijanje anonimnog/nečlanskog pristupa. [Dokaz i otvorene provjere](ANDROID_PHOTO_QA_2026-10-28.md). Prekid aktivnog uploada, native download drugog računa, odbijene dozvole, drugi kodeci i iPhone ostaju otvoreni.
+
+Napredak 2026-10-27: djelomični Android native PASS za račun/putovanje, kalendar, hladni start bez API-ja, trajni offline red i ponovljenu sinkronizaciju bez duplikata. Ispravljena i fizički provjerena greška zatvaranja obrasca pri zatvaranju Samsung tipkovnice. [Dokaz](ANDROID_QA_2026-10-27.md). Širi uvjeti ispod ostaju otvoreni; to nije airplane-mode, foto ni iPhone prihvat.
+
+- [x] Dodati integrirani lokalni pregled putovanja i provjeriti component tokove kroz sekcije; native UX potvrda ostaje u beti.
 - [ ] Provjeriti slabu mrezu, airplane mode, istek prijave, odbijene dozvole i manjak prostora.
 - [ ] Provjeriti nadogradnju aplikacije i migracije s podacima na cekanju.
 - [ ] Testirati zajednicko putovanje na stvarnom Androidu i iPhoneu.
-- [ ] Provjeriti sigurnost pristupa, backup i povrat baze i medija.
+- [x] Automatizirano provjeriti ovlasti i povrat razvojne baze/medija/kljuceva; produkcijska sigurnost i udaljeni backup ostaju otvoreni.
 - [ ] Pripremiti privatnu distribuciju, upute i popis poznatih ogranicenja.
 
 Zavrsetak: probno putovanje s vise ljudi zavrseno bez izgubljenih promjena ili neovlastenog pristupa.
+
+Razvojna priprema faze 9 provedena 2026-10-22: 46 mobilnih testova, 35 PostgreSQL/HTTP scenarija i zaseban test zastite backupa. Faza jos nije potpisana kao dovrsena: fizicki uredjaji, stvarno putovanje, HTTPS beta okruzenje i instalacijska distribucija ostaju otvoreni. Upute i matrica: [PRIVATE_BETA.md](PRIVATE_BETA.md).
 
 ## Faza 10 — Prvo izdanje i portfolio
 

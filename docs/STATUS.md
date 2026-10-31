@@ -1,42 +1,220 @@
-# Current status — new-laptop checkpoint
+# Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-10-18
-Development branch: codex/offline-foundation
-Start here: [NEW_LAPTOP_HANDOFF.md](NEW_LAPTOP_HANDOFF.md).
+Updated: 2026-10-31. Development branch: codex/offline-foundation.
+
+## Latest checkpoint — user authorized publication of all current changes
+
+User explicitly requested committing and pushing all current Tripora changes with an English description, confirmed the repository is now public, and will connect it to Render personally. The publication target remains codex/offline-foundation; main and parent legacy history are unchanged. Includes updated AGENTS.md verification instructions, all implemented mobile/API features and tests, deployment adapters/configuration and documentation. English README summary and commit description cover the actual final scope.
+
+Rechecked repository root/branch, full changed/new file inventory, git diff --check and common credential/runtime-output exclusions. The limited scan found no candidate credentials/private keys, databases, APKs, personal media or local-data. Only launcher PNGs are binary assets. Synthetic test credentials remain deliberately synthetic. Current feature evidence remains 83 mobile tests, 48 PostgreSQL/HTTP scenarios, TypeScript, both exports, Release API/liveness, backup guard and QA10 build; no functional code changed during publication preparation and no physical/cloud acceptance is newly claimed.
+
+Next: finish commit/push and verify the remote head, then user selects codex/offline-foundation in Render (Docker, services/api/Dockerfile, root context, Frankfurt, Free, auto-deploy off). Enter provider secrets directly in Render; real deployment/email/private-storage/idle-wake acceptance and hosted backup still pending. No production endpoint has been activated by this source publication.
+
+## Latest checkpoint — Render registered; repository access and commit/push approval pending
+
+User completed Render registration. Existing workspace contains another deployed app, left untouched. Opened New Web Service and its Credentials menu; Render's current GitHub installation lists seven repositories under a different owner, not dcirko-side-projects/tripora. Configure in GitHub is ready for user-controlled least-privilege access to Tripora only. No new Render service, secret, paid plan, deployment, repository permission change, commit or push performed.
+
+Read actual remote heads with git: codex/offline-foundation still facf141; main b8397cd. Current implementation remains local. Prepared [deployment review](DEPLOY_REVIEW.md) with source/branch/scope, intended Free Docker/Frankfurt settings and outstanding acceptance gates. Initial 130-file candidate review excludes local AGENTS.md changes, includes only two launcher PNG binaries and finds no common credential formats/runtime-secret/output candidates (limited scan, not a full audit). Existing source tests remain the 83 mobile/48 HTTP passing checkpoint; current changes are browser/docs only.
+
+Next: user authorizes commit/push of the prepared development checkpoint to codex/offline-foundation (not main), and grants Render access only to the Tripora repository in the side-projects organization. Then configure the Free service and direct server-side credentials. All four provider registrations are now completed; live connections/email/private storage/deployment remain pending.
+
+## Latest checkpoint — Brevo phone verified, Render registration pending
+
+User completed Brevo phone verification. Home no longer shows the verification requirement; API keys page is accessible with Generate API key enabled and no existing keys. No API key generated/copied, email sent, or account security/IP policy modified. Existing verified freemail sender still needs real delivery acceptance. Opened official Render account registration for user-controlled signup/terms/email verification, with no card/paid plan or repository integration authorized by this step. Neon and Cloudinary configurations remain; app/provider credentials and real deployment are not connected yet.
+
+Next: user finishes Render registration and stops at dashboard. Then configure the Free API service against the intended reviewed source and enter secrets directly into hosting settings. Existing no-commit/push boundary remains unless user authorizes publication. Browser/docs-only step; no tests rerun.
+
+## Latest checkpoint — Brevo sender verified, phone verification required
+
+User completed Brevo registration. Dashboard shows 300 available emails and an existing Verified sender, so no duplicate sender was created. It is a freemail sender with a provider compliance/deliverability warning; verified status does not establish successful transactional delivery. API-based transactional onboarding is available, but the account requires phone verification before creating an API key/sending messages. Opened the phone verification dialog and handed it to the user; no number/code entered, no verification SMS or test email triggered by the agent, no credentials created/copied. No additional account access or security setting changed. Neon and Cloudinary remain as documented below; Render registration and live connections/deployment still pending.
+
+Next: user completes Brevo phone verification directly, then review transactional activation/sender behavior and continue Render account setup. Preserve zero-cost/no-card requirement; do not buy a domain or bypass recovery/email confirmation to conceal deliverability problems. Browser/docs-only step, no code or test rerun.
+
+## Latest checkpoint — Cloudinary Free verified, Brevo registration in progress
+
+User completed Cloudinary registration. Verified the official dashboard shows Image and Video Free, $0 total and 0/25 credit usage, with one active product environment (the Free account limit). No paid plan/add-on, extra environment, uploads or SDK onboarding actions performed. API secret not revealed/copied and no live application connection/private-byte acceptance yet. Non-secret cloud identifier is kept only under ignored local-data/hosting-setup.
+
+Opened Brevo's official Free signup page, which explicitly states no credit card required. During the handoff flow the browser moved to Google authentication; automatic browser review denied observation of that separately unauthorized origin. No workaround attempted. User must finish their own sign-in/registration and return to Brevo before setup continues. Neon remains configured as described below. Remaining: Brevo sender/transactional activation, Render account and direct server-side secrets configuration, live deployment/acceptance. No code/test changes or tests rerun in this browser/docs-only step.
+
+## Latest checkpoint — Neon account/project configured, Cloudinary registration pending
+
+User completed Neon registration and requested guided setup. Created dedicated Tripora project/database tripora, production branch, AWS Frankfurt and PostgreSQL 17; confirmed Free plan in the dashboard. Reduced the initial 0.25–2 CU autoscaling range to fixed 0.25 CU and verified success; Free scale-to-zero remains five minutes. Only PostgreSQL enabled. No card, paid upgrade, imported data, application migrations, new auth provider or secrets copied into chat/repository. Connection credentials have not been configured and the app is not yet connected. Non-secret IDs and screenshot proof stay ignored in local-data/hosting-setup.
+
+Opened Cloudinary's official Free signup page (explicitly $0/no card); user must complete their own registration/verification, then continue to storage settings. Neon and Cloudinary browser tabs are retained for handoff. Remaining accounts: Cloudinary, Brevo and Render; real deployment and its acceptance remain pending. The full earlier implementation/test checkpoint is below; no tests rerun for this browser/docs-only configuration step.
+
+## Latest checkpoint — implemented place lookup/map and no-card hosting preparation
+
+User approved implementation after clarifying: no manual pin placement as primary flow, name+city lookup with candidate confirmation, online map/offline saved list, zero cost and no bank card for providers. User has no accounts and requested registration instructions. [Decision 0005](decisions/0005-maps-and-no-card-beta.md) supersedes research-only maps and the Supabase-based hosting proposal; [registration/setup guide](NO_CARD_SETUP.md) is the next external step.
+
+Implemented authenticated trip-bound name/city lookup, persisted 30-day hashed-query cache, cross-instance DB advisory throttle (1.1 s), 12 requests/account/min and 200 upstream requests/day default. Nominatim responses are finite/range-checked and deduplicated; no autocomplete or bulk lookup. UI explicitly selects a result, fills address, stores coordinates in existing local JSON/outbox and invalidates stale selections on changed name/address/city. Old asynchronous results cannot change a newer draft. MapLibre 11.5.1 native Popis/Karta adds category/status filters, numbered category-colored markers, detail/navigation and attribution, with list fallback. No Google key/card or location permission. Existing places without a location remain in the list; no fabricated coordinates.
+
+Server migration 20261031145906_PlaceLocations adds nullable LocationJson and PlaceSearchCache. Existing SQLite rows/immutable operations do not require a local schema rewrite. Sync carries coordinates through retry/follow-up/conflict/tombstones; conflict descriptions include coordinate versions. Place/account deletion clears server position. Old null location fields are omitted from mutation serialization to preserve older receipt digest shapes.
+
+Prepared Render Free + Neon Free PostgreSQL + Cloudinary Free authenticated originals + Brevo email configuration, keeping Identity/auth/sync. Added Cloudinary server-only signed upload/download/delete/inventory adapter; client API still enforces membership and returns bytes/hashes, never provider credentials or signed URLs. Inventory is bounded to every 30 minutes/process. Neon mode keeps verified DB TLS/encrypted DB keys and checks for exposed Data API roles without requiring Supabase roles. Supabase adapter remains supported. No accounts/resources/email/deployment were provisioned; no card or paid plan used.
+
+Evidence: clean mobile npm ci, TypeScript, 83 mobile tests, Android/iOS exports, Release API build/liveness, backup guard and ALL 48 PostgreSQL/HTTP scenarios with completed cleanup pass. New tests cover delayed lookup/draft preservation, exact map coordinates, offline reopen/follow-ups, invalid coordinates, membership/cache/throttle/provider failure/retry, coordinate conflicts/deletion, signed private media interrupted retry/exact bytes/restart/deletion. External transports are local test stubs, not real-provider acceptance. npm reports 2 low / 10 moderate and no high/critical. Android QA10 native build passes after restoring isolated localhost certificate config following prebuild; no lint checks were disabled. The first storage-test attempts exposed two fixture parser/field errors, corrected before final passing run.
+
+QA10 APK: local.tripora.qa, versionCode 10, SHA-256 71bf7b978455079f366a1d756ea14cee2470061eb0dd14309d2f7d53ea5c5b8b. Ignored output: local-data/native-qa/android/app/build/outputs/apk/release/app-release.apk. Verified embedded https://localhost:5443, byte-identical existing QA certificate and MapLibre native libraries for four Android ABIs; final copied app source matches workspace. APK not installed; no new physical Android/iPhone map/visual/network test. It remains a local QA build, not an internet-distributed production build.
+
+Before applying the migration to existing development data, created ignored cold backup local-data/backups/pre-maps-20261031 (1,373 files, credentials/media/keys private). Development stack and existing HTTPS wrapper restarted afterward; HTTP and certificate-verified HTTPS readiness pass. Both existing place rows retained with null coordinates. No automatic real-place lookup/backfill. New cloud account scope does not inherit local data. No phone settings/data changed, no commit/push/publication.
+
+Next: user registers the four free accounts using NO_CARD_SETUP, stopping if any requires a bank card; configure secrets directly in provider settings, then deliberate deployment and actual email/private storage/idle-wake/two-client acceptance. Hosted combined backup/restore and native Android/iPhone map acceptance remain open. Free quotas can suspend services and have no production uptime guarantee. Do not call laptop-independent availability achieved before this live acceptance.
+
+## Latest checkpoint — blue/pink refresh and connection investigation
+
+User requested #0593C6 / #FCFFFF / #D83995, connection investigation and map research only. Applied shared theme, darker readable action labels, tinted auth/trip headers, expense panel, cards/navigation/controls, day selector and source/generated launcher branding. Map dependencies/UI/schema/endpoints were not added. See [design/connection evidence](DESIGN_CONNECTION_2026-10-31.md) and [map options, EEA rules and MVP proposal](MAP_RESEARCH.md).
+
+Confirmed local ports 5080/5443/8081 initially refused connections. Runner PID 21196 was absent, PostgreSQL stopped, and a stale development.lock blocked startup. Archived only that verified stale lock under ignored local-data; existing database/media/keys preserved. Existing development stack and QA HTTPS wrapper now running. Five HTTP and five certificate-verified HTTPS database readiness probes pass; anonymous HTTPS auth is rejected. No internet deployment exists. Phone USB forwarding/reachability is not verified in this round; laptop shutdown/sleep still removes availability.
+
+SessionClient now bounds request and response-body reading at 75 seconds with a cleaned AbortController timer, distinguishes timeout/network messages and retains existing generation checks/foreground retries. No arbitrary POST network replay. The prior 15-second limit could fail a future free-host cold start; it is not evidence that Render caused yesterday's error. Current UI global busy lock may delay edits during a slow sync. Render/Supabase Free cannot guarantee always-on availability.
+
+Evidence: clean mobile dependency install, TypeScript, 80 mobile tests (three new cold-start/body-timeout/idle-refresh regressions), Android/iOS exports, Release API build/liveness, backup guard and all 43 PostgreSQL/HTTP scenarios plus cleanup pass. First integration run stopped at the stale lock; rerun passes. First separate backup guard hit transient Windows EPERM rename; rerun and integration restore pass. npm ci reports 2 low / 10 moderate, no high/critical. No forced dependency upgrade. New physical-device design acceptance, APK install, actual hosted idle/wake and multi-day uptime remain untested; existing QA9 does not update automatically. No commit/push/publication.
+
+Next: physical mobile visual acceptance/build distribution, configure the already selected free cloud accounts and run real HTTPS/two-client/cold-start acceptance; agree map provider/persistence/budget before any map implementation. Older palette references below are historical.
+
+## Latest checkpoint — accounts, launcher icon and free-beta preparation
+
+User approved Render Free API, Supabase Free PostgreSQL/private objects and Brevo Free email, with no paid services/domain. Keep email confirmation/recovery. Account deletion removes owned trips and the user's contributions to others' trips, with password, exact phrase and final confirmation. These decisions supersede older open-provider/recovery notes below. See [decision 0004](decisions/0004-free-beta-and-account-lifecycle.md), [release phases](RELEASE_PHASES.md) and [setup](FREE_BETA_SETUP.md).
+
+Implemented native confirmation/resend/reset/deletion forms and Identity email adapter, one-hour codes, confirmed-email hosted login, session revocation, erased sync tombstones/credential-free identity stub, account-local cleanup and durable pending photo deletion. Place creator migration backfills existing retained receipts. Hosted configuration includes private Supabase storage, closed Data API schema checks, verified DB TLS, certificate-encrypted database keys, Docker startup migrations/readiness and a manual Free Render blueprint. No real service accounts/resources, email delivery or internet deployment have been created.
+
+Evidence: clean mobile npm ci, TypeScript, 77 mobile tests, Android/iOS exports, Release API build/liveness, backup guards and all 43 PostgreSQL/HTTP scenarios pass with completed integration cleanup. Local provider stubs test private storage/retries, email contract, account deletion and startup safeguards; these are not real-provider tests. A non-root Linux API container limited to 512 MiB passes migrations, readiness/auth and restart with certificate-encrypted persistent keys. Fixed the integration harness double-shutdown hang and smoke-test dynamic port discovery. Existing development data was cold-backed up before migration (ignored pre-accounts-20261030 snapshot, 1,366 files); existing two place records both have backfilled creators.
+
+Dependency audit: four high findings resolved with Expo 57.0.31, node-forge 1.4.2 and the scoped Expo CLI Zod 4.6.6 override; actual CLI schemas are tested. Zero high/critical, eight low remain. No forced SDK downgrade.
+
+Original suitcase/airplane branding is generated from source SVG. Android QA9 retaining upgrade installed successfully, versionCode 9, SHA-256 133ee13642b4d33fec5242d1fec03372065166ccb20d14da8a2a0e31b3132f9a. Existing session/synthetic trip survives. Final adaptive foreground adds safe margins after QA8 launcher inspection. No phone radio/font/accessibility setting changed in this round; iPhone explicitly deferred. Native email/deletion end-to-end against real services is still open.
+
+Final QA9 physical launcher inspection passes: suitcase handle/airplane fully visible within the Samsung adaptive mask. Existing signed-in trip remains visible after upgrade. Private cropped proof is ignored under local-data/native-qa-tls/qa9-launcher-icon.png. Both platform exports rerun after final icon padding and pass.
+
+Final phone state: zero pending changes/attention items and no reported sync problems; airplane=0, stay-awake=0, font=1.15, USB reverse 5443→5443 retained. CI definition now gates high dependency findings; hosted CI has not run. Documentation relative-link checks and git diff --check pass.
+
+Next: user creates the free service accounts and configures secrets using the setup guide. Real sender delivery, internet/two-client acceptance, hosted logical database+objects+certificate backup/restore and operational quota/cleanup procedures remain release gates. First three release phases are advanced, not fully signed off. No commit/push/publication.
+
+## Latest checkpoint — available Android acceptance round closed
+
+User requested completion of Android checks and explicitly deferred today's iPhone work. The remaining available Samsung round is complete with bounded results: pending member expense uploaded once (12,34 EUR / 987,66 EUR remaining); native plan conflict survives restart, both explicit resolution choices pass, and server deletion cannot be resurrected. Dedicated synthetic fixture only. QA6 safely simulated low photo space without filling the phone; error preserves title and a text/notes-only memory saves once. Restored normal QA7, then native WebP/HEIC picker/preparation/upload pass on the same memory with verified PNG dimensions/hashes; photo/note survive source removal and offline cold start. Large text 1.5 and a basic active TalkBack/form-focus check pass.
+
+Limits are explicit: real physical ENOSPC was not induced; absent broad gallery permission is N/A for the system picker; USB localhost does not prove LAN permission-denial enforcement. Full spoken/gesture accessibility audit and all codec profiles are not claimed. iPhone/two-device and real-trip acceptance remain deferred/open, rather than blocking today's Android round. [Complete matrix and evidence](ANDROID_ACCEPTANCE_2026-10-29.md).
+
+Final QA7 versionCode 7, SHA-256 224a8b964b3a6e0a621037b7eecb8cc2210fd4b373a39019f964e2636fc57698. Normal nativeMedia source restored/verified; no product code/schema/API change in this round. Three focused storage tests rerun successfully; QA6/QA7 builds and retaining installs pass. Earlier full 73 mobile/35 HTTP checks remain the relevant baseline, not falsely reported as rerun. Settings restored/verified: stay-awake=0, airplane=0, font=1.15, TalkBack off with original null services, effective local-network app-op allow, direct reverse 5443→5443. Synthetic credentials and output remain ignored. No commit/push.
+
+Next: resolve four high mobile dependency findings, then prepare account recovery and HTTPS private beta/distribution choices; iPhone/different-device testing resumes when available. Existing development/HTTPS QA stack remains running. Older next-step paragraphs below are historical.
+
+Final normal-QA7 manual synchronization confirms zero pending changes, zero attention items and no reported problems. Documentation relative links (50 across nine documents) and git diff --check pass.
+
+## Latest checkpoint — EXIF queue recovery completed
+
+User resumed work. USB authorized; saved phone baseline restored and confirmed: stay-awake=0, airplane=0, font=1.15, direct adb reverse 5443→5443. QA4 build/exports/71 tests were successful; its integration had stopped at the backup guard while the development stack held the lock. Today the stale runner lock was removed only after confirming its runner/database PIDs, PostgreSQL processes and listeners were absent. Later maintenance used managed clean shutdown.
+
+Fixed recovery of earlier oversized PNGs: a pending upload rejected as 400/invalid_media can verify local hashes/bounds and prepare new durable copies, retaining the media ID, immutable entry outbox and tracked original copies. Valid/accepted/downloaded media and unrelated errors are excluded. Repaired metadata persists before retry; storage failure preserves originals. No schema/API change. Both architecture files updated.
+
+Evidence: clean mobile npm ci, TypeScript, 73 mobile tests, Android/iOS exports, Release API build/liveness, backup guard and all 35 PostgreSQL/HTTP scenarios pass; integration rerun after the recovery change and clean e2e npm ci. Mobile dependencies still report 6 low/4 high findings. QA5 assembleRelease and adb install -r pass; final APK SHA-256 b713c3e0c2b0a8b2ac454fe546d491c5be89dd917b7205b3345c7fd19b679a3c. Initial QA5 build used the wrong API hostname; corrected ignored QA configuration to existing localhost trust/scope and regenerated/verified the embedded JS endpoint before final installation. Original session and queue restored.
+
+Physical Samsung PASS: old rejected asset uploaded with the same ID at corrected 800×1280/200×320 dimensions, pending queue drained to zero, and exactly one JPEG memory remains with the selected replacement. API verifies hashes/private caching/401 anonymous/404 non-member and absence of EXIF/text PNG chunks for this synthetic fixture. Removed only today's synthetic picker file; full photo remains visible after force-stop/cold start with QA API tunnel absent. Restored direct tunnel/settings and rechecked API uniqueness. [Detailed evidence](ANDROID_MEDIA_RECOVERY_2026-10-29.md).
+
+Next: restore the synthetic member's pending 12,34 EUR expense through native reauthentication, then remaining conflict/accessibility/permission/controlled low-space acceptance. iPhone/two physical devices, dependency findings, production account recovery and beta distribution remain open. Development stack/HTTPS QA API are running; no commit/push. Older checkpoints below are history, not current stop instructions.
+
+## Latest checkpoint — user requested stop
+
+User explicitly stopped work to continue later. No further phone tests until resumed. Since the previous checkpoint, QA3 installation is confirmed by Android versionCode=3 (install command timed out without reporting Success). Physical packing fix passes at original font 1.15 and font 1.5; edit opens the native form. Revoked-session local continuation preserved packing, reauthentication uploaded it once, and owner API cannot read it. Removed-member offline plan remained queued across restart and was rejected server-side; a new invitation restored access and uploaded the same plan once (2026-10-27 09:00, transport). Native food/visited place saved successfully. Native offline expense 12,34 EUR displayed exact 987,66 EUR remaining from synthetic 1000 EUR budget; it remains pending under member account after logout. Owner login did not send the member's expense.
+
+**New media regression reproduced, not yet signed off:** synthetic JPEG with EXIF orientation 6/GPS was displayed correctly but upload rejected 400: native full image 1280×2048 and thumbnail 320×512 exceeded limits because picker dimensions preceded rotation. Current source fix in nativeMedia.ts uses decoded ImageManipulator dimensions before sizing; focused regression fails geometrically with old code and passes with fix (800×1280 / 200×320), and all 71 mobile tests pass. QA4 build, exports and isolated auth/sync check were launched before stop; inspect saved qa4 logs for completion, do not assume success. QA4 has not been installed or physically verified. Existing oversized JPEG remains in owner's local pending queue; new preparation code does not automatically reprocess that cached image. Resolve recovery of that pending fixture without discarding local work before claiming the JPEG flow complete.
+
+Phone settings cleanup was attempted on stop but ADB reported no device; **restoration is not confirmed**. Last confirmed font is 1.15 and airplane mode 0; temporary USB stay-awake was enabled during testing and must be restored from local-data/native-qa-tls/stay-awake-baseline.txt on reconnection, together with direct QA USB forwarding 5443→5443. No further phone actions after stop. Next: restore that baseline first, then finish EXIF/pending-photo recovery, verify/install QA4 as appropriate, restore member expense and remaining conflict/native acceptance. Preserve all existing changes. No commit/push.
+
+## Extended Android device QA — waiting for USB reconnection
+
+Latest continuation: user resumed device work. Native member packing offline create passed; native session-revocation screen requests reauthentication while preserving local work. Discovered a physical packing layout bug: full-title edit button squeezed title/status into a narrow column. Replaced it with a 48×48-minimum icon action retaining the full accessibility label and existing behavior. Clean npm ci, TypeScript, all 71 tests, Android/iOS exports and QA3 assembleRelease pass. QA3 versionCode 3 hash: faab8ea0b392a6ce48291aa4e0824458cf0c711bac56cc30084d655a97a11277. USB disconnected again before installation and final device regression; user was asked to reconnect. No font/radio/permission settings changed in this continuation. Next: install QA3, verify packing layout and pending work through reauthentication, then revoked membership/native plan/expenses and remaining safe checks. Full Android sign-off remains open. [Current checkpoint](ANDROID_DEVICE_QA_2026-10-28.md).
+
+Resume update 2026-10-28: airplane mode restored to 0; QA2 versionCode 2 installed successfully with session/two pending items retained; upload retry drains to zero without duplicate memory. Native login under second synthetic account, explicit photo download, offline cold reopen and interrupted-download/retry pass. User then explicitly requested a pause to use the phone. No further device UI work; original QA USB forwarding restored at pause. Font/permissions were not changed. Next after user resumes: session revocation/member removal with pending data, native packing/plan/expenses and remaining safe device matrix. Detailed current results: [ANDROID_DEVICE_QA_2026-10-28.md](ANDROID_DEVICE_QA_2026-10-28.md). The following bullets describe the earlier disconnect, now superseded.
+
+- User requested completion of remaining phone checks. Actual active-upload interruption is confirmed: fault proxy closed the mobile request after 8,192–57,344 of 4,235,566 bytes; replacement photo and two pending items remained visible. Real airplane mode (setting=1), removed QA USB API forwarding and force-stop/cold start preserved the session/pending queue.
+- USB initially disconnected; user subsequently reconnected and authorized it. Initial settings (airplane=0, font scale=1.15, original USB forwarding) are saved under ignored local-data. Airplane restoration is now confirmed; no font or permission changes have been made.
+- QA2 APK built successfully with versionCode 2, unchanged app/schema/signature. Installation with pending data, successful upload retry and native download under the second synthetic account now pass. No app source changes/full automated suite rerun.
+- Resume only after user lifts the pause, following the remaining matrix in [ANDROID_DEVICE_QA_2026-10-28.md](ANDROID_DEVICE_QA_2026-10-28.md). Full Android/beta sign-off is not claimed. No commit/push.
+
+## Android photo acceptance — 2026-10-28
+
+- Existing installed Samsung QA build passed actual native photo-picker cancellation/selection, PNG preparation, offline memory save, source-fixture removal and force-stop/cold reopen with image and thumbnail still available. Reconnected foreground sync drained the two pending items to zero; repeated synchronization retained one memory. No product code changes were needed.
+- Authenticated API verification confirms 1280×800 image and 320×200 thumbnail, matching SHA-256 hashes, private/no-store responses, anonymous HTTP 401 and non-member HTTP 404 for both. The synthetic PNG tEXt comment was absent from uploaded copies; JPEG/HEIC/EXIF/GPS generalizations are not claimed.
+- Actual installed APK hash matches the 2026-10-27 build. No new build/export/full automated suite or audit was run for this device/documentation-only step. Native/HTTP evidence: [ANDROID_PHOTO_QA_2026-10-28.md](ANDROID_PHOTO_QA_2026-10-28.md).
+- Offline means unavailable QA API, not changed phone radios. Permission denial, interruption during active upload, native offline download on another account/device, other codecs, low space and iPhone remain open. Next concrete step: interrupted upload/retry and explicit native offline photo download on a second synthetic account.
+- Development stack restarted only after verifying old recorded PIDs, PostgreSQL processes and listeners were absent; existing database retained. Runner uses loopback links for USB QA; the HTTPS QA API and USB forwarding are restored. No commit/push.
+
+## Android native acceptance — 2026-10-27
+
+- Samsung Galaxy S25+ (SM-S936B, Android 17/API 37): actual installed `local.tripora.qa` build passed registration, native calendar selection, online trip creation, offline session/data restore, offline trip creation, force-stop/reopen with one pending operation, reconnect and manual synchronization to zero pending operations. Authenticated server pull independently confirms exactly two expected synthetic trips, one copy each, including after repeated synchronization.
+- Reproduced a native UX bug: dismissing the Samsung keyboard through Back also closed the trip form and discarded its unsaved draft. `FormSheet` now dismisses a visible Android keyboard before allowing modal closure. Physical regression passes: first Back preserves entered text/form and hides the keyboard; second Back closes the form. Existing busy-operation guards and iOS behavior remain covered by component tests.
+- Updated QA APK installed with `adb install -r` (Success), retaining session and saved trip. APK SHA-256: `f463ff488d5e9aafabda0d3b4fa233847dbfbce9a0c20e251d1b82808fedbc25`. QA source tree matches current mobile source. Build is from an uncommitted working tree, with the separate QA identity/local HTTPS configuration; no clean-commit release identity is claimed.
+- Verification: clean mobile npm ci, TypeScript, all 71 mobile tests, Android/iOS exports and arm64 QA assembleRelease pass. Initial test runs hit sandbox TEMP rename restrictions and then a TEMP path-separator assertion; rerun with canonical Windows TEMP/TMP under ignored local-data passes. Clean install currently reports 4 high dependency findings; these remain unresolved. No API/auth-sync integration suite rerun for this UI-only change.
+- Offline test removed only QA USB API forwarding; it did not toggle phone radios. No-Metro installed cold start is confirmed for this trip/session scenario; airplane mode, gallery/photo persistence, permissions, low space, multi-device behavior, pending-data upgrades/migrations and iPhone remain open. Full phase 9 is not signed off.
+- Restored managed development stack after checking old runner/database PIDs, PostgreSQL processes and listeners were absent; only the stale runner lock was removed. Existing database recovered through PostgreSQL startup. Local development stack and QA HTTPS API are running; QA USB forwarding was restored. Evidence and next device steps: [ANDROID_QA_2026-10-27.md](ANDROID_QA_2026-10-27.md). No commit/push.
+
+The next step recorded on 2026-10-27 (Android synthetic gallery/photo durability) is completed within the bounded scenario above. Full installed-device matrix and iPhone/two-device acceptance remain open.
+
+Development restart 2026-10-25: the previous runner/API/Expo were stopped. Removed the stale runner lock only after confirming recorded runner/database PIDs, PostgreSQL processes and development listeners were absent. Started the existing data folder with explicit Wi-Fi host 192.168.0.173 (additional APIPA interfaces were present). Expo status, Android launcher, API health and SDK 57 Android development bundle returned HTTP 200. Stack is running for the user's Android test; no new native-device acceptance is claimed. Next: reload in compatible Expo Go and run the redesign scenarios in UX_REDESIGN.md.
+
+## Full functional QA — 2026-10-25
+
+- Executed the requested test/fix/regression loop. Baseline 58 mobile tests passed; expanded coverage now totals 71 mobile tests, with zero failures after fixes. All 35 PostgreSQL/HTTP scenarios, backup guard, TypeScript, Release build/liveness and Android/iOS exports pass.
+- Fixed two reproduced UI bugs: currency selection was enabled after deleting the final expense despite the existing historical lock; rejected native invitation sharing caused an unhandled Promise. Currency now respects tombstone history, and failed sharing retains the code with a useful error.
+- Added full feature UI CRUD/cancel/error/access tests, native modal busy/back checks and resumed entry pagination after SQLite reopen. Extended App tests exercise registration/rejected login, restored account/component remount, trip editing and local/server conflict resolution for places/plans including tombstones.
+- At the automated baseline no Android SDK/ADB or iOS simulator was available. Android tools are now installed locally with the user's explicit licence approval; an authorized Samsung Galaxy S25+ (SM-S936B, Android 17/API 37) is connected over USB. A standalone, separate `local.tripora.qa` arm64 APK was built successfully with its embedded JS bundle. USB installation succeeded and Android reports `local.tripora.qa/.MainActivity` running. The device still reports its lock screen is showing; the user was asked to unlock. Functional device acceptance is not yet confirmed. Native controls/bridges in the existing component tests remain mocked; physical cold start, permissions/gallery/codec, keyboard/accessibility, low storage and real multi-device QA remain open. Six high dependency audit findings and account recovery/distribution remain release gates.
+- Full feature-by-feature evidence, failed-then-passing regressions, acceptance criteria and outstanding work: [QA_REPORT_2026-10-25.md](QA_REPORT_2026-10-25.md). Existing unrelated uncommitted changes were retained; no commit/push.
+- Restarted the managed stack with the two UI fixes: Android launcher, Expo status and API health returned 200; SDK 57 Android bundle returned 200 (4,687,590 bytes), anonymous entry pull returned 401. Documentation links and git diff --check passed. Stack remains running for Android device acceptance.
 
 ## Implemented
 
-- Expo/React Native local trip create/list UI, validation, SQLite schema and atomic outbox.
-- Development ASP.NET Core Identity register/login/refresh, identity and revoke-all routes.
-- PostgreSQL + EF Core migration; owner-only trip push/pull, idempotent receipts, version conflicts, tombstones and cursor pagination.
-- Draft mobile account-scoped database, session/SecureStore adapter and sync modules.
-- Foundation CI definition and isolated PostgreSQL/HTTP integration suite.
+- Existing account/session, shared trips, invitations, membership and places/food/nightlife work remains preserved.
+- Phase 6: daily/unscheduled plan, optional local time, activity/transport/stay categories and saved-place references. Trip date shortening cannot strand activities outside the new range.
+- Personal packing per participant, explicitly chosen by the user. Other participants, including the owner, cannot read or modify it.
+- Phase 7: expenses, immutable author, separate optional payer, date/category/notes, owner budget and one trip currency. Exact minor-unit arithmetic includes pending changes and deletions; currency locks after the first expense. No debt settlement.
+- Phase 8: text/photo memories, optional place, gallery selection, durable account-scoped image and thumbnail, separate idempotent upload queue, private authorized downloads and explicit offline saving.
+- Development media defaults: one photo/memory, 100 assets/trip, 1280 px image/320 px thumbnail, 8 MiB/1 MiB. Private local server storage; cloud/paid hosting remains unselected.
+- SQLite v3 preserves previous data and queues, invalidates older narrower readiness markers and adds feature/media state. Sync processes trips/access, places, image uploads, entries, then guarded cleanup.
+- Immutable requests, follow-up drafts, explicit conflicts, tombstones, server validation and removed-access handling cover new sections.
+- Prepare for offline confirms complete metadata pulls; image bytes require explicit download. External maps are not included.
 
-## Incomplete — do not mistake code presence for finished behavior
+## Phase 9 completed development work
 
-- App.tsx STILL uses the anonymous prototype database. The new session/account/sync modules are not connected to the UI.
-- No dedicated client auth/sync tests yet; npm test currently covers only the original localStore.
-- No invitations, membership collaboration, expenses, media or production deployment.
-- Email confirmation/recovery is not configured. API is gated to Development/Testing.
-- Device testing was explicitly postponed by the user; no Android/iPhone runtime or visual proof.
-- Hosted CI result is not yet known. Mobile exports previously passed but are not device tests.
+- Integrated per-trip local overview: places/visited, plans/unscheduled, own packing, exact spending/remaining, memory/image availability and pending/attention counts. Child work is no longer labelled synchronized from parent status alone.
+- Added clear disk-full handling preserving previous commits/queues, an advisory native photo free-space threshold and cleanup when thumbnail generation fails.
+- Fixed logout during secure-storage sign-in writes; token writes and clearing now serialize with generation guards. All auth/API responses use private/no-store.
+- Added exclusive runner/maintenance locking, managed stop command, clean pg_ctl shutdown and same-platform PostgreSQL 17 snapshot/restore with media, keys and settings. Restore refuses live clusters, corruption, unsafe paths and existing targets. Explicit private key folder supports complete recovery.
+- Actual restored-cluster HTTP test verifies identities/tokens, receipts, sync clock, membership and private photos; backup guard test verifies checksum/path/overwrite/lock defenses and empty directories. CI definition includes the guard test; hosted result is not claimed.
+- Private beta instructions, device matrix, known limits and recovery procedure: [PRIVATE_BETA.md](PRIVATE_BETA.md). No store/TestFlight package or paid infrastructure provisioned.
+
+## Mobile UX redesign — 2026-10-23
+
+- Replaced the single long app form with separate global Trips/Sync/Account screens and selected-trip Overview/Plan/Places/Expenses/More navigation. More includes personal packing, memories, membership and settings; overview has direct shortcuts.
+- Added shared raspberry/pale-sky/white tokens, SVG icons, consistent fields/buttons/empty states, native modal forms/details and Android back handling. Trip cards separate upcoming/active and past trips.
+- Added SDK 57 native date/time selection (Croatian display, unchanged calendar-only payloads), horizontal itinerary days, saved-place-to-plan flow, personal packing checklist, exact expense breakdowns and thumbnail memories.
+- Added datetimepicker 9.1.0 and react-native-svg 15.15.4; aligned crypto/SQLite patch versions with Expo's local SDK list. No DB/API/auth/sync contract changes. Offline dependency compatibility check passes.
+- Latest verification: all 58 mobile tests, all 35 PostgreSQL/HTTP scenarios, backup guard, TypeScript, Release build/API liveness and Android/iOS exports pass. Native pickers are mocked; date/DST serialization is also checked in three time zones. Synthetic component layouts were inspected in an HTML projection, not a native device render.
+- Final lockfile clean install passed. Managed development stack restarted with the redesign: Android/iPhone launchers and API returned HTTP 200, SDK 57 Android development bundle returned HTTP 200 (4,687,166 bytes), anonymous entries returned 401. The temporary layout-preview server was stopped; the actual development stack remains running for device testing.
+- Android launch before redesign was confirmed by the user after installing SDK 57-compatible Expo Go (previously 58.0.5). The redesigned native flows still need Android/iOS acceptance. Detailed changes and concrete test scenarios: [UX_REDESIGN.md](UX_REDESIGN.md).
 
 ## Verification
 
-- 2026-10-18: TypeScript passed, all 7 localStore SQLite tests passed, .NET Release build passed with zero warnings/errors, HTTP liveness smoke passed.
-- 2026-10-18: all 10 isolated PostgreSQL/HTTP auth-sync scenarios passed again, including duplicate replay, cross-account denial, conflicts, tombstones, API restart, pagination and revocation.
-- Earlier npm audit reported 10 moderate findings in Expo build-tool dependencies; not reassessed during this checkpoint.
+- Session hardening on 2026-10-23: late restore cannot undo logout or replace a new account; old requests cannot replay mutations under the new account after 401. Refresh sharing is generation-scoped and logout blocks requests while secure-storage clearing is pending. Nine deterministic race regressions added; the first six reproduced failures before the fix.
+- Continuation verification on 2026-10-23: all 35 PostgreSQL/HTTP scenarios, backup guard, Release build/liveness, both platform exports, updated documentation links and git diff --check passed again. The old runner lock referenced a nonexistent PID; it was removed only after confirming both recorded runner/database PIDs, PostgreSQL processes and development listeners were absent. Restarted managed stack; Android/iPhone launchers and API returned 200, anonymous entries returned 401. Physical-device acceptance is the next concrete step using PRIVATE_BETA.md.
+- TypeScript passed; all 71 mobile tests passed, including actual desktop SQLite/reopen/rollback, real temporary image files/hashes, mocked native adapters and App.tsx journeys with denied/cancelled gallery selection. On this Windows sandbox, TEMP/TMP were pointed at ignored local-data/test-temp to permit file renames and Hermes output; npm ci needed normal host access for node_modules.
+- All 35 PostgreSQL/HTTP scenarios passed: actual mobile modules, two accounts/stores, retries/lost acknowledgements, conflicts, membership enforcement, personal packing privacy, exact money, interrupted/malformed media, quotas, cleanup and API restart persistence.
+- .NET Release build: zero warnings/errors. API liveness passed. Android and iOS exports passed.
+- Restarted the local stack with migrations applied. Android/iPhone launchers, API health and Android development bundle returned HTTP 200; anonymous entry/media requests returned 401. Relative documentation links and git diff --check passed.
+- Managed dev-stop released the lock after clean shutdown; a subsequent runner restart and the same HTTP checks passed. The app is left running for trusted-LAN testing. Existing sessions may need reauthentication after the switch to explicit local token keys; account data/queues are retained.
+- PNG structure/CRC/dimensions/decompression bounds and private/no-store downloads tested. Native File.move destination retention has an adapter regression test.
+- React test renderer is deprecated and native bridges are mocked. Desktop files/SQLite and bundle exports do not establish native cold start, SecureStore, gallery codecs/metadata stripping or physical-device behavior. Full Android/iPhone QA remains pending; only earlier Android startup has user confirmation.
+- Added Expo-compatible file-system, image-picker and image-manipulator dependencies. The latest 2026-10-23 install audit reports 6 high mobile dependency findings (earlier runs: 4/15); these remain a release gate. Only SDK-aligned UI dependencies and crypto/SQLite patches were updated; no audit fix --force was run. No lint script exists. Hosted CI result remains unverified.
 
-## Environment and Git
+## Remaining work
 
-- The old laptop's Docker engine did not start, so DB tests use embedded-postgres 17 with synthetic accounts and ephemeral generated credentials.
-- Source, migrations, lockfiles, tests and handoff documentation are intended for Git; local databases, credentials, installed dependencies and build output are ignored.
-- The user explicitly requested commit and push for laptop migration. Verify the remote branch tip after publishing; main retains the earlier documentation baseline.
+The installed Samsung QA runs establish registration/calendar/trip behavior, offline session/trip persistence and the keyboard Back fix (2026-10-27), plus synthetic PNG gallery selection, source-independent image persistence after cold start and private upload (2026-10-28). They do not establish full redesigned UX acceptance, airplane mode, all codecs/permissions or iPhone behavior. Next concrete step: interrupted upload/retry and native explicit offline photo download on another synthetic account, then the remaining installed-build matrix in PRIVATE_BETA.md. Earlier Expo Go compatibility and startup evidence remains historical.
 
-## Next steps
+Phase 9 remains open for device acceptance and deployment: integration/private beta — installed-build Android/iPhone cold start and airplane mode, low storage/weak network/permissions, real multi-person trip, UX/accessibility, security review, paired database/media backup and restore, account verification/recovery and private distribution.
 
-1. Read the handoff and inspect current code; do not restart the project.
-2. Add client session/account/sync tests and resolve discovered edge cases.
-3. Connect auth and account-specific storage to App.tsx; add explicit logout and conflict UX.
-4. Validate end-to-end mobile sync before adding shared membership.
-5. Continue the roadmap; leave physical-device QA postponed until the user resumes it.
+Then phase 10: agree private/store release, hosting/storage costs, resolve release dependency findings, verify hosted CI and establish repeatable release/operations. Production permissions, currencies/photo limits and Croatian UI remain reviewable prototype defaults except explicitly confirmed personal packing.
+
+No public hosting provisioned. No commit or push performed; prior uncommitted work preserved. Start the trusted-LAN stack using node tests/e2e/dev.mjs; ignored local-data/development retains DB, private media and generated credentials. The laptop and development server must remain available.
+
+Evidence: [phases 6–8](PHASES_6_8_CHECKLIST.md), [places/offline](PLACES_OFFLINE_CHECKLIST.md), [membership](MEMBERSHIP_CHECKLIST.md), [decisions](decisions/0003-planning-money-memories.md).

@@ -20,9 +20,11 @@ The initial audience is the owner and their travel companions. A credible portfo
 - Expenses: fast entry, list and budget overview.
 - Participants: real people with accounts who can use a shared trip.
 - Memories: photos and written memories. Other formats need a separate decision.
-- Daily plan and packing: retained from the original brief; confirm their release priority.
+- Daily plan and personal packing: included in the requested phases 6–8; personal ownership confirmed 2026-10-22.
 
 Separate food and nightlife views must remain visible to users even if they share underlying behavior.
+
+UX redesign brief accepted 2026-10-23: mobile screens must separate global navigation from a selected trip, keep full forms out of lists, use native date/time selection and Croatian date formatting, and apply the visual palette (superseded by the 2026-10-31 palette below). Existing functionality, personal packing privacy and explicit offline/sync/conflict states must remain available. Implementation and device acceptance: docs/UX_REDESIGN.md.
 
 ## Principal journeys
 
@@ -58,9 +60,12 @@ Conflict resolution must preserve the user's pending version until an explicit r
 
 ## Initial release boundaries
 
+Decisions 2026-10-30: initial internet beta must use zero-cost services within their limits. Retain email confirmation and password recovery. Deleting an account requires password and explicit double confirmation and removes owned trips plus the user's own records in other trips; previously downloaded copies/backups need separate retention handling. The app must have a recognizable suitcase/airplane launcher icon. iPhone acceptance is deferred; this does not silently remove iOS or desktop from the overall requirements. Details: docs/decisions/0004-free-beta-and-account-lifecycle.md.
+
 One currency per trip; no automatic exchange rates.
 Memories initially support images and text, not video.
-Packing ownership, UI language, desktop priority and photo limits are open decisions.
+Personal packing per participant was explicitly selected by the user on 2026-10-22; other participants, including the owner, do not see that list.
+UI language, desktop priority and production photo/storage limits remain open decisions. Prototype photo limits are documented in Architecture.md.
 Desktop remains a requirement from the initial brief whose timing must be agreed, not silently dropped.
 
 Excluded: booking, payments, chat, social feed, live tracking, AI generation, automatic venue discovery,
@@ -80,3 +85,13 @@ weather integrations and Splitwise-style settlement.
 
 Local prototype -> shared data foundation -> places and planning -> money -> memories -> private beta.
 Use docs/TRIPORA_PLAN.md for the detailed checklist. No dates are promised before the technical spike.
+
+## Visual refresh — 2026-10-31
+
+User requested primary #0593C6, light #FCFFFF and accent #D83995, with mobile hierarchy, tinted surfaces and accessible text/control colors. Existing navigation and offline behavior remain. The original research-only map boundary is superseded by the accepted scope below. Historical comparison: [map research](docs/MAP_RESEARCH.md).
+
+## Accepted maps and no-card availability — 2026-10-31
+
+User authorized implementation: enter a public place name plus city, explicitly find/select the correct result, save its coordinates and display it on the trip map. Manual pin placement is not the primary workflow. No invented positions when lookup fails. The map requires internet; existing downloaded lists/addresses/notes stay usable offline. Popis/Karta sits within Places, with category/status filters and place details/navigation. Existing places without coordinates remain visible in the list and can be located later. User-triggered lookup is included; automatic venue recommendations remain excluded.
+
+Initial hosting must cost zero and require no bank card, including provider verification. Laptop-independent availability with occasional short automatic wake is acceptable; Free quotas/SLA limitations must be explicit. Users retain email/password accounts. No provider accounts exist; user requested [registration steps](docs/NO_CARD_SETUP.md). Real hosting/native acceptance remains pending, not implied by local builds. [Decision 0005](docs/decisions/0005-maps-and-no-card-beta.md).

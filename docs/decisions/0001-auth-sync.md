@@ -2,6 +2,10 @@
 
 Date: 2026-09-30. Scope: private development foundation, authorized continuation of phases.
 
+Update 2026-10-30: [decision 0004](0004-free-beta-and-account-lifecycle.md) adds confirmed email/recovery/deletion and the user-approved free hosted beta. Identity and explicit sync remain; earlier no-email/open-hosting notes describe the original foundation, not the current implementation.
+
+Implementation update 2026-10-21: mobile UI now connects this protocol and session storage, with confirmed logout and conflict resolution. Desktop SQLite/component and real mobile-core HTTP tests pass; native-device validation and production recovery remain open. See ../STATUS.md.
+
 ## Decision
 
 Use ASP.NET Core Identity API endpoints and its opaque bearer/refresh tokens.

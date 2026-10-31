@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node auth-sync.mjs"
+    "test": "node --test local-backup.test.mjs && node --experimental-sqlite auth-sync.mjs"
   },
   "devDependencies": {
     "embedded-postgres": "17.10.0-beta.17"
