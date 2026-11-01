@@ -93,14 +93,16 @@ export function PlacesPanel({
     const generation = ++searchGeneration.current;
     setSearching(true); setError(''); setResults([]); setSearched(false);
     try {
-      const response = await api.request<{ items: PlaceLocation[] }>('/api/places/search', { tripId, name: input.name.trim(), city: city.trim() });
+      const response = await api.request<{ items: PlaceLocation[] }>('/api/places/search', { tripId, name: input.name.trim(), address: input.address.trim(), city: city.trim() });
       if (generation !== searchGeneration.current) return;
       setResults(response.items); setSearched(true);
     } catch (cause) {
       if (generation !== searchGeneration.current) return;
       setError(cause instanceof ApiError && cause.status === 429 ? 'Pretraga je trenutačno ograničena. Pričekaj pa pokušaj ponovno.'
         : cause instanceof ApiError && cause.status === 404 ? 'Prvo sinkroniziraj putovanje kako bi pretraga bila dostupna.'
-        : 'Mjesto nije pronađeno jer pretraga nije dostupna. Nacrt je sačuvan; provjeri vezu i pokušaj ponovno.');
+        : cause instanceof ApiError && cause.status === 400 ? 'Unesi naziv, adresu ili grad za pretragu.'
+        : cause instanceof ApiError && cause.status === 401 ? 'Za pretragu se ponovno prijavi. Nacrt je sačuvan.'
+        : 'Pretraga trenutačno nije dostupna. Nacrt je sačuvan; provjeri vezu i pokušaj ponovno.');
     } finally { if (generation === searchGeneration.current) setSearching(false); }
   }
   function save() {
@@ -244,14 +246,14 @@ export function PlacesPanel({
           maxLength={300}
           editable={!busy}
         />
-        <Field label="Grad ili odredište za pretragu" value={city} maxLength={120} editable={!busy}
+        <Field label="Grad ili odredište za pretragu" optional value={city} maxLength={120} editable={!busy}
           onChangeText={(value) => { locationQueryChanged(); setCity(value); setInput(i => ({ ...i, location: null })); }} />
         <Button title={searching ? 'Tražim mjesto…' : 'Pronađi mjesto'} variant="secondary" icon="pin"
-          disabled={busy || searching || !api || !input.name.trim() || !city.trim()} onPress={() => void findLocation()} />
-        <Text style={ui.caption}>Pretražuje se naziv uz grad. Ako treba, u naziv dodaj ulicu ili broj. Naziv i grad šalju se OpenStreetMap servisu tek na pritisak gumba.</Text>
+          disabled={busy || searching || !api || !(input.name.trim() || input.address.trim() || city.trim())} onPress={() => void findLocation()} />
+        <Text style={ui.caption}>Pretraži naziv, javnu adresu ili grad, samostalno ili zajedno. Ti se podaci šalju OpenStreetMap servisu tek na pritisak gumba. Ako naziv nije pronađen, pretražuje se unesena adresa; provjeri rezultat prije odabira.</Text>
         {results.map(result => <Button key={result.providerId} title={result.displayName} variant="secondary" disabled={busy}
-          onPress={() => { setInput(i => ({ ...i, address: result.displayName.slice(0, 300), location: result })); setResults([]); setSearched(false); }} />)}
-        {searched && !results.length ? <Text style={ui.muted}>Nema rezultata. Dopuni naziv ulicom ili provjeri grad. Položaj nije odabran automatski.</Text> : null}
+          onPress={() => { setInput(i => ({ ...i, name: i.name.trim() ? i.name : result.displayName.split(',')[0].slice(0, 120), address: result.displayName.slice(0, 300), location: result })); setResults([]); setSearched(false); }} />)}
+        {searched && !results.length ? <Text style={ui.muted}>Nema rezultata za unesene podatke. Provjeri naziv, adresu i grad ili pokušaj samo s adresom. Položaj nije odabran automatski.</Text> : null}
         {input.location ? <View style={ui.inset}>
           <Text style={ui.subheading}>Potvrđen položaj</Text><Text style={ui.body}>{input.location.displayName}</Text>
           <Button title="Ukloni položaj" variant="ghost" onPress={() => setInput(i => ({ ...i, location: null }))} />

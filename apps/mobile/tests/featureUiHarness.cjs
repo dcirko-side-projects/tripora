@@ -23,7 +23,7 @@ const trip = {
 };
 global.IS_REACT_ACT_ENVIRONMENT = true;
 async function featureHarness(kind, options = {}) {
-  const c = connect();
+  const c = connect(options.databaseFile);
   account.applyPage(c.db, [trip], 1, [{ id: trip.id, role: "owner" }]);
   const control = {
     busy: false,

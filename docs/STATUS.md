@@ -2,6 +2,24 @@
 
 Updated: 2026-10-31. Development branch: codex/offline-foundation.
 
+## Latest checkpoint — location search repair, 2026-11-01
+
+User reported unavailable search yesterday and no matches today. Traced frontend → authenticated endpoint → actual Nominatim request/parser/cache → selection → SQLite/outbox → server persistence/map projection. Confirmed functional defects: Address was never sent, name+city were mandatory, and empty responses lived for 30 days. Fixed optional name/address/city queries, normalized Unicode/whitespace and repeated comma components, bounded address fallback under the existing global spacing/daily budget, five-minute negative cache with new key version, robust candidate parsing, separate empty/unavailable/quota UI, and privacy-preserving provider diagnostics. Explicit selection and existing coordinate sync remain.
+
+Read-only Render inspection confirms yesterday's Search HTTP 503 at 22:31:15 CET while DB/readiness passed; old code suppressed the exception reason, so the exact historical upstream failure cannot be reconstructed. Maps daily quota is 200, SearchUrl uses the default Nominatim HTTPS endpoint, and no API key is required. No provider/configuration change. Details, sources and acceptance boundaries: [search repair](PLACE_SEARCH_FIX_2026-11-01.md).
+
+Clean dependencies, TypeScript, all 86 mobile tests, both bundle exports, API Release build and HTTP liveness pass. New UI test saves a selected location, closes/reopens the actual SQLite file and confirms identical marker coordinates/details (native map bridge mocked). Final deterministic PostgreSQL/HTTP run passes all 52 scenarios, including upstream/daily quota and budget exhaustion between the primary/address queries; backup guard also passes. A separate full opt-in run verified six live Croatian public-location lookups through the actual .NET provider adapter; selected live coordinates survive server save/restart/paginated pull. Local npm audit remains 2 low/10 moderate; e2e dependencies report zero. First integration attempt encountered an unrelated stale development lock; managed stop found no owner process, verified no dotnet/postgres process, and only the lock was archived. No development DB/PID data was removed.
+
+Next: publish the reviewed API/mobile source and deliver a new mobile build, then verify search/map on the hosted API and physical phone. Existing Render source 4890618 and installed Tripora 12 have not been updated by this repair. No commit/push/deploy/install or physical Android/iPhone acceptance is claimed. Existing unrelated launcher/hosted-checkpoint edits are preserved.
+
+## Latest checkpoint — Tripora 12 installed with the final name and palette logo
+
+User requested installation, the display name Tripora without Beta/QA, and updated palette branding. The existing suitcase mark now has a pink #D83995 airplane with a white #FCFFFF outline on the blue #0593C6 background. Regenerated both tracked launcher PNGs from the SVG and native Android density/adaptive resources with Expo's existing icon generator. No application behavior, account scope or API code changed.
+
+Built versionCode 12 / 0.1.0-beta12, display name Tripora, package local.tripora.beta. Public Render origin verified in the actual Hermes bundle; localhost QA origin absent. Gradle Release passes (406 tasks); clean npm ci, typecheck, mobile tests and both Android/iOS exports pass. npm reports 2 low/10 moderate findings, no high/critical. APK SHA-256: 24980acc54f14bd203b228874fd12420f4eb911b7caa769b19ecc5af9664e3e1. Ignored copy: local-data/hosted-beta/Tripora-12.apk.
+
+User connected the Samsung Android. ADB install for user 0 succeeded; installed package/version and app-info name/icon verified. Explicit launch of the resolved activity succeeded and a stable native login/create-account screen was inspected. The initial implicit shell launch did not resolve; the explicit package/activity opens normally. Old local.tripora.qa remains installed; no uninstall, account/data migration, phone security/radio/font setting change or user credentials entered. Private proof stays ignored under local-data/hosting-setup. This proves installation/branding/initial launch, not hosted registration, email confirmation, map or shared sync acceptance; iPhone remains untested. Next: user creates and confirms the hosted account, then tests a saved place on the native map.
+
 ## Latest checkpoint — Render API live, real email and private media verified
 
 Published source `4890618` to Render Free / Frankfurt as `tripora`, connected the existing Neon database (direct VerifyFull TLS), Cloudinary authenticated storage, restricted Brevo transactional-email key and existing PFX-encrypted database keys. Public API origin: https://tripora-l4c7.onrender.com. No card, paid plan, main change or legacy publication. User explicitly approved provider secrets, key creation, test email and sender-address transfer. Automatic deploy remains off.
