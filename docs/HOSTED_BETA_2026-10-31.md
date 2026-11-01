@@ -25,6 +25,8 @@ Jednokratni nastavak nakon **17 minuta bez naših API zahtjeva** prolazi: 17:36:
 
 ## Android paket za internet
 
+Najnovije: **Tripora 12** je instalirana na korisnikov Samsung. Naziv na telefonu je samo **Tripora**, uz novi ružičasti avion/bijeli kofer na plavoj podlozi. Paket ostaje `local.tripora.beta`, verzija 12 / 0.1.0-beta12, tako da stara QA aplikacija ostaje sačuvana. Instalacija, prikaz naziva/ikone i početni zaslon prijave fizički su provjereni. APK `local-data/hosted-beta/Tripora-12.apk`, SHA-256 `24980acc54f14bd203b228874fd12420f4eb911b7caa769b19ecc5af9664e3e1`. Javni origin ponovno je provjeren u stvarnom bundleu. Prethodni paket 11 ispod ostaje povijesni checkpoint. Registracija/potvrda, karta i puni hosted sync još nisu fizički prihvaćeni.
+
 Izrađen je zaseban **Tripora Beta 11** APK: `local.tripora.beta`, versionCode 11 / versionName 0.1.0-beta11, release varijanta s postojećim razvojnim potpisom (privatni QA paket, nije izdanje za trgovinu). Izlaz je ignorirani `local-data/hosted-beta/Tripora-Beta-11.apk`. Drugi application ID omogućuje instalaciju uz stari `local.tripora.qa`; ne prepisuje njegovu lokalnu pohranu. Nema automatske migracije putovanja ili računa.
 
 APK SHA-256: `78b7b130c7ba2eaa5acb7047b94be0d7df3dbed00f6cf1f93755ab7368c8e19e` (129.166.795 bajtova).
@@ -35,10 +37,10 @@ Prethodni QA10 APK i njegova native konfiguracija arhivirani su pod ignoriranim 
 
 ## Preostali prihvat
 
-Za ručni prihvat instalirati `Tripora-Beta-11.apk` kao zasebnu aplikaciju, uključiti internet i registrirati novi hosted račun vlastitim emailom/lozinkom. Lokalni QA račun nije cloud račun, čak i ako koristi isti email. Potvrditi primljeni email, stvoriti probno putovanje i u Mjestima odabrati Pronađi mjesto uz naziv i grad, potvrditi rezultat te provjeriti pin na karti. Zatim provjeriti pregled spremljenog popisa bez interneta. Nema unaprijed zadanih korisničkih lozinki.
+Za ručni prihvat otvoriti sada instaliranu aplikaciju **Tripora**, uključiti internet i registrirati novi hosted račun vlastitim emailom/lozinkom. Lokalni QA račun nije cloud račun, čak i ako koristi isti email. Potvrditi primljeni email, stvoriti probno putovanje i u Mjestima odabrati Pronađi mjesto uz naziv i grad, potvrditi rezultat te provjeriti pin na karti. Zatim provjeriti pregled spremljenog popisa bez interneta. Nema unaprijed zadanih korisničkih lozinki.
 
 - Potvrditi izmjereni cold start nakon neaktivnosti i zasebno višednevni nastavak unutar Free kvota.
-- Instalirati pripremljeni mobilni beta APK i fizički provjeriti novu kartu, prijavu i sinkronizaciju. iPhone ostaje odgođen.
+- Fizički provjeriti novu kartu, prijavu i sinkronizaciju u instaliranoj Tripori 12. iPhone ostaje odgođen.
 - Stvarna registracija/potvrda/reset, sesije nakon restarta i dva klijenta s koordinatama, konfliktima i uklanjanjem člana.
 - Zajednički hosted backup/povrat Neon baze, privatnih fotografija i certifikata; lokalni backup nije cloud backup.
 
