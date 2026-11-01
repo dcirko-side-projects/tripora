@@ -31,4 +31,29 @@ Prvi puni integracijski pokušaj prošao je sve scenarije pretrage, ali stao na 
 
 Nema novih ključeva, servisa, troškova ili DB migracija. `Tripora__Maps__SearchUrl` ostaje opcionalni HTTPS endpoint kompatibilan s Nominatimom; `Tripora__Maps__DailySearchLimit` ostaje 200. Javna usluga nema SLA i može odbiti zahtjev; logovi novog koda trebaju pokazati razlog ako se to ponovi iz Rendera.
 
-Popravak treba objaviti na API-ju i uključiti u novu mobilnu instalacijsku verziju. Stara Tripora 12 ne šalje Adresu, stoga sam deploy API-ja ne isporučuje cijeli popravak. U ovom koraku nema commita/pusha/deploya/instalacije. Fizički Android/iPhone test i stvarni hosted tok nakon objave ostaju otvoreni; export i automatizirani SQLite/UI test nisu fizički dokaz karte.
+Naknadni korisnikov zahtjev izričito je odobrio objavu, rad na spojenom telefonu te commit/push. Završena isporuka opisana je ispod. Stara Tripora 12 ne šalje Adresu, stoga je uz API objavljena i mobilna nadogradnja.
+
+## Objavljeno i fizički provjereno — 2026-11-01
+
+- Commiti `f5fac25` (prethodno završeno brendiranje i zapis instalacije) i `941bd341066abfd992c9346b0e26dd2bf507a113` (ovaj popravak) pushani su na `codex/offline-foundation`, uz potvrdu istog udaljenog SHA. Main/legacy nisu mijenjani.
+- [Render deploy dep-dbjg58vb9u1s73dujbs0](https://dashboard.render.com/web/srv-dbj16huc6qcc73b6e3a0/deploys/dep-dbjg58vb9u1s73dujbs0) iz `941bd34`: **Deploy succeeded | Live**, 10:13 CET, trajanje 1m05s. Javni `/health/ready` vraća 200 i `ready`; testovi pretrage niže pozivaju taj hosted API iz aplikacije. Nema novih migracija, ključeva ili promjena providera/plana.
+- **Tripora 13**, `local.tripora.beta`, versionCode 13 / `0.1.0-beta13`. Gradle `assembleRelease --offline` prolazi, 438 zadataka. Izvor u izoliranom native projektu odgovara mobilnom izvoru; lockfile je identičan. Stvarni Hermes bundle sadrži javni API i novi tekst pretrage (hrvatski nizovi provjereni kao UTF-16LE), bez localhost QA origina. APK `local-data/hosted-beta/Tripora-13.apk`, SHA-256 `a6aa91e3ced62f60bf674b688927b9a1372bfc8c0e6f3dfd7f18dc023a0c8b2f`.
+- `adb install -r --user 0` vraća Success; paket/verzija potvrđeni na fizičkom Samsungu SM-S936B. Postojeća sesija i prethodno putovanje ostali su dostupni. Nema deinstalacije, brisanja podataka, odjave ili čitanja korisničkih tokena/lozinki.
+
+| Fizički scenarij kroz hosted API | Rezultat |
+| --- | --- |
+| Adresa `Cirilometodska ulica 2` + Zagreb, prazan naziv | Pronađen Muzej prekinutih veza; eksplicitni odabir popunjava naziv i položaj. |
+| Spremanje odabranog muzeja | Jedno mjesto u sintetičkom putovanju, status Sinkronizirano. |
+| Karta i dodir oznake | Stvarno učitani OSM raster i MapLibre oznaka 1; dodir otvara točne detalje, punu adresu i akciju koordinatne navigacije. Navigacijska aplikacija nije pokretana. |
+| Ponovna pretraga spremljenog muzeja i pune javne adrese s Ć/č/š | Vraća isti kandidat. |
+| Samo grad `Sibenik`, prazan naziv/adresa | Vraća razlikovane kandidate grada i administrativne jedinice. |
+| Samo Unicode naziv `Šibenik`, prazna adresa/grad | Vraća kandidate; niz s dijakritikom dolazi iz izričito odabranog gradskog rezultata pa je stvarno poslan iz native obrasca. |
+| Sintetički nepoznat naziv `QA Nonindexed 9f3b1` + valjana adresa/Zagreb | Novi adresni fallback nalazi muzej; korisnik i dalje bira kandidat. |
+| Isti nepoznati naziv bez adrese | Jasna poruka Nema rezultata, isti nacrt, nema automatski dodanog položaja. |
+| Force-stop i cold start | Sesija i spremljeni muzej ostaju; ponovno otvorena karta ima oznaku, koja otvara iste Sinkronizirano detalje. |
+
+Složeni puni opis administrativne jedinice `Grad Šibenik` uz dodatni `Sibenik` dao je valjan prazan odgovor; jednostavan upit `Šibenik` radi. OSM indeksi i administrativni opisi nisu jamstvo pronalaženja svake proizvoljne kombinacije. Prazan rezultat nije prikazan kao nedostupnost i ne briše prethodno potvrđen položaj. Svih č/ć/ž/š/đ već je zasebno pokriveno live .NET scenarijima; fizički rezultati ne zamjenjuju taj dokaz.
+
+Jedan pokušaj automatizacije prekinut je Samsung Account zaslonom novih uvjeta. Nisu prihvaćeni uvjeti ni mijenjan račun; zaštita je odbila daljnji input izvan Tripore i aplikacija je vraćena u prvi plan. Nisu mijenjani radio/font/dozvole/USB forwarding, niti su osobna putovanja uređivana. Ostavljeno je jedno sintetičko `QA Search 2026-11-01` putovanje s jednim muzejem za korisnikov pregled.
+
+Privatni QA dokazi ostaju izvan Gita pod `local-data/hosting-setup`: `tripora13-build.log`, `search-render-live-20261101.png`, `tripora13-unicode-search.xml`, `tripora13-address-fallback.xml`, `tripora13-empty-result.xml`, `tripora13-map-restart.png`, `tripora13-details-restart.xml/png` i `tripora13-map-final.png`. Fizički iPhone, dva uređaja, offline mrežni režimi, višednevni hosting i hosted backup nisu dio ovog prihvata. Završni dokumentacijski commit bilježi ovu isporuku; funkcionalni deployed izvor ostaje `941bd34`.

@@ -1,6 +1,16 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-10-31. Development branch: codex/offline-foundation.
+Updated: 2026-11-01. Development branch: codex/offline-foundation.
+
+## Latest checkpoint — search deployed and physically verified on Android
+
+User authorized deployment, retaining phone upgrade, device checks and commit/push. Published branding checkpoint f5fac25 and search fix 941bd341066abfd992c9346b0e26dd2bf507a113 to origin codex/offline-foundation; remote HEAD verified. Render manual deployment dep-dbjg58vb9u1s73dujbs0 reports Deploy succeeded | Live (2026-11-01 10:13 CET, 1m05s), with source 941bd34. Public readiness returns 200/ready. Existing Free plan, provider configuration and credentials remain; no DB migrations were needed.
+
+Built/installed **Tripora 13**, package local.tripora.beta, versionCode 13 / 0.1.0-beta13, same existing signing identity. Gradle Release passes (438 tasks). APK SHA-256 a6aa91e3ced62f60bf674b688927b9a1372bfc8c0e6f3dfd7f18dc023a0c8b2f; ignored artifact local-data/hosted-beta/Tripora-13.apk. Actual Hermes bundle contains the public origin and repaired search text; localhost QA origin absent. Existing session and existing trip remain after adb install -r; no uninstall/clear-data/logout.
+
+Physical Samsung acceptance passes against the **hosted** API: public address without name → explicit museum candidate → auto-filled name → save/synced → rendered OSM tiles and numbered MapLibre marker → marker opens exact details/navigation. Full saved address containing Ć/č/š can be searched again. City-only Sibenik returns multiple distinguishable candidates; exact Unicode name-only Šibenik also returns candidates. Unknown synthetic name plus valid address finds the museum through fallback; the same unknown name with no address shows no results while preserving the draft and leaving coordinates unselected. After force-stop/cold start, the saved museum and session persist, the map marker renders again and opens the same Synced details. One synthetic QA Search 2026-11-01 trip with one saved place remains for user review. Phone radio/font/permissions, account credentials and unrelated trips were not changed. A Samsung Account terms screen interrupted one input sequence; no terms were accepted and testing returned to Tripora.
+
+Native evidence remains ignored under local-data/hosting-setup; scope and exact artifacts are in [the search report](PLACE_SEARCH_FIX_2026-11-01.md). Earlier 86 mobile/52 deterministic HTTP tests and six live adapter lookups remain applicable; this delivery step changed no functional source after 941bd34. This is physical Android search/map acceptance, not iPhone, two-device, airplane-mode or multi-day hosting acceptance. Next: user verifies their intended real locations; broader hosted backup/iPhone gates remain separate.
 
 ## Latest checkpoint — location search repair, 2026-11-01
 
