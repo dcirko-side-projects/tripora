@@ -3,6 +3,10 @@
 Status: planning, personal packing, expenses and memories checkpoint 2026-10-22. Read docs/STATUS.md for verification and remaining boundaries.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
+## Trip overview and expanded map — 2026-11-02
+
+User requested a prominent trip header, quieter budget placement and a fullscreen map. The overview uses a local SVG travel-card background; budget/expenses are a standard row under “Za tvoje putovanje”, retaining pending-inclusive totals. Places can open the filtered native map in a fullScreen Modal with SafeAreaView and no ScrollView, isolating gestures from the app scroll. Only one map is mounted; expanding/closing refits the markers. Android back and Close dismiss it; markers open existing details after closing (iOS waits for onDismiss). Attribution stays enabled. No new service, dependency, schema or sync behavior. Native gesture/layout acceptance remains pending.
+
 ## 1. Decision register
 
 | Area | Proposal | Reason | Status |

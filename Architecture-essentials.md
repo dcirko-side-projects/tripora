@@ -2,6 +2,12 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Trip overview and expanded map — 2026-11-02
+
+User requested a prominent trip header, quieter budget placement and a fullscreen map. The overview uses a local SVG travel-card background; budget/expenses are a standard row under “Za tvoje putovanje”, retaining pending-inclusive totals. Places can open the filtered native map in a fullScreen Modal with SafeAreaView and no ScrollView, isolating gestures from the app scroll. Only one map is mounted; expanding/closing refits the markers. Android back and Close dismiss it; markers open existing details after closing (iOS waits for onDismiss). Attribution stays enabled. No new service, dependency, schema or sync behavior. Native gesture/layout acceptance remains pending.
+
+## Existing foundation
+
 - User decisions 2026-10-30: zero-cost internet beta using Render Free, Supabase Free PostgreSQL/private objects and Brevo Free transactional email. Identity remains the auth system; no Supabase Auth/sync. Provider accounts/credentials, delivery and real deployment are not provisioned. See docs/FREE_BETA_SETUP.md.
 - Confirmed-email login is required in hosted mode; local private outbox supports synthetic tests. Native confirmation/resend/reset forms use Identity codes (one hour). Password reset revokes prior access/refresh tokens.
 - User-requested deletion requires password, exact phrase and final confirmation; erases owned trips plus own contributions in other trips. Persist erased tombstones/minimal credential-free identity stub, revoke sessions/membership/invitations, clear receipt/PII, purge this device's account scope. Pending remote byte deletion remains tracked/retriable; downloaded copies/backups are not remotely erased.

@@ -56,7 +56,7 @@ async function featureHarness(kind, options = {}) {
   );
   Object.assign(native, {
     StyleSheet: { create: (s) => s },
-    Platform: { OS: "android" },
+    Platform: { OS: options.platform ?? "android" },
     Alert: {
       alert(title, message, buttons) {
         control.confirm = buttons.at(-1).onPress;

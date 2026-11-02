@@ -7,6 +7,32 @@ const { tmpdir } = require('node:os');
 const point = { latitude: 45.81, longitude: 15.98, displayName: 'Synthetic cafe, QA island', provider: 'osm', providerId: 'N123' };
 const config = { tileUrl: 'https://tile.example.test/{z}/{x}/{y}.png', attribution: 'Synthetic attribution', attributionUrl: 'https://example.test/copyright' };
 
+for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is isolated from scrolling, closes with back/button and opens marker details`, async () => {
+  const h = await featureHarness('places', { platform, requests: async path => path.endsWith('/search') ? { items: [point] } : config });
+  try {
+    await h.press('Dodaj mjesto'); await h.fill('Naziv mjesta', 'Synthetic cafe');
+    await h.press('Pronađi mjesto'); await h.press(point.displayName); await h.press('Spremi mjesto');
+    await h.press('Karta'); await h.press('Otvori kartu preko cijelog zaslona');
+    const fullscreen = h.root.findAllByType('Modal').find(n => n.props.presentationStyle === 'fullScreen');
+    assert.ok(fullscreen);
+    assert.equal(fullscreen.findAllByType('ScrollView').length, 0);
+    assert.equal(fullscreen.findByType('NativeMap').props.style.flex, 1);
+    assert.equal(h.root.findAllByType('NativeMap').length, 1);
+    await h.run(() => fullscreen.props.onRequestClose());
+    assert.equal(h.root.findByType('NativeMap').props.style.height, 380);
+    await h.press('Otvori kartu preko cijelog zaslona'); await h.press('Zatvori kartu');
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 0);
+    await h.press('Otvori kartu preko cijelog zaslona');
+    await h.run(() => h.root.findByType('MapMarker').props.onPress());
+    if (platform === 'ios') {
+      assert.doesNotMatch(h.text(), /Otvori navigaciju/);
+      await h.run(() => h.root.findAllByType('Modal').find(n => n.props.presentationStyle === 'fullScreen').props.onDismiss());
+    }
+    assert.match(h.text(), /Otvori navigaciju/);
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 0);
+  } finally { await h.close(); }
+});
+
 test('map UI searches only on button, confirms exact candidate, saves coordinates and invalidates a renamed location', async () => {
   const h = await featureHarness('places', { requests: async path => path.endsWith('/search') ? { items: [point] } : config });
   try {

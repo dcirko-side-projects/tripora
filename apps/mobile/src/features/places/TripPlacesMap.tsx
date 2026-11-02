@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Linking, Modal, Platform, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import type * as MapLibre from '@maplibre/maplibre-react-native';
 import { Place } from '../../core/placeStore';
 import { ApiClient } from '../../core/sync';
@@ -35,6 +36,14 @@ export function TripPlacesMap({ places, api, onSelect }: { places: Place[]; api?
 function NativePlacesMap({ native, config, places, onSelect, onError }: { native: typeof MapLibre; config: Config; places: Place[]; onSelect: (id: string) => void; onError: () => void }) {
   const { Map, Camera, Marker, TransformRequestManager } = native;
   const [networkReady, setNetworkReady] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const pendingSelection = useRef<string | null>(null);
+  const selectPlace = (id: string) => {
+    // iOS must dismiss the map before presenting the existing place-details modal.
+    if (fullscreen && Platform.OS === 'ios') pendingSelection.current = id;
+    else onSelect(id);
+    setFullscreen(false);
+  };
   const coordinates = places.map(p => [p.location!.longitude, p.location!.latitude]);
   const xs = coordinates.map(c => c[0]), ys = coordinates.map(c => c[1]);
   const samePoint = Math.max(...xs) === Math.min(...xs) && Math.max(...ys) === Math.min(...ys);
@@ -45,21 +54,37 @@ function NativePlacesMap({ native, config, places, onSelect, onError }: { native
     return () => { TransformRequestManager.removeHeader('tripora-user-agent'); };
   }, [TransformRequestManager]);
   if (!networkReady) return <Loading />;
-  return <View style={{ gap: 8 }}>
-    <Map key={places.map(p => p.id + ':' + p.location!.latitude + ':' + p.location!.longitude).join('|') + config.tileUrl}
-      style={{ height: 380, borderRadius: 16, overflow: 'hidden' }}
+  const map = <Map key={places.map(p => p.id + ':' + p.location!.latitude + ':' + p.location!.longitude).join('|') + config.tileUrl}
+      style={fullscreen ? { flex: 1 } : { height: 380, borderRadius: 16, overflow: 'hidden' }}
       mapStyle={{ version: 8, sources: { osm: { type: 'raster', tiles: [config.tileUrl], tileSize: 256, maxzoom: 19, attribution: config.attribution } }, layers: [{ id: 'base', type: 'raster', source: 'osm' }] }}
       attribution onDidFailLoadingMap={onError}>
       <Camera maxZoom={19} initialViewState={samePoint
         ? { center: [xs[0], ys[0]], zoom: 14 }
         : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: 48, left: 48, right: 48 } }} />
-      {places.map((p, index) => <Marker key={p.id} id={p.id} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => onSelect(p.id)}>
+      {places.map((p, index) => <Marker key={p.id} id={p.id} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => selectPlace(p.id)}>
         <View accessibilityLabel={`${index + 1}. ${p.name}`} style={{ minWidth: 40, minHeight: 40, padding: 8, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: tokens.color.surface,
           backgroundColor: p.category === 'food' ? tokens.color.accentInk : p.category === 'nightlife' ? tokens.color.text : tokens.color.primaryInk }}>
           <Text style={{ color: tokens.color.surface, fontWeight: '700' }}>{index + 1}</Text>
         </View>
       </Marker>)}
-    </Map>
+    </Map>;
+  return <View style={{ gap: 8 }}>
+    <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
+    {!fullscreen ? map : null}
+    <Modal visible={fullscreen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setFullscreen(false)} onDismiss={() => {
+      const id = pendingSelection.current;
+      pendingSelection.current = null;
+      if (id) onSelect(id);
+    }}>
+      {fullscreen ?
+      <SafeAreaView style={ui.safe}>
+        <View style={{ padding: 12, gap: 4 }}>
+          <Text accessibilityRole="header" style={ui.subheading}>Karta putovanja</Text>
+          <Button title="Zatvori kartu" variant="secondary" icon="close" onPress={() => setFullscreen(false)} />
+        </View>
+        {map}
+      </SafeAreaView> : null}
+    </Modal>
     <Text style={ui.caption}>Plavo: mjesta · ružičasto: hrana · tamno: izlasci. Dodirni oznaku za detalje.</Text>
     <Text style={ui.caption}>Karta treba internet. Mjesta bez položaja prikazana su samo u popisu.</Text>
     <Button title={config.attribution} variant="ghost" onPress={() => {

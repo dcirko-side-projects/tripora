@@ -1,6 +1,24 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-01. Development branch: codex/offline-foundation.
+Updated: 2026-11-02. Development branch: codex/offline-foundation.
+
+## Latest delivery — Tripora 14 installed on Samsung
+
+User explicitly authorized commit/push and installation of the new Android version. Built **Tripora 14**, local.tripora.beta, versionCode 14 / 0.1.0-beta14, using the existing isolated native project and identical dependency lockfile. All current mobile source files were copied and hash-compared. Release Gradle build passes (438 tasks); the actual Hermes bundle contains the public API origin plus the new hero/fullscreen/budget text and no old local API origin. APK and build log remain ignored: local-data/hosted-beta/Tripora-14.apk and local-data/hosting-setup/tripora14-build.log. APK SHA-256: 369f0a858621c32c5ec0aed4fa95738b23081840daf99d41abb5c1d4103c2a34. Old/new APK signing-certificate SHA-256 digests match.
+
+ADB upgrade from version 13 returns Success using install -r --user 0 on the connected Samsung SM-S936B; installed versionCode 14 / versionName 0.1.0-beta14 confirmed. No uninstall, clear-data, logout, credential access or user-trip mutation. This verifies retaining upgrade installation, not a physical acceptance test of map gestures, visual layout or preserved session contents. Existing 88-test/typecheck/export evidence below applies; no source changed after those checks. No backend deployment is needed for these UI-only changes. User authorized publication to the current development branch; final response records the verified commit/push result.
+
+Next: user reviews the new header and full-map pan/pinch/Close/marker details on the phone; iPhone distribution remains unconfigured.
+
+## Latest checkpoint — trip card, quieter expenses and fullscreen map
+
+Implemented the user's requested overview refresh: dark blue travel card with local SVG landscape/route, destination, title, dates and role. Budget/expenses now use a normal “Budžet i troškovi” menu row in “Za tvoje putovanje”, including exact pending-inclusive totals/remaining amount and currency warning. Existing expense tab remains available.
+
+Places map has an explicit fullscreen action. A native fullScreen Modal with safe areas and no ScrollView keeps map interaction separate from the app's scroll; Close/Android back restore the inline map, and a marker opens existing details. iOS waits for modal dismissal before presenting details. One map is mounted at a time and the viewport refits filtered markers when switching. Map attribution, category/status filters and online-only boundary remain.
+
+Evidence: npm ci (sandbox EPERM resolved by approved execution outside sandbox), TypeScript, all **88 mobile tests**, Android export and iOS export pass. New component regressions cover fullscreen isolation, one map, Close/back, Android marker selection and deferred iOS details; app regression covers expense row navigation. git diff --check passes. No API/storage/sync changes; API/integration tests not rerun. No new APK/native iOS binary, device installation, physical gesture/layout test, commit, push or deployment performed.
+
+Next: build/install an Android upgrade preserving data, then physically check full-map pan/pinch, marker details, back/Close, long trip titles and large fonts. iPhone distribution is not configured; [installation options](IPHONE_INSTALLATION.md) explain TestFlight and the Mac-only free development alternative. No paid account/service selected.
 
 ## Latest checkpoint — search deployed and physically verified on Android
 

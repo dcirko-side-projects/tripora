@@ -2,6 +2,7 @@ import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { tokens } from "./theme";
 
 export type IconName =
+  | "expand"
   | "trips"
   | "calendar"
   | "pin"
@@ -22,6 +23,7 @@ export type IconName =
   | "download"
   | "alert";
 const paths: Record<IconName, string> = {
+  expand: "M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5",
   trips: "M8 6V4h8v2M4 7h16v13H4zM8 7v13M16 7v13",
   calendar: "M4 5h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2",
   pin: "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z",

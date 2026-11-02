@@ -315,6 +315,12 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
     assert.ok(!button("Dodaj mjesto"));
     await press("Otvori putovanje UI synthetic trip");
     assert.match(text(), /Pregled putovanja/);
+    assert.match(text(), /PUTOVANJE ZA PAMĆENJE/);
+    assert.ok(button("Budžet i troškovi"));
+    assert.ok(!button("Otvori troškove"));
+    await press("Budžet i troškovi");
+    assert.match(text(), /Postavi valutu i budžet/);
+    await tab("Pregled");
     capture("overview");
     await tab("Mjesta");
     await tab("Hrana");
