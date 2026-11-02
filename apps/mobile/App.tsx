@@ -53,6 +53,7 @@ import { LocalMedia, MediaIO, mediaSnapshot } from "./src/core/mediaQueue";
 import { createNativeMediaIO, deleteNativeMediaScope } from "./src/core/nativeMedia";
 import { TripWorkPanel } from "./src/features/work/TripWorkPanel";
 import { tripOverview } from "./src/core/tripOverview";
+import { TripHero } from "./src/features/trips/TripHero";
 import { actionError } from "./src/core/actionError";
 
 import {
@@ -627,45 +628,33 @@ function Home() {
         accessibilityLabel={`Otvori putovanje ${t.name}`}
         onPress={() => openTrip(t.id)}
         style={({ pressed }) => [
-          styles.tripCard,
           { opacity: pressed ? 0.7 : 1 },
         ]}
       >
-        <View style={ui.between}>
-          <View style={ui.flex}>
-            <Text style={ui.eyebrow}>
-              {t.destination.toLocaleUpperCase("hr-HR")}
+        <TripHero trip={t}>
+          <View style={ui.wrap}>
+            <Text style={[ui.caption, { color: tokens.color.surface }]}>
+              {t.startDate <= today && t.endDate >= today
+                ? "U tijeku"
+                : t.endDate < today
+                  ? "Završeno"
+                  : "Nadolazeće"}
             </Text>
-            <Text style={[ui.heading, { marginTop: 8 }]}>{t.name}</Text>
+            <Text
+              style={[
+                ui.caption, { color: tokens.color.surface, fontWeight: "600" },
+              ]}
+            >
+              {t.accessRevoked
+                ? "Pristup je uklonjen"
+                : state.attention
+                  ? "Treba pažnju"
+                  : state.pending
+                    ? `${state.pending} na čekanju`
+                    : "Sinkronizirano"}
+            </Text>
           </View>
-          <Icon name="next" color={tokens.color.primary} />
-        </View>
-        <Text style={ui.muted}>
-          {displayDate(t.startDate)} – {displayDate(t.endDate)}
-        </Text>
-        <View style={ui.between}>
-          <Text style={ui.caption}>
-            {t.startDate <= today && t.endDate >= today
-              ? "U tijeku"
-              : t.endDate < today
-                ? "Završeno"
-                : "Nadolazeće"}
-          </Text>
-          <Text
-            style={[
-              ui.caption,
-              state.attention > 0 && { color: tokens.color.danger },
-            ]}
-          >
-            {t.accessRevoked
-              ? "Pristup je uklonjen"
-              : state.attention
-                ? "Treba pažnju"
-                : state.pending
-                  ? `${state.pending} na čekanju`
-                  : "Sinkronizirano"}
-          </Text>
-        </View>
+        </TripHero>
       </Pressable>
     );
   };
@@ -1505,15 +1494,5 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 44,
     padding: 8,
-  },
-  tripCard: {
-    padding: 20,
-    gap: 16,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: tokens.color.border,
-    borderLeftWidth: 4,
-    borderLeftColor: tokens.color.primary,
-    backgroundColor: tokens.color.surface,
   },
 });

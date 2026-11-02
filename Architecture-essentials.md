@@ -4,6 +4,8 @@ Status: executable prototype started 2026-09-28. Architecture.md is authoritativ
 
 ## Trip overview and expanded map — 2026-11-02
 
+Follow-up: the same shared TripHero component renders each trip in “Moja putovanja” (upcoming/current/past, including newly created trips) and the selected-trip overview. List cards retain their accessible open action plus trip/sync/access status below the shared title/destination/date/role content.
+
 User requested a prominent trip header, quieter budget placement and a fullscreen map. The overview uses a local SVG travel-card background; budget/expenses are a standard row under “Za tvoje putovanje”, retaining pending-inclusive totals. Places can open the filtered native map in a fullScreen Modal with SafeAreaView and no ScrollView, isolating gestures from the app scroll. Only one map is mounted; expanding/closing refits the markers. Android back and Close dismiss it; markers open existing details after closing (iOS waits for onDismiss). Attribution stays enabled. No new service, dependency, schema or sync behavior. Native gesture/layout acceptance remains pending.
 
 ## Existing foundation

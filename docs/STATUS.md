@@ -2,6 +2,14 @@
 
 Updated: 2026-11-02. Development branch: codex/offline-foundation.
 
+## Latest follow-up — shared trip card in My trips
+
+User clarified that the new travel-card design must also appear in “Moja putovanja” for every existing/new trip. Extracted TripHero and reused it in both the selected-trip overview and the upcoming/current/past trip lists. The whole list card retains its accessible open action, trip status and explicit sync/access warnings. The shared component renders destination/title/dates/role plus the same SVG background, so newly created trips inherit the design automatically. No schema, API or sync behavior changed.
+
+Verification: npm ci, TypeScript, all 88 mobile tests and Android/iOS exports pass. Existing app regression now checks the travel-card banner inside a freshly created trip's list button, pending status and navigation to the overview. No API tests rerun for this presentation-only follow-up. Native physical layout remains for user review.
+
+Delivered **Tripora 15** (versionCode 15 / 0.1.0-beta15): Release build passes, 438 tasks. Native mobile source hashes match; public API origin verified in the Hermes bundle; signing certificate matches Tripora 14. APK SHA-256 ec57d4b59abef8efe828d1a89c6cb5ed47d2f2a7cb9ef576d0ae1159eda746b3. APK/build logs remain ignored under local-data. ADB install -r --user 0 returns Success; installed version 15 and launch Status: ok confirmed on the same Samsung. No uninstall, clear-data, logout or trip edits. Commit/push continues the user's existing delivery authorization. Next: user visually reviews the shared card in the list and overview; no physical layout acceptance is claimed by installation alone.
+
 ## Latest delivery — Tripora 14 installed on Samsung
 
 User explicitly authorized commit/push and installation of the new Android version. Built **Tripora 14**, local.tripora.beta, versionCode 14 / 0.1.0-beta14, using the existing isolated native project and identical dependency lockfile. All current mobile source files were copied and hash-compared. Release Gradle build passes (438 tasks); the actual Hermes bundle contains the public API origin plus the new hero/fullscreen/budget text and no old local API origin. APK and build log remain ignored: local-data/hosted-beta/Tripora-14.apk and local-data/hosting-setup/tripora14-build.log. APK SHA-256: 369f0a858621c32c5ec0aed4fa95738b23081840daf99d41abb5c1d4103c2a34. Old/new APK signing-certificate SHA-256 digests match.

@@ -313,6 +313,9 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
     );
     assert.ok(!text().includes("Naslov aktivnosti"));
     assert.ok(!button("Dodaj mjesto"));
+    const listedTrip = button("Otvori putovanje UI synthetic trip");
+    assert.match(JSON.stringify(listedTrip.findAllByType("Text").map(n => n.props.children)), /PUTOVANJE ZA PAMĆENJE/);
+    assert.match(text(), /na čekanju/);
     await press("Otvori putovanje UI synthetic trip");
     assert.match(text(), /Pregled putovanja/);
     assert.match(text(), /PUTOVANJE ZA PAMĆENJE/);
