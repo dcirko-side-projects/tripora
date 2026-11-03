@@ -1,0 +1,17 @@
+# Repeat the real browser/storage/API suite in Linux Chromium and WebKit.
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS dotnet
+FROM mcr.microsoft.com/playwright:v1.64.1-noble
+COPY --from=dotnet /usr/share/dotnet /usr/share/dotnet
+ENV DOTNET_ROOT=/usr/share/dotnet PATH=/usr/share/dotnet:$PATH
+WORKDIR /work
+COPY apps/mobile/package*.json apps/mobile/
+RUN npm ci --prefix apps/mobile
+COPY tests/e2e/package*.json tests/e2e/
+RUN npm ci --prefix tests/e2e
+COPY apps/mobile/ apps/mobile/
+COPY services/api/ services/api/
+COPY tests/e2e/ tests/e2e/
+RUN dotnet build services/api/Tripora.Api.csproj --configuration Release && npm run export:web --prefix apps/mobile
+RUN mkdir local-data && chown pwuser:pwuser local-data && chown -R pwuser:pwuser apps/mobile/dist-web
+USER pwuser
+CMD ["node", "tests/e2e/pwa.mjs"]

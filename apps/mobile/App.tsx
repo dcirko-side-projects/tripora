@@ -1,6 +1,6 @@
+import { Alert } from "./src/ui/alert";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   AppState,
   BackHandler,
   KeyboardAvoidingView,
@@ -1130,8 +1130,8 @@ function Home() {
                   />
                   <DeleteAccountPanel client={sessionClient} pending={pendingCount} onDeleted={async pending => { await activeSync.current?.catch(() => {}); await logout(account.scope, pending); }} />
                   <Text style={ui.caption}>
-                    Razvojna verzija 0.1.0 · koristi probne podatke. Oporavak
-                    lozinke još nije dostupan.
+                    Razvojna verzija 0.1.0 · koristi probne podatke. Za potvrdu
+                    i oporavak računa potrebna je mreža.
                   </Text>
                 </>
               ) : null}

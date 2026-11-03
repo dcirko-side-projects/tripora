@@ -1,5 +1,10 @@
 # Nastavak Tripore na ovom ili novom laptopu
 
+Najnovije 2026-11-03: pokrenut je iPhone PWA bez Apple članstva. Korisnik traži prvo
+sve dostupne samostalne pripreme, pa tek onda fizički iPhone test. [Plan](IPHONE_PWA_PLAN.md)
+i [STATUS](STATUS.md) imaju trenutni dokaz i sljedeći korak; ranija odgoda iPhonea
+više nije aktivna odluka. Android ostaje native; nema nove plaćene infrastrukture.
+
 Najnovije 2026-11-01: popravak pretrage objavljen je na Renderu iz `941bd34`; **Tripora 13** instalirana je uz očuvane podatke. Na fizičkom Samsungu prolaze pretraga javne adrese bez naziva, grad/naziv s dijakritikom, adresni fallback, prazan rezultat s očuvanim nacrtom, spremanje/sinkronizacija, izvorna karta i ponovno otvaranje istog mjesta nakon cold starta. Ostavljeno je sintetičko `QA Search 2026-11-01` putovanje s jednim mjestom za pregled. [Dokaz, SHA i granice](PLACE_SEARCH_FIX_2026-11-01.md), [STATUS](STATUS.md). Stariji pending checkpointi ispod ostaju povijest.
 
 Najnovije 2026-10-31: Render Free API radi na https://tripora-l4c7.onrender.com uz Neon, Cloudinary i Brevo. Readiness nakon deploya/restarta i 17 minuta neaktivnosti klijenta, stvarna dostava testne poruke i privatni medijski transport prolaze. Zaseban Tripora Beta 11 APK sa stvarnim originom je izrađen, nije instaliran. Stvarno spavanje/cold start, fizički prihvat nove karte i puni hosted auth/sync/backup još slijede. [Točna konfiguracija i dokazi](HOSTED_BETA_2026-10-31.md), [STATUS](STATUS.md). Stariji registracijski checkpointi ispod ostaju povijest.

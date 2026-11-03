@@ -1,5 +1,10 @@
 # Tripora — plan razvoja
 
+Aktualno 2026-11-03: korisnik je odabrao besplatni iPhone PWA i zatražio prvo sve
+samostalne pripreme/provjere, zatim stvarni iPhone prihvat. [Plan do dovršetka](IPHONE_PWA_PLAN.md)
+zamjenjuje raniju odgodu iPhone distribucije. Native Android ostaje; nema Apple
+članstva niti novog plaćenog servisa. Aktualne dokaze/objavu vodi [STATUS](STATUS.md).
+
 Najnovije 2026-10-31: Render Free API radi na https://tripora-l4c7.onrender.com uz Neon, Cloudinary i Brevo. Readiness nakon deploya/restarta i 17 minuta neaktivnosti klijenta, stvarna dostava testne poruke i privatni medijski transport prolaze. Zaseban Tripora Beta 11 APK sa stvarnim originom je izrađen, nije instaliran. Stvarno spavanje/cold start, fizički prihvat nove karte i puni hosted auth/sync/backup još slijede. [Točna konfiguracija i dokazi](HOSTED_BETA_2026-10-31.md), [STATUS](STATUS.md). Stariji registracijski checkpointi ispod ostaju povijest.
 
 Aktualno: sva četiri provider računa su registrirana, Neon je konfiguriran, Brevo telefon/sender potvrđeni. Korisnik je repozitorij učinio javnim i izričito odobrio commit/push svih trenutnih promjena s engleskim opisom. Izvor za Render je **codex/offline-foundation**; još nema stvarnog deploymenta ni povezanih tajni. Korisnik povezuje repozitorij u Renderu. Aktualni dokaz i sljedeći korak: [STATUS](STATUS.md).

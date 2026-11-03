@@ -1,5 +1,6 @@
+import { Alert } from "../../ui/alert";
 import { useState } from 'react';
-import { Alert, Text } from 'react-native';
+import { Text } from 'react-native';
 import { ApiClient } from '../../core/sync';
 import { actionError } from '../../core/actionError';
 import { Button, Field, FormError, FormSheet } from '../../ui/components';

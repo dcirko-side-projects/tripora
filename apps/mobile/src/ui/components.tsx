@@ -37,6 +37,15 @@ export function Button({
       : variant === "danger"
         ? c.danger
         : c.primaryInk;
+  if (Platform.OS === 'web') return (
+    <button type="button" aria-label={title} disabled={disabled} onClick={onPress}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+        minHeight: 48, padding: '12px 14px', borderRadius: 14, border: 0, fontFamily: 'inherit',
+        fontSize: 15, fontWeight: 600, color: foreground, cursor: disabled ? 'default' : 'pointer',
+        opacity: disabled ? 0.45 : 1, backgroundColor: variant === 'primary' ? c.primary : variant === 'secondary' ? c.primarySoft : 'transparent' }}>
+      {icon ? <Icon name={icon} color={foreground} size={20} /> : null}{title}
+    </button>
+  );
   return (
     <Pressable
       accessibilityRole="button"

@@ -1,6 +1,8 @@
+import { DurableImage as Image } from "../../ui/DurableImage";
+import { Alert } from "../../ui/alert";
 import { useState } from "react";
-import { Alert, Image, Pressable, ScrollView, Text, View } from "react-native";
-import * as ImagePicker from "expo-image-picker";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import * as ImagePicker from "../../core/photoPicker";
 import { randomUUID } from "expo-crypto";
 import { LocalDatabase } from "../../core/localStore";
 import {

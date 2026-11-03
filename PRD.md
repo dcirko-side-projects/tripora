@@ -60,6 +60,13 @@ Conflict resolution must preserve the user's pending version until an explicit r
 
 ## Initial release boundaries
 
+Decision 2026-11-03: deliver iPhone support as an installable Safari Home Screen PWA
+without an Apple Developer membership; retain native Android. Same accounts/trips,
+offline writes and downloaded memories remain required. Complete autonomous browser,
+API and release preparation before asking for physical iPhone testing. Installation,
+Safari storage/media and Android/iPhone collaboration require final device evidence.
+See [completion plan](docs/IPHONE_PWA_PLAN.md). No paid infrastructure is authorized.
+
 Decisions 2026-10-30: initial internet beta must use zero-cost services within their limits. Retain email confirmation and password recovery. Deleting an account requires password and explicit double confirmation and removes owned trips plus the user's own records in other trips; previously downloaded copies/backups need separate retention handling. The app must have a recognizable suitcase/airplane launcher icon. iPhone acceptance is deferred; this does not silently remove iOS or desktop from the overall requirements. Details: docs/decisions/0004-free-beta-and-account-lifecycle.md.
 
 One currency per trip; no automatic exchange rates.

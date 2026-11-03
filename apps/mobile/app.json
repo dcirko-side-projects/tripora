@@ -8,7 +8,8 @@
     "userInterfaceStyle": "light",
     "platforms": [
       "android",
-      "ios"
+      "ios",
+      "web"
     ],
     "ios": {
       "supportsTablet": true
@@ -32,6 +33,10 @@
         }
       ],
       "@maplibre/maplibre-react-native"
-    ]
+    ],
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    }
   }
 }

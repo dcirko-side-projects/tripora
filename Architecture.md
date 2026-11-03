@@ -3,6 +3,49 @@
 Status: planning, personal packing, expenses and memories checkpoint 2026-10-22. Read docs/STATUS.md for verification and remaining boundaries.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
+## iPhone PWA — accepted 2026-11-03
+
+User selected zero-cost iPhone access through a Safari Home Screen PWA, with all
+available autonomous preparation before physical acceptance. Native Android stays.
+This supersedes the earlier iPhone deferral. No Apple membership or new paid provider
+is selected. [Completion plan](docs/IPHONE_PWA_PLAN.md).
+
+Reuse Expo/React Native UI and existing Identity/API/sync contracts. Public app assets
+ship in the existing API Docker image on the same HTTPS origin, with CSP, COOP/COEP,
+no CORS and no third-party scripts. Web dates and confirmation buttons use HTML;
+Leaflet uses existing coordinates/config, online tiles and attribution. Native
+adapters remain unchanged.
+
+The first PWA beta uses sql.js 1.15.2 SQLite/WASM on the main thread and one atomic
+localStorage snapshot per account. The full server/user-derived scope is the key;
+Web Locks prevent simultaneous tabs overwriting it. Existing SQLite schema,
+transactions, immutable outbox, conflicts and cursors remain. For every standalone
+write or transaction, save an in-memory rollback snapshot, commit SQL, export the
+whole database and synchronously replace the durable value. Only then report success.
+If SQL/export/storage fails, restore the prior database and retain the prior durable
+snapshot. Restore FK enforcement after sql.js export reopens its connection. Web
+uses DELETE journaling inside its memory filesystem; Android keeps its native WAL.
+A corrupt or future-version database is never silently cleared.
+
+This is an explicit first-beta capacity tradeoff: localStorage has a small browser
+quota (commonly about 5 MiB, with base64/string overhead reducing usable metadata),
+shared across accounts on this origin. Photos and tokens are excluded from that
+quota and live in IndexedDB. A full store must reject the write and preserve old
+records/outbox plus the form draft. No unlimited-volume claim or silent memory-only
+fallback. The experimental Expo synchronous OPFS adapter failed WebKit writes during
+the spike and is not shipped; no vendor patches or OPFS requirement remain.
+
+Browser session tokens use origin-scoped IndexedDB, not Keychain protection. HTTPS,
+CSP/no external scripts and private/no-store API responses are required. Account-
+scoped PNG/thumbnail blobs commit together in IndexedDB before media metadata; hash
+checks/bounds and existing private API access remain. Temporary object URLs are views,
+not durable storage. Unsupported images keep the text draft. Service worker precache
+contains only public build assets, waits for old clients to close and never deletes
+account snapshots/IndexedDB or caches API/media/tile responses. Browser data eviction
+and user clearing remain possible; persistence requests are not backups. No background
+sync guarantee. Deployment/browser checks and physical iPhone acceptance remain
+separate evidence in STATUS.
+
 ## Trip overview and expanded map — 2026-11-02
 
 Follow-up: the same shared TripHero component renders each trip in “Moja putovanja” (upcoming/current/past, including newly created trips) and the selected-trip overview. List cards retain their accessible open action plus trip/sync/access status below the shared title/destination/date/role content.

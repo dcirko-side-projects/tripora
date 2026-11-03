@@ -1,5 +1,6 @@
+import { Alert } from "../../ui/alert";
 import { useEffect, useState } from "react";
-import { Alert, Share, Text, View } from "react-native";
+import { Share, Text, View } from "react-native";
 import { ApiClient } from "../../core/sync";
 import { Button, Empty, Field, FormSheet } from "../../ui/components";
 import { ui } from "../../ui/theme";

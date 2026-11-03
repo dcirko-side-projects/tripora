@@ -1,6 +1,50 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-02. Development branch: codex/offline-foundation.
+Updated: 2026-11-03. Development branch: codex/offline-foundation.
+
+## iPhone PWA — autonomous preparation complete, HTTPS publication next
+
+User selected a zero-Apple-fee Safari Home Screen PWA and requested all autonomous
+preparation before physical iPhone testing. [Completion plan](IPHONE_PWA_PLAN.md)
+and [installation guide](IPHONE_INSTALLATION.md) record the sequence and acceptance.
+Shared Expo UI now has web adapters for dates/buttons/confirmations, Leaflet maps,
+persistent sessions and photo selection/storage. Existing Identity/API/sync/native
+Android remain. Web SQLite uses sql.js 1.15.2 with atomic account-scoped localStorage
+snapshots: commit SQL, persist snapshot, then report success; restore prior records
+and outbox on SQL/export/quota failure. A Web Lock prevents two active tabs overwriting
+one another. This first-beta metadata store has a small browser quota (commonly
+5 MiB before encoding/string overhead); photos/tokens are separate IndexedDB data.
+No OPFS dependency, vendor patches or memory-only fallback ship. The earlier Expo
+OPFS spike failed WebKit writes and was replaced before publication.
+
+PNG/thumbnail blobs commit together in IndexedDB; bounded canvas decode/resizing and
+SHA-256 checks retain the private API contract. Unsupported images and simulated
+metadata/second-image quota failures preserve the draft and previous persisted data.
+Service worker precaches 13 public build assets only, waits for old clients to close
+and preserves local queues/photos. Offline-shell readiness and Safari installation
+instructions are included. Same-origin HTTPS/CSP/COOP/COEP static delivery ships in
+our existing API image; no extra hosting account, CORS or client secrets.
+
+Evidence on final source: clean npm ci with **no vendor patch**, TypeScript, all
+**88 mobile tests**, Android/iOS/web exports, API Release/liveness, backup guard and
+all **52 PostgreSQL/HTTP scenarios** pass. Linux Chromium + WebKit 1.64.1 passes all
+**25 PWA checkpoints**, using actual browser SQLite snapshots/IndexedDB, isolated
+real PostgreSQL/API and a test-only HTTP proxy for real lost-acknowledgement faults.
+It covers offline reload, atomic metadata/image quota rollback, 2400px input resized
+to 1280px/320px, full-image reopening offline, upload accepted then response lost and
+safe retry, persisted conflicts/cancel/explicit local resolution, Leaflet/fullscreen/
+marker details with synthetic tiles, logout/account isolation/offline deletion, and
+new-shell activation preserving draft/outbox/photos. No uncaught browser errors;
+API/private media responses never enter the shell cache. A repeatable Linux browser
+image and CI checks are included. Generated logs/screenshots stay in ignored
+local-data/pwa-qa. Production Docker build passes. Dependency findings remain
+2 low/10 moderate, no high/critical.
+
+Next: publish this verified same-origin PWA on the existing Render Free service and
+verify public HTTPS assets/headers/startup. Then physical iPhone installation,
+gallery/HEIC/airplane-mode/reopen and shared Android/iPhone acceptance. Browser
+WebKit and bundle exports are not a physical iPhone test. No live PWA deployment,
+physical iPhone result, new Android installation or paid service is claimed here.
 
 ## Latest follow-up — shared trip card in My trips
 

@@ -1,5 +1,9 @@
 # Tripora — preostale faze do izdanja
 
+Aktualno 2026-11-03: iPhone se isporučuje kao Safari Home Screen PWA bez Apple
+članstva. Prvo završiti sve samostalne provjere i HTTPS pripremu, zatim uređaj.
+[Detaljan plan i prihvat](IPHONE_PWA_PLAN.md), [aktualni dokazi](STATUS.md).
+
 Aktualno 2026-10-31 — korisnik je odobrio i implementirani su pretraga mjesta po nazivu/gradu, odabir rezultata, koordinate kroz offline sync i native MapLibre karta. Prolaze 83 mobilna / 48 HTTP scenarija te QA10 Android build; APK nije instaliran/fizički prihvaćen. Zahtjev je 0 € bez bankovne kartice i bez laptopa: pripremljen Render/Neon/Cloudinary/Brevo; korisnik nema račune i tražio je [korake registracije](NO_CARD_SETUP.md). Nema stvarnog deploymenta. [Odluka 0005](decisions/0005-maps-and-no-card-beta.md) i [STATUS](STATUS.md) zamjenjuju raniji research-only/Supabase checkpoint.
 
 Ažurirano 2026-10-30. Ovo su release faze iz razgovora; ne prenumeriraju izvorni razvojni plan. iPhone je odgođen, a Android ima raniji ograničeni device prihvat.

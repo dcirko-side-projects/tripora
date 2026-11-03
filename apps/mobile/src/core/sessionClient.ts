@@ -12,7 +12,7 @@ export class SessionClient {
   private storageWork: Promise<void> = Promise.resolve();
   constructor(
     readonly baseUrl: string, private storage: SessionStorage,
-    private scopeFor: (value: string) => Promise<string>, private send: Requester = fetch,
+    private scopeFor: (value: string) => Promise<string>, private send: Requester = (url, options) => fetch(url, options),
     private now: () => number = Date.now,
   ) {}
   private publicAccount(): Account {

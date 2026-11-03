@@ -1,5 +1,6 @@
+import { Alert } from "../../ui/alert";
 import { useEffect, useRef, useState } from "react";
-import { Alert, Linking, Pressable, Text, View } from "react-native";
+import { Linking, Pressable, Text, View } from "react-native";
 import { LocalDatabase } from "../../core/localStore";
 import {
   Place,

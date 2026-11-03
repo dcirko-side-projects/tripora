@@ -2,6 +2,27 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## iPhone PWA — accepted 2026-11-03
+
+User selected Safari Home Screen PWA at zero Apple membership cost; native Android
+remains. Reuse Expo UI, Identity and sync. Web uses sql.js SQLite/WASM with the same
+schema/outbox/cursors. One atomic localStorage snapshot per account commits after SQL
+and before reporting success; on storage failure restore both in-memory records and
+outbox to the previous snapshot. A single-tab Web Lock prevents overwrites. This
+first-beta metadata store has a small browser quota (commonly about 5 MiB before
+base64/string overhead); quota failure preserves previous data and the draft. Photos
+and tokens use separate IndexedDB stores. There is no OPFS dependency, Expo web vendor
+patch or volatile fallback. Native SQLite/WAL remains unchanged.
+
+Browser tokens are not Keychain-protected. Same-origin HTTPS, CSP/no third-party
+scripts and private/no-store API responses are required. HTML dates/confirmations and
+online Leaflet maps replace native bridges on web. Public PWA assets ship with the
+existing API image; no extra provider/CORS. Service worker caches build assets only,
+waits for old clients to close and preserves snapshots/outbox/photos. Eviction/user
+clearing and no background-sync guarantee remain explicit. All autonomous checks
+precede physical iPhone acceptance. [Plan](docs/IPHONE_PWA_PLAN.md) and STATUS track
+browser, deployment and device evidence separately. This supersedes iPhone deferral.
+
 ## Trip overview and expanded map — 2026-11-02
 
 Follow-up: the same shared TripHero component renders each trip in “Moja putovanja” (upcoming/current/past, including newly created trips) and the selected-trip overview. List cards retain their accessible open action plus trip/sync/access status below the shared title/destination/date/role content.

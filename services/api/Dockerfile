@@ -1,3 +1,10 @@
+FROM node:22-bookworm-slim AS web
+WORKDIR /mobile
+COPY apps/mobile/package*.json ./
+RUN npm ci
+COPY apps/mobile/ ./
+RUN npm run export:web
+
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY services/api/Tripora.Api.csproj services/api/
@@ -9,6 +16,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 ASPNETCORE_ENVIRONMENT=Production
 COPY --from=build /out ./
+COPY --from=web /mobile/dist-web/ ./wwwroot/
 COPY --chmod=755 services/api/start.sh /app/start.sh
 USER $APP_UID
 EXPOSE 8080

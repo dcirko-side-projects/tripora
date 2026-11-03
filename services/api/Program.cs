@@ -46,6 +46,7 @@ if (!healthOnly)
 }
 var app = builder.Build();
 app.UseExceptionHandler();
+app.UseTriporaWeb();
 app.Use(async (context, next) => {
     if (context.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>() is { IsReadOnly: false } limit)
         limit.MaxRequestBodySize = context.Request.Path.StartsWithSegments("/auth") ? 16 * 1024 : 16 * 1024 * 1024;
