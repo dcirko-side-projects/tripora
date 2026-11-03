@@ -11,14 +11,22 @@ Logout retains pending work for the same account. Owners and members maintain pl
 including offline editing, visited status, filtering and explicit conflict resolution. Prepare for offline confirms a complete
 metadata download; images require explicit download and offline maps are not included. Daily plans link saved places,
 packing is personal per participant, expenses use exact totals and one trip currency, and memories support text and private photos.
-Account confirmation/recovery/deletion and free hosted adapters are implemented and locally tested. The API is now live, with real email test delivery and private-photo transport verified; complete hosted account/device acceptance remains pending. Android has bounded physical acceptance with QA9 branding; iPhone is deferred. See [the live hosting checkpoint](docs/HOSTED_BETA_2026-10-31.md), [current release phases](docs/RELEASE_PHASES.md) and [card-free beta setup](docs/NO_CARD_SETUP.md).
+Account confirmation/recovery/deletion and free hosted adapters are implemented and locally tested. The API is now live, with real email test delivery and private-photo transport verified; complete hosted account/device acceptance remains pending. Android has bounded physical acceptance; iPhone now has a deployed PWA beta with final physical acceptance pending. See [the live hosting checkpoint](docs/HOSTED_BETA_2026-10-31.md), [current release phases](docs/RELEASE_PHASES.md) and [card-free beta setup](docs/NO_CARD_SETUP.md).
 
 Place lookup searches a public name plus city on demand and lets the user confirm a result. Saved coordinates synchronize with the trip and appear on the native map; downloaded lists remain usable offline. Online maps and place lookup use OpenStreetMap services within their beta usage limits, without a Google API key.
 
-The zero-cost hosting stack is Render, Neon PostgreSQL, authenticated Cloudinary storage and Brevo email. The API is live at [tripora-l4c7.onrender.com](https://tripora-l4c7.onrender.com), with provider secrets stored server-side. It provides API endpoints, not a browser UI. The repository is public; credentials and local runtime data stay excluded. Current source evidence: 83 mobile tests, 48 PostgreSQL/HTTP scenarios, both platform exports and an Android QA10 build. New map behavior has not yet passed physical-device acceptance. Availability, mobile beta build and remaining cloud acceptance are tracked in [STATUS](docs/STATUS.md).
+The zero-cost hosting stack is Render, Neon PostgreSQL, authenticated Cloudinary storage and Brevo email. The API is live at [tripora-l4c7.onrender.com](https://tripora-l4c7.onrender.com), with provider secrets stored server-side. It serves both the API and the installable iPhone PWA on the same HTTPS origin. The repository is public; credentials and local runtime data stay excluded. Current PWA evidence: 88 mobile tests, 52 PostgreSQL/HTTP scenarios, 25 Chromium/WebKit PWA checkpoints, both native exports, web export and passing GitHub CI. Physical iPhone acceptance remains pending. Availability, mobile beta build and remaining cloud acceptance are tracked in [STATUS](docs/STATUS.md).
 
 **Moving to another laptop or a new Codex chat? Read [NEW_LAPTOP_HANDOFF.md](docs/NEW_LAPTOP_HANDOFF.md).**
 Latest development is on `codex/offline-foundation`, not `main`.
+
+## iPhone PWA beta
+
+Open [Tripora](https://tripora-l4c7.onrender.com/) in Safari, choose Share → Add to
+Home Screen, then sign in through the new icon. No Apple Developer membership or
+Mac is needed. [Installation and remaining iPhone acceptance](docs/IPHONE_INSTALLATION.md),
+[completion plan](docs/IPHONE_PWA_PLAN.md). Prepare trip data and download photos
+before going offline. Browser storage has limits and is not a backup; maps need internet.
 
 ## Prerequisites
 

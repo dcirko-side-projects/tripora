@@ -1,6 +1,8 @@
 # Nastavak Tripore na ovom ili novom laptopu
 
-Najnovije 2026-11-03: pokrenut je iPhone PWA bez Apple članstva. Korisnik traži prvo
+Najnovije 2026-11-03: iPhone PWA beta je objavljena bez Apple članstva na
+https://tripora-l4c7.onrender.com/ iz `93ac4c3`; GitHub CI i 25 Chromium/WebKit
+scenarija prolaze, kao i javni HTTPS/offline smoke. Korisnik traži prvo
 sve dostupne samostalne pripreme, pa tek onda fizički iPhone test. [Plan](IPHONE_PWA_PLAN.md)
 i [STATUS](STATUS.md) imaju trenutni dokaz i sljedeći korak; ranija odgoda iPhonea
 više nije aktivna odluka. Android ostaje native; nema nove plaćene infrastrukture.

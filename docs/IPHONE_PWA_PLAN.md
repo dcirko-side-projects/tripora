@@ -90,10 +90,16 @@ docker build -f tests/e2e/Dockerfile.pwa -t tripora-pwa-test:local .
 docker run --rm --init --shm-size=1g tripora-pwa-test:local
 ```
 
-Preostalo prije uređaja: objava provjerenog paketa na
-postojećem Render Free servisu i provjera stvarne HTTPS poveznice/zaglavlja/app shella.
-Stvarni iPhone prihvat još ne postoji. Ne tražiti korisnika za taj test prije
-dovršetka dostupne pripreme ili dokumentiranja konkretne vanjske prepreke.
+Korak 6 je dovršen: [PWA beta](https://tripora-l4c7.onrender.com/) je objavljena
+iz `93ac4c3`, Render potvrđuje Live i CI je zelen. Javni HTTPS app shell, svih 13
+asset datoteka, sigurnosna zaglavlja i readiness prolaze. Javni Chromium/WebKit
+provjeravaju stvarno offline ponovno otvaranje bez prijave/promjene korisničkih podataka.
+
+**Preostaje korak 7: pravi iPhone i zajedničko putovanje s Androidom.**
+Nema dodatnog plaćenog računa niti potrebe za Macom za ovu PWA distribuciju.
+Stvarni uređaj, HEIC/galerija/airplane mode i višednevni prihvat nisu zamijenjeni
+browser testovima. Fotografije i metapodaci trebaju završnu provjeru uz stvarni račun
+na uređaju; dostupna priprema nije ostavljena korisniku.
 Aktualni rezultat i sljedeći korak vode se u [STATUS.md](STATUS.md).
 
 Izvori: [SQL.js](https://github.com/sql-js/sql.js),

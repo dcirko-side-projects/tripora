@@ -2,7 +2,7 @@
 
 Updated: 2026-11-03. Development branch: codex/offline-foundation.
 
-## iPhone PWA — autonomous preparation complete, HTTPS publication next
+## iPhone PWA — published; physical iPhone acceptance next
 
 User selected a zero-Apple-fee Safari Home Screen PWA and requested all autonomous
 preparation before physical iPhone testing. [Completion plan](IPHONE_PWA_PLAN.md)
@@ -40,11 +40,28 @@ image and CI checks are included. Generated logs/screenshots stay in ignored
 local-data/pwa-qa. Production Docker build passes. Dependency findings remain
 2 low/10 moderate, no high/critical.
 
-Next: publish this verified same-origin PWA on the existing Render Free service and
-verify public HTTPS assets/headers/startup. Then physical iPhone installation,
-gallery/HEIC/airplane-mode/reopen and shared Android/iPhone acceptance. Browser
-WebKit and bundle exports are not a physical iPhone test. No live PWA deployment,
-physical iPhone result, new Android installation or paid service is claimed here.
+Published source **93ac4c379fd0f145e88cebdfc2010ffe5b39b7a6** to the existing
+codex/offline-foundation branch; remote SHA matches. [GitHub CI run](https://github.com/dcirko-side-projects/tripora/actions/runs/41712825798)
+passes both mobile and API jobs, including native/web exports, all integration
+checks and the full Chromium/WebKit PWA suite. Main/legacy history remain unchanged.
+Render manual deployment **dep-dbl480m7bikc73eubfr0** reports **Deploy succeeded | Live**,
+1m57s, on 2026-11-03 at approximately 21:30 CET. No migrations were applied; existing
+Free plan/provider settings/secrets were retained. No new paid service/account.
+
+PWA beta is live at **https://tripora-l4c7.onrender.com/**. Public root, manifest,
+service worker, all 13 shell assets and readiness return 200; WASM MIME and security
+headers pass. Auth options still require confirmed email; anonymous sync returns
+401 with no-store. Actual Chrome UI shows the login screen, Safari instructions and
+completed offline-shell preparation. Separate read-only **public Chromium and WebKit**
+checks pass HTTPS startup and offline reload without logging in or changing user data.
+Public HTTP proof, screenshot and logs are ignored under local-data/pwa-qa.
+
+All available autonomous preparation/publication checks are complete for this slice.
+Next: real iPhone Safari → Add to Home Screen, standalone layout/keyboard, gallery
+cancel/JPEG/HEIC, airplane-mode save/close/reopen/reconnect, update and shared trip with
+Android. Browser WebKit is not a physical iPhone test. No new Android installation,
+full hosted account/photo exercise, multi-day uptime or unlimited browser storage
+claim is implied. First-beta metadata capacity/eviction limits remain documented.
 
 ## Latest follow-up — shared trip card in My trips
 

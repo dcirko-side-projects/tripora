@@ -5,9 +5,10 @@
 Korisnik je odabrao besplatnu Safari Home Screen aplikaciju. Apple Developer račun,
 TestFlight i App Store nisu potrebni. Android ostaje postojeća native aplikacija.
 [Plan do dovršetka i aktualni dokazi](IPHONE_PWA_PLAN.md), [STATUS](STATUS.md).
-PWA je implementirana i testira se; javna objava još nije potvrđena.
+PWA beta je objavljena na postojećem Render Free servisu iz `93ac4c3`.
+Automatizirane i javne browser provjere prolaze; pravi iPhone prihvat tek slijedi.
 
-Nakon potvrđene objave:
+Instalacija bete:
 
 1. U **Safariju** otvori [Triporu](https://tripora-l4c7.onrender.com/).
 2. Odaberi **Dijeli → Dodaj na početni zaslon → Dodaj** (po potrebi uključi
