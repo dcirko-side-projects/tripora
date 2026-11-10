@@ -19,6 +19,8 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
   let selected = null;
   let confirm;
   let online = false;
+  let releaseSync;
+  let waitingSync = new Promise(resolve => { releaseSync = resolve; });
   let expired = false;
   let backHandler;
   let photosAllowed = true;
@@ -122,6 +124,7 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
   const sync = {
     ApiError,
     async synchronize(db) {
+      if (waitingSync) await waitingSync;
       if (expired) throw new ApiError(401);
       if (!online) throw new Error("Synthetic offline");
       for (const p of store.accountSnapshot(db).pending) {
@@ -292,6 +295,7 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
     assert.match(text(), /Moja putovanja/);
     assert.ok(!button("Spremi putovanje"));
     assert.ok(!button("Dodaj mjesto"));
+    assert.match(text(), /Sinkronizacija traje u pozadini/);
     await press("Novo putovanje");
     await press("Spremi putovanje");
     capture("trips");
@@ -311,6 +315,8 @@ test("App UI: auth, trips, category views, offline place edits, invitations and 
       store.accountSnapshot(databases.get("a@example.test").db).pending.length,
       1,
     );
+    assert.match(text(), /Sinkronizacija traje u pozadini/);
+    await run(() => { waitingSync = null; releaseSync(); });
     assert.ok(!text().includes("Naslov aktivnosti"));
     assert.ok(!button("Dodaj mjesto"));
     const listedTrip = button("Otvori putovanje UI synthetic trip");

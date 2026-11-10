@@ -2,6 +2,62 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Free hosting wake mitigation - 2026-11-10
+
+User requested eliminating the observed server wait and explicitly reaffirmed
+**0 cost and no payment card**, declining the proposed paid Render Starter option.
+A single external UptimeRobot Free HTTP monitor checks only the public
+`/health/live` endpoint every 300 seconds. The user signed in/created the monitor
+account; monitor setup uses no API key, app credentials, trip data or private
+media. No alert contacts/integrations or public status page were attached.
+This supersedes the earlier no-keepalive implementation boundary for this beta.
+The monitor runs outside Codex/the laptop, independently of the mobile app.
+
+Render's platform health path changes from `/health/ready` to `/health/live`,
+both in the existing service settings and `render.yaml`. Liveness performs no DB
+query; readiness still validates the database and remains the separate release/
+incident gate. Render sends health probes every few seconds: keeping the API
+awake with the old DB-backed health path would also keep Neon awake. At the
+recorded 0.25 CU minimum, continuously active compute would use roughly 180-186
+CU-hours/month, above the currently documented 100 CU-hour Free allowance.
+Neon scale-to-zero remains enabled; short database wakes can therefore remain.
+A liveness success is not a claim that auth, database, sync or media are healthy.
+
+This mitigates ordinary idle spin-down; it does not disable Render's Free policy
+or promise an SLA. Missing external checks, provider restarts, quota exhaustion
+and network faults can still produce a cold start. Render's 750 running hours
+are shared across the workspace; one always-running service uses 720-744 hours
+in a 30/31-day month, leaving little room for another Free service. No unrelated
+service is changed. Current activation and idle-window evidence:
+[hosting wake report](docs/SERVER_WAKE_2026-11-10.md) and [status](docs/STATUS.md).
+
+## Map return, filters and startup responsiveness - 2026-11-10
+
+User requested return from place details to the same map position, map filtering by
+city/place/category, meaningful spot labels and investigation of slow startup.
+Fullscreen details and editing now render as an embedded sheet inside the existing
+map modal. Closing the sheet or pressing Android Back closes that sheet first;
+the map stays mounted. Inline details retain the usual modal. Native camera
+center/zoom/bearing/pitch and web center/zoom survive inline/fullscreen remounts.
+Filtering to zero matches retains the map and controls. Category/status and a local,
+accent-insensitive name/address/location-display-name query are available in both
+map sizes. City matching uses saved address/display-name text; there is no separate
+structured city field or geocoder call. Labels use category M/H/I plus up to two
+name initials, keeping category colors and accessible full place names.
+
+Session restore already reads local credentials without contacting the server.
+Previously initial/foreground sync set the global busy state and locked local
+writes/navigation until the network finished. Sync now has a separate visible
+status and permits local transactions through the existing immutable outbox and
+dirty-record reconciliation. Account changes and online lifecycle actions remain
+serialized with sync. Foreground retry cadence, API/auth/schema/media contracts
+and the 75-second request timeout are unchanged. A read-only public readiness
+measurement returned 200 after 44,633 ms, then 200 after 243 ms, consistent with
+an idle hosting wake-up; this does not measure the native launch time or prove
+server-side timing attribution. Local use no longer waits for that response.
+First login, fresh remote data and online maps still require the server/network.
+No paid service, keepalive or provider change is introduced.
+
 ## iPhone PWA — accepted 2026-11-03
 
 User selected Safari Home Screen PWA at zero Apple membership cost; native Android
@@ -27,7 +83,7 @@ browser, deployment and device evidence separately. This supersedes iPhone defer
 
 Follow-up: the same shared TripHero component renders each trip in “Moja putovanja” (upcoming/current/past, including newly created trips) and the selected-trip overview. List cards retain their accessible open action plus trip/sync/access status below the shared title/destination/date/role content.
 
-User requested a prominent trip header, quieter budget placement and a fullscreen map. The overview uses a local SVG travel-card background; budget/expenses are a standard row under “Za tvoje putovanje”, retaining pending-inclusive totals. Places can open the filtered native map in a fullScreen Modal with SafeAreaView and no ScrollView, isolating gestures from the app scroll. Only one map is mounted; expanding/closing refits the markers. Android back and Close dismiss it; markers open existing details after closing (iOS waits for onDismiss). Attribution stays enabled. No new service, dependency, schema or sync behavior. Native gesture/layout acceptance remains pending.
+User requested a prominent trip header, quieter budget placement and a fullscreen map. The overview uses a local SVG travel-card background; budget/expenses are a standard row under “Za tvoje putovanje”, retaining pending-inclusive totals. Places can open the filtered native map in a fullScreen Modal with SafeAreaView and no ScrollView, isolating gestures from the app scroll. Only one map is mounted. The 2026-11-10 follow-up above supersedes the original refit/close-on-marker behavior: camera position is retained and fullscreen details/editing stay inside the map modal. Android Back closes an open sheet before the map. Attribution stays enabled. No new service, dependency, schema or sync behavior. Native gesture/layout acceptance remains pending.
 
 ## Existing foundation
 

@@ -1,5 +1,14 @@
 # Tripora — plan razvoja
 
+Aktualno 2026-11-10 - hosting: ostaje 0 EUR / bez kartice. Aktiviran je jedan
+UptimeRobot Free monitor za javni `/health/live` svakih pet minuta, uz isti Render
+Free servis. Health provjere ne pristupaju Neonu. [Dokaz i operativne granice](SERVER_WAKE_2026-11-10.md).
+
+Aktualno 2026-11-10: novi zahtjevi za povrat iz detalja na isti kadar karte,
+filtre grada/naziva/kategorije, oznake mjesta i brzi lokalni ulazak. Implementacija,
+mjerenje javnog API-ja i provjere vode se u [STATUS](STATUS.md). Prihvat na telefonu
+i objava nove verzije ostaju zaseban sljedeći korak.
+
 Aktualno 2026-11-03: korisnik je odabrao besplatni iPhone PWA i zatražio prvo sve
 samostalne pripreme/provjere, zatim stvarni iPhone prihvat. [Plan do dovršetka](IPHONE_PWA_PLAN.md)
 zamjenjuje raniju odgodu iPhone distribucije. Native Android ostaje; nema Apple

@@ -1,5 +1,12 @@
 # Internetska beta bez bankovne kartice
 
+Aktualno 2026-11-10: korisnik je ponovno potvrdio 0 EUR i bez kartice te
+zatražio uklanjanje čekanja na buđenje. Postojeći Render Free servis sada koristi
+`/health/live` za rutinske provjere; jedan UptimeRobot Free monitor provjerava taj
+javni endpoint svakih pet minuta, bez pristupa bazi. To zamjenjuje raniju granicu
+bez keepalive provjera. `/health/ready` ostaje zasebna provjera baze/API-ja.
+[Konfiguracija, kvote i stvarni dokaz](SERVER_WAKE_2026-11-10.md).
+
 Najnovije 2026-10-31: sva četiri računa sada su povezana. Render Free API je live na https://tripora-l4c7.onrender.com; Neon migracije/readiness, nastavak nakon 17 minuta neaktivnosti klijenta, stvarna Brevo testna dostava i privatni Cloudinary upload/download/cleanup prolaze. Tripora Beta 11 APK je izrađen, nije instaliran; stvarni cold start još nije potvrđen. [Aktualna konfiguracija i preostali prihvat](HOSTED_BETA_2026-10-31.md) zamjenjuju povijesne checkpointove ispod; koraci registracije ostaju referenca. Ne unositi karticu.
 
 Checkpoint — sva četiri računa su registrirana; Brevo telefon je potvrđen i postojeći pošiljatelj verificiran (freemail dostavu još treba testirati). Render zasad nema pristup Tripora repozitoriju; pripremljen je [pregled objave](DEPLOY_REVIEW.md). Čekaju korisnikovo odobrenje commit/pusha na razvojnu granu i povezivanje samo tog repozitorija s Renderom. Ključevi još nisu preneseni niti je servis deployan.

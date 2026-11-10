@@ -1,6 +1,6 @@
 import { Alert } from "../../ui/alert";
 import { useEffect, useRef, useState } from "react";
-import { Linking, Pressable, Text, View } from "react-native";
+import { Keyboard, Linking, Platform, Pressable, Text, View } from "react-native";
 import { LocalDatabase } from "../../core/localStore";
 import {
   Place,
@@ -18,6 +18,7 @@ import { ui } from "../../ui/theme";
 import { actionError } from "../../core/actionError";
 import { ApiClient, ApiError } from "../../core/sync";
 import { TripPlacesMap } from "./TripPlacesMap";
+const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hr").replace(/đ/g, "d").trim();
 const categories = [
   ["place", "Mjesta"],
   ["food", "Hrana"],
@@ -55,6 +56,7 @@ export function PlacesPanel({
 }: Props) {
   const [category, setCategory] = useState<PlaceCategory | 'all'>("all");
   const [view, setView] = useState<'list' | 'map'>('list');
+  const [mapQuery, setMapQuery] = useState("");
   const [city, setCity] = useState(destination);
   const [results, setResults] = useState<PlaceLocation[]>([]);
   const [searching, setSearching] = useState(false);
@@ -73,7 +75,8 @@ export function PlacesPanel({
       p.tripId === tripId &&
       !p.deleted &&
       (category === 'all' || p.category === category) &&
-      (filter === "all" || p.visited === (filter === "visited")),
+      (filter === "all" || p.visited === (filter === "visited")) &&
+      normalize([p.name, p.address, p.location?.displayName ?? ""].join(" ")).includes(normalize(mapQuery)),
   );
   const selected = snapshot.places.find((p) => p.id === detail && !p.deleted);
   function edit(place?: Place) {
@@ -145,82 +148,19 @@ export function PlacesPanel({
     selected &&
     snapshot.pending.find((p) => p.operation.placeId === selected.id);
   const editable = !readOnly && !queued?.conflict && !queued?.error;
-  return (
-    <View style={ui.panel}>
-      <View>
-        <Text style={ui.eyebrow}>ISTRAŽI ODREDIŠTE</Text>
-        <Text accessibilityRole="header" style={ui.title}>
-          Tvoja mjesta
-        </Text>
-      </View>
-      <Choice options={[["list", "Popis"], ["map", "Karta"]] as const} value={view} onChange={setView} />
-      <Choice options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
-      <Choice
-        options={
-          [
-            ["all", "Sve"],
-            ["planned", "Za posjetiti"],
-            ["visited", "Posjećeno"],
-          ] as const
-        }
-        value={filter}
-        onChange={setFilter}
-      />
-      {!readOnly ? (
-        <Button
-          title="Dodaj mjesto"
-          icon="plus"
-          disabled={busy}
-          onPress={() => edit()}
-        />
-      ) : (
-        <Text style={ui.muted}>
-          Preuzeta kopija · pristup za izmjene je uklonjen.
-        </Text>
-      )}
-      {view === 'map' ? <TripPlacesMap places={records} api={api} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
-        <Empty
-          icon="pin"
-          title="Ovdje počinje istraživanje"
-          detail="Spremi mjesto, restoran ili izlazak koji ne želiš propustiti."
-        />
-      ) : (
-        <View>
-          {records.map((place) => (
-            <Pressable
-              key={place.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Otvori mjesto ${place.name}`}
-              onPress={() => {
-                setDetail(place.id);
-                setError("");
-              }}
-              style={[ui.item, ui.between]}
-            >
-              <View style={ui.flex}>
-                <Text style={ui.subheading}>{place.name}</Text>
-                <Text style={ui.muted}>
-                  {place.visited ? "Posjećeno" : "Za posjetiti"}
-                  {place.address ? ` · ${place.address}` : ""}
-                </Text>
-                {!place.location ? <Text style={ui.caption}>Bez položaja na karti · pronađi mjesto u obrascu</Text> : null}
-                {snapshot.pending.some(
-                  (p) => p.operation.placeId === place.id,
-                ) ? (
-                  <Text style={ui.caption}>
-                    Spremljeno na uređaju · čeka slanje
-                  </Text>
-                ) : null}
-              </View>
-              <Icon name="next" size={18} />
-            </Pressable>
-          ))}
-        </View>
-      )}
+  const closeForm = () => { searchGeneration.current++; setSearching(false); setForm(false); };
+  const closeMapSheet = () => {
+    if (Platform.OS === 'android' && Keyboard.isVisible()) { Keyboard.dismiss(); return; }
+    if (busy) return;
+    if (selected) setDetail(undefined);
+    else closeForm();
+  };
+  const editor = (embedded = false) => (
       <FormSheet
+        embedded={embedded}
         title={editing ? "Uredi mjesto" : "Novo mjesto"}
         visible={form && !readOnly}
-        onClose={() => { searchGeneration.current++; setSearching(false); setForm(false); }}
+        onClose={closeForm}
         busy={busy}
         error={error}
       >
@@ -313,8 +253,11 @@ export function PlacesPanel({
         <Button title="Spremi mjesto" disabled={busy || searching} onPress={save} />
         <Text style={ui.caption}>Spremanje radi i bez interneta.</Text>
       </FormSheet>
+  );
+  const details = (embedded = false) => (
       <FormSheet
         title="Detalji mjesta"
+        embedded={embedded}
         visible={!!selected}
         onClose={() => setDetail(undefined)}
         busy={busy}
@@ -418,6 +361,75 @@ export function PlacesPanel({
           </>
         ) : null}
       </FormSheet>
+  );
+  const filters = <View style={{ gap: 8 }}>
+    <Field label="Filtriraj grad, naziv ili adresu" value={mapQuery} onChangeText={setMapQuery} maxLength={300} />
+    <Choice options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
+    <Choice options={[["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const} value={filter} onChange={setFilter} />
+  </View>;
+  return (
+    <View style={ui.panel}>
+      <View>
+        <Text style={ui.eyebrow}>ISTRAŽI ODREDIŠTE</Text>
+        <Text accessibilityRole="header" style={ui.title}>
+          Tvoja mjesta
+        </Text>
+      </View>
+      <Choice options={[["list", "Popis"], ["map", "Karta"]] as const} value={view} onChange={setView} />
+      {view === "list" ? filters : null}
+      {!readOnly ? (
+        <Button
+          title="Dodaj mjesto"
+          icon="plus"
+          disabled={busy}
+          onPress={() => edit()}
+        />
+      ) : (
+        <Text style={ui.muted}>
+          Preuzeta kopija · pristup za izmjene je uklonjen.
+        </Text>
+      )}
+      {view === 'map' ? <TripPlacesMap places={records} api={api} filters={filters} overlay={selected ? details : form && !readOnly ? editor : undefined} onCloseOverlay={closeMapSheet} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
+        <Empty
+          icon="pin"
+          title="Ovdje počinje istraživanje"
+          detail="Spremi mjesto, restoran ili izlazak koji ne želiš propustiti."
+        />
+      ) : (
+        <View>
+          {records.map((place) => (
+            <Pressable
+              key={place.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Otvori mjesto ${place.name}`}
+              onPress={() => {
+                setDetail(place.id);
+                setError("");
+              }}
+              style={[ui.item, ui.between]}
+            >
+              <View style={ui.flex}>
+                <Text style={ui.subheading}>{place.name}</Text>
+                <Text style={ui.muted}>
+                  {place.visited ? "Posjećeno" : "Za posjetiti"}
+                  {place.address ? ` · ${place.address}` : ""}
+                </Text>
+                {!place.location ? <Text style={ui.caption}>Bez položaja na karti · pronađi mjesto u obrascu</Text> : null}
+                {snapshot.pending.some(
+                  (p) => p.operation.placeId === place.id,
+                ) ? (
+                  <Text style={ui.caption}>
+                    Spremljeno na uređaju · čeka slanje
+                  </Text>
+                ) : null}
+              </View>
+              <Icon name="next" size={18} />
+            </Pressable>
+          ))}
+        </View>
+      )}
+      {view === "list" ? editor() : null}
+      {view === "list" ? details() : null}
     </View>
   );
 }

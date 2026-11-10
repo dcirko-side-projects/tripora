@@ -118,6 +118,7 @@ function Home() {
   const [reauthHidden, setReauthHidden] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [register, setRegister] = useState(false);
@@ -175,7 +176,7 @@ function Home() {
   async function syncNow() {
     if (locked.current || !connection.current || reauth) return;
     locked.current = true;
-    setBusy(true);
+    setSyncing(true);
     setError("");
     const task = synchronize(connection.current.db, sessionClient, {
       actor: account ?? undefined,
@@ -206,7 +207,7 @@ function Home() {
       locked.current = false;
       if (mounted.current) {
         reload();
-        setBusy(false);
+        setSyncing(false);
       }
     }
   }
@@ -359,7 +360,7 @@ function Home() {
     if (accepted) void syncNow();
   }
   function localAction(action: () => void, success: string) {
-    if (locked.current || !connection.current) return false;
+    if ((locked.current && !activeSync.current) || !connection.current) return false;
     setError("");
     setMessage("");
     try {
@@ -796,7 +797,9 @@ function Home() {
               size={16}
             />
             <Text style={ui.caption}>
-              {busy
+              {syncing
+                ? "Sinkroniziram…"
+                : busy
                 ? "U tijeku"
                 : pendingCount
                   ? `${pendingCount} na čekanju`
@@ -823,6 +826,7 @@ function Home() {
             </Text>
           ) : null}
           {busy || !ready ? <Loading /> : null}
+          {syncing ? <Text accessibilityLiveRegion="polite" style={ui.caption}>Sinkronizacija traje u pozadini. Spremljena putovanja možeš pregledavati i uređivati.</Text> : null}
           {busy ? (
             <Text accessibilityLiveRegion="polite" style={ui.caption}>
               Zahtjev je u tijeku. Ako se server pokreće nakon neaktivnosti,

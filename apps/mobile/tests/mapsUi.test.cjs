@@ -24,12 +24,37 @@ for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is i
     assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 0);
     await h.press('Otvori kartu preko cijelog zaslona');
     await h.run(() => h.root.findByType('MapMarker').props.onPress());
-    if (platform === 'ios') {
-      assert.doesNotMatch(h.text(), /Otvori navigaciju/);
-      await h.run(() => h.root.findAllByType('Modal').find(n => n.props.presentationStyle === 'fullScreen').props.onDismiss());
-    }
     assert.match(h.text(), /Otvori navigaciju/);
-    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 0);
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
+    const nativeMap = h.root.findByType('NativeMap');
+    await h.press('Uredi mjesto');
+    assert.match(h.text(), /Uredi mjesto/);
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'pageSheet').length, 0, 'editor stays inside fullscreen map');
+    if (platform === 'android') {
+      h.control.keyboardVisible = true;
+      await h.run(() => fullscreen.props.onRequestClose());
+      assert.equal(h.control.keyboardVisible, false);
+      assert.ok(h.button('Spremi mjesto'), 'keyboard back retains editor draft');
+    }
+    await h.press('Zatvori obrazac');
+    assert.equal(h.root.findByType('NativeMap'), nativeMap, 'details do not remount the map');
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
+    await h.run(() => h.root.findByType('MapMarker').props.onPress());
+    await h.run(() => fullscreen.props.onRequestClose());
+    assert.doesNotMatch(h.text(), /Otvori navigaciju/);
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
+    const camera = { center: [16.2, 45.5], zoom: 11, bearing: 20, pitch: 10 };
+    await h.run(() => nativeMap.props.onRegionDidChange({ nativeEvent: camera }));
+    await h.press('Zatvori kartu');
+    assert.deepEqual(h.root.findByType('MapCamera').props.initialViewState, camera);
+    await h.press('Otvori kartu preko cijelog zaslona');
+    assert.deepEqual(h.root.findByType('MapCamera').props.initialViewState, camera);
+    await h.fill('Filtriraj grad, naziv ili adresu', 'no synthetic match');
+    assert.equal(h.root.findAllByType('MapMarker').length, 0);
+    assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
+    await h.fill('Filtriraj grad, naziv ili adresu', 'QA island');
+    assert.equal(h.root.findAllByType('MapMarker').length, 1);
+
   } finally { await h.close(); }
 });
 
@@ -130,4 +155,27 @@ test('selected search result survives SQLite close/reopen and renders the same m
     assert.match(h.text(), /Sintetičko mjesto č ć ž š đ/);
     assert.match(h.text(), /Otvori navigaciju/);
   } finally { await h?.close(); rmSync(folder, { recursive: true, force: true }); }
+});
+
+ test('map filters combine category, visit status and accent-insensitive city/name/address; labels identify each category', async () => {
+  const h = await featureHarness('places', { requests: async () => config });
+  try {
+    for (const [category, name, address, visited] of [
+      ['place', 'Synthetic Museum', 'Test street, \u0160ibenik', false],
+      ['food', 'Synthetic Cafe', 'Other street, Zadar', true],
+      ['nightlife', 'Synthetic Bar', 'Night street, \u0160ibenik', false],
+    ]) places.savePlace(h.db, 'qa-trip', { category, name, address, visited, notes: '', link: '', location: { ...point, displayName: address } }, require('node:crypto').randomUUID);
+    await h.refresh(); await h.press('Karta');
+    assert.equal(h.root.findAllByType('MapMarker').length, 3);
+    assert.match(h.text(), /M\u00b7SM/); assert.match(h.text(), /H\u00b7SC/); assert.match(h.text(), /I\u00b7SB/);
+    await h.fill('Filtriraj grad, naziv ili adresu', 'sibenik');
+    assert.equal(h.root.findAllByType('MapMarker').length, 2);
+    await h.press('Hrana'); assert.equal(h.root.findAllByType('MapMarker').length, 0);
+    await h.fill('Filtriraj grad, naziv ili adresu', 'ZADAR');
+    assert.equal(h.root.findAllByType('MapMarker').length, 1);
+    await h.press('Za posjetiti'); assert.equal(h.root.findAllByType('MapMarker').length, 0);
+    await h.press('Posje\u0107eno'); assert.equal(h.root.findAllByType('MapMarker').length, 1);
+    await h.fill('Filtriraj grad, naziv ili adresu', 'Synthetic Cafe');
+    assert.equal(h.root.findAllByType('MapMarker').length, 1);
+  } finally { await h.close(); }
 });

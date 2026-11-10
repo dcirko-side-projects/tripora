@@ -1,5 +1,12 @@
 # Prva internetska beta — 2026-10-31
 
+Aktualno 2026-11-10: korisnik je ponovno potvrdio 0 EUR i bez kartice te
+zatražio uklanjanje čekanja na buđenje. Postojeći Render Free servis sada koristi
+`/health/live` za rutinske provjere; jedan UptimeRobot Free monitor provjerava taj
+javni endpoint svakih pet minuta, bez pristupa bazi. To zamjenjuje raniju granicu
+bez keepalive provjera. `/health/ready` ostaje zasebna provjera baze/API-ja.
+[Konfiguracija, kvote i stvarni dokaz](SERVER_WAKE_2026-11-10.md).
+
 API je objavljen na [tripora-l4c7.onrender.com](https://tripora-l4c7.onrender.com). To je ASP.NET API, bez web sučelja; korisničko sučelje je mobilna aplikacija.
 
 ## Stvarna konfiguracija

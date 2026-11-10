@@ -1,6 +1,125 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-03. Development branch: codex/offline-foundation.
+Updated: 2026-11-10. Development branch: codex/offline-foundation.
+
+## Publication authorized - 2026-11-10
+
+User explicitly requested commit, push and deployment of the current map/startup
+and free-hosting changes to the existing codex/offline-foundation branch and
+Render service. Candidate application source is unchanged since the recorded
+89 mobile tests, TypeScript, Android/iOS/web exports, 52 HTTP scenarios and 13
+Chromium PWA checkpoints passed. Windows WebKit bootstrap timed out; push CI
+provides the required Linux Chromium/WebKit rerun before deployment. No APK
+installation or physical device acceptance is implied by this web/API publication.
+Render Free, DB-free health checks and the existing external monitor remain.
+The final publication receipt will record verified SHAs, CI and deployment status.
+
+## Server idle-wake mitigation - 2026-11-10
+
+User requested removing the server wait and explicitly retained **0 cost / no
+payment card**, rejecting a paid compute upgrade. Configured the existing Render
+Free service's health path as `/health/live` and mirrored that in `render.yaml`.
+Created one UptimeRobot Free HTTP monitor, **Tripora API liveness** (804624912),
+checking that public endpoint every **300 seconds**. User supplied the monitoring
+account via their own sign-in. No API keys/private app data, notification contacts,
+integrations, public status page, paid features or card were added.
+
+The normal Single Monitor route returned to the empty list; the official one-row
+CSV import succeeded. UI confirms monitor **Up**, first external response **108
+ms**, five-minute checks and no alert recipients. Prior unmitigated liveness took
+32,272 ms followed by DB readiness in 91 ms; earlier cold/warm readiness was
+44,633/243 ms. The initial idle-window timer was canceled: live logs showed that the running
+instance still used the prior DB health route after saving Settings and after
+Restart service. A specific-commit redeploy of the already-live 93ac4c3 applied
+the saved setting. **dep-dbpmkjc9v7es73fbo3e0** is **Deploy succeeded | Live**,
+2m 7s, about **20:04:45 CET**, same source 93ac4c3. New instance logs confirm
+`/health/live`. Final 16-minute measurement began **19:05:42.726 UTC /
+20:05:42.726 CET** and **passed at 20:21:43 CET**: first public liveness
+**200 in 276 ms**, DB-backed readiness **200 in 1,991 ms** after Neon had been
+explicitly **SUSPENDED for 11 minutes**. Confirmed-email option remains true
+(200, 99 ms); anonymous sync remains 401 (102 ms), `private, no-store`. Final
+monitor view: **Up**, about 27 minutes, five-minute checks, no incidents,
+displayed response about 104 ms. Raw public JSON and screenshot proofs remain
+ignored under local-data/hosting-setup; the report below lists exact paths.
+This is HTTP/provider proof, not a native phone launch or real-user auth test.
+
+DB-backed `/health/ready` remains the separate deployment/incident DB/API check.
+Render's frequent internal health probes now use liveness without querying Neon,
+avoiding an estimated 180-186 CU-hours/month at continuous 0.25 CU versus the
+current 100 CU-hour Free allowance. Neon Free scale-to-zero remains enabled.
+The provider dashboard shows 2.71 CU-hours used this month. The initial project
+last-active timestamp did not prove suspension: the compute view still showed
+Active and Render logs revealed DB-backed health checks every five seconds. After
+the same-source redeploy, the Neon compute UI at **20:10 CET** explicitly shows
+**SUSPENDED**, while UptimeRobot remains Up (post-deploy response about 99 ms).
+Screenshot proof: ignored local-data/hosting-setup/neon-suspended-2026-11-10.png.
+
+Render UI: Hobby, no card, 8.87/750 Free hours, 8 MB/5 GB outbound bandwidth,
+1/500 pipeline minutes, $0 accrued/projected; same deployed source 93ac4c3. No
+new application source/auth/sync changes or unrelated service changes; the
+existing commit was redeployed solely to apply health settings. The 750-hour
+allowance is workspace-wide (two services exist);
+one 24/7 service consumes 720-744 hours in a full month. No SLA or quota bypass
+claim. Local API liveness and YAML parsing/config comparison pass; only the
+health path differs from the prior Render YAML. Required files, relative links,
+matching architecture decisions and git diff --check pass.
+
+Full configuration, evidence, source links, limitations and rollback:
+[server wake report](SERVER_WAKE_2026-11-10.md). Hosting mitigation is active for
+the existing installed app without a new APK. Next: user compares normal app
+opening; review/publish earlier map/startup source changes separately on request.
+Those changes below remain local and were not deployed by this hosting step.
+
+## Map navigation, filters and responsive local startup - 2026-11-10
+
+Implemented the user's new requirements in the current checkout:
+
+- Fullscreen place details/editing stay inside the map modal. Close/Back restores
+  the same mounted map; Android keyboard Back preserves the editor draft first.
+  Inline/fullscreen transitions remember native center/zoom/bearing/pitch and web
+  center/zoom. Zero filter matches keep the fullscreen map and controls open.
+- Category and visit-status filters are available in both map sizes. A local text
+  filter matches city/name/address/location display name without case/diacritics.
+  City is matched from saved address text; no structured city field, new provider
+  lookup, database migration or automatic venue discovery was added.
+- Markers use M/H/I (places/food/nightlife) plus up to two name initials, retaining
+  category colors and accessible full names. Shared label generation covers both
+  MapLibre and Leaflet.
+- Session restoration was already local. The actual UI bottleneck was using the
+  global busy/lock state for initial and foreground sync: this blocked local
+  navigation/writes while the server woke. Sync now has its own visible status;
+  local transactions remain usable through the existing immutable outbox/dirty
+  reconciliation. Session/account switching and online actions retain serialization.
+
+Read-only public /health/ready measurements: **200 in 44,633 ms**, followed by
+**200 in 243 ms**. This supports idle-host wake-up as a network contributor; it is
+not a native startup benchmark or server-side trace. First sign-in and remote
+operations still wait for connectivity/hosting. No paid hosting, keepalive,
+provider change, token or request-timeout change was introduced.
+
+Validation: clean mobile npm ci (Windows sandbox EPERM resolved by approved
+execution), TypeScript and **89/89 mobile tests** pass, including moved-camera
+return, same-map identity, embedded editor/keyboard Back, zero-result filters,
+accent-insensitive/category/status filtering and saving while startup sync waits.
+API Release build (0 errors/warnings), HTTP liveness, clean E2E npm ci and all
+**52 PostgreSQL/HTTP scenarios** pass, covering persistence/retries/conflicts,
+deletions, membership enforcement, sessions and private media. Android/iOS/web
+exports pass. Final **13/13 Chromium PWA checkpoints** pass on the final source,
+including actual Leaflet tiles/markers, fullscreen return after details/editing,
+filters, durable offline storage, conflicts, lost acknowledgements, updates and
+account isolation; no uncaught browser errors.
+
+The combined Chromium/WebKit run passed all Chromium checkpoints, including real
+Leaflet/fullscreen/details/editing/filter controls, then Windows WebKit timed out
+during PWA bootstrap after its storage-capability probe. WebKit is **not passed**.
+Its downloaded test browsers and generated artifacts remain ignored in local-data;
+Linux browser rerun and physical Samsung/iPhone gesture/layout acceptance remain.
+No new APK, installation, commit, push or public deployment performed.
+
+Next concrete step: prepare/review the new Android upgrade and PWA publication
+on user instruction, then verify real-device
+map pan/zoom/Back plus cold launch against the sleeping host. Existing published
+beta/installed APK still contain the earlier behavior until that delivery step.
 
 ## iPhone PWA — published; physical iPhone acceptance next
 

@@ -5,7 +5,9 @@ services:
     plan: free
     autoDeployTrigger: off
     dockerfilePath: ./services/api/Dockerfile
-    healthCheckPath: /health/ready
+    # Liveness must not keep the Free Neon compute awake.
+    # Verify /health/ready separately on release and when diagnosing DB availability.
+    healthCheckPath: /health/live
     envVars:
       - key: PORT
         value: "8080"

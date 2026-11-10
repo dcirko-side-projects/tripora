@@ -56,6 +56,7 @@ async function featureHarness(kind, options = {}) {
   );
   Object.assign(native, {
     StyleSheet: { create: (s) => s },
+    Keyboard: { isVisible: () => !!control.keyboardVisible, dismiss: () => { control.keyboardVisible = false; } },
     Platform: { OS: options.platform ?? "android" },
     Alert: {
       alert(title, message, buttons) {

@@ -102,3 +102,17 @@ User requested primary #0593C6, light #FCFFFF and accent #D83995, with mobile hi
 User authorized implementation: enter a public place name plus city, explicitly find/select the correct result, save its coordinates and display it on the trip map. Manual pin placement is not the primary workflow. No invented positions when lookup fails. The map requires internet; existing downloaded lists/addresses/notes stay usable offline. Popis/Karta sits within Places, with category/status filters and place details/navigation. Existing places without coordinates remain visible in the list and can be located later. User-triggered lookup is included; automatic venue recommendations remain excluded.
 
 Initial hosting must cost zero and require no bank card, including provider verification. Laptop-independent availability with occasional short automatic wake is acceptable; Free quotas/SLA limitations must be explicit. Users retain email/password accounts. No provider accounts exist; user requested [registration steps](docs/NO_CARD_SETUP.md). Real hosting/native acceptance remains pending, not implied by local builds. [Decision 0005](docs/decisions/0005-maps-and-no-card-beta.md).
+
+## Map and opening experience - accepted 2026-11-10
+
+Closing a place's details returns to the same map position and zoom, including
+fullscreen. Map filters cover saved city/address/name, category (places, food,
+nightlife) and visit status, including within fullscreen. Markers must convey
+category and spot identity using initials or icons. Previously downloaded trips
+must remain usable while startup synchronization waits for the server. Investigate
+and report network/hosting delays separately from local UI responsiveness.
+
+Follow-up 2026-11-10: mitigate normal server idle waiting while retaining 0 cost,
+no card and laptop-independent operation. One external public-liveness monitor
+is implemented; free-plan quotas/restarts and brief database wake remain explicit.
+See [hosting wake report](docs/SERVER_WAKE_2026-11-10.md).

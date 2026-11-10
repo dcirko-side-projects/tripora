@@ -210,7 +210,9 @@ export function FormSheet({
   busy,
   children,
   error,
+  embedded = false,
 }: {
+  embedded?: boolean;
   title: string;
   visible: boolean;
   onClose: () => void;
@@ -219,19 +221,7 @@ export function FormSheet({
   error?: string;
 }) {
   if (!visible) return null;
-  return (
-    <Modal
-      visible
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={() => {
-        if (Platform.OS === "android" && Keyboard.isVisible()) {
-          Keyboard.dismiss();
-          return;
-        }
-        if (!busy) onClose();
-      }}
-    >
+  const content = (
       <SafeAreaView style={ui.safe}>
         <View style={styles.modalHeader}>
           <Text accessibilityRole="header" style={[ui.heading, ui.flex]}>
@@ -266,6 +256,22 @@ export function FormSheet({
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+  );
+  if (embedded) return <View role="dialog" aria-modal accessibilityLabel={title} accessibilityViewIsModal onAccessibilityEscape={() => { if (!busy) onClose(); }} style={{ position: "absolute", inset: 0, zIndex: 10, backgroundColor: c.surface }}>{content}</View>;
+  return (
+    <Modal
+      visible
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={() => {
+        if (Platform.OS === "android" && Keyboard.isVisible()) {
+          Keyboard.dismiss();
+          return;
+        }
+        if (!busy) onClose();
+      }}
+    >
+      {content}
     </Modal>
   );
 }
