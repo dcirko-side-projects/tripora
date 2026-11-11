@@ -1,5 +1,10 @@
 # Tripora — plan razvoja
 
+Aktualno 2026-11-11: promjene karte i lokalnog ulaska objavljene su iz `2b794c6`;
+GitHub CI prolazi (89 mobilnih, 52 HTTP, 25 Chromium/WebKit scenarija). Javna
+PWA i offline otvaranje provjereni su nakon deploya. Android UI traži novi APK;
+instalacija/fizički prihvat ostaju zaseban korak. [Dokaz objave](STATUS.md).
+
 Aktualno 2026-11-10 - hosting: ostaje 0 EUR / bez kartice. Aktiviran je jedan
 UptimeRobot Free monitor za javni `/health/live` svakih pet minuta, uz isti Render
 Free servis. Health provjere ne pristupaju Neonu. [Dokaz i operativne granice](SERVER_WAKE_2026-11-10.md).

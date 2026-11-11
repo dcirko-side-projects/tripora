@@ -1,5 +1,11 @@
 # Server wake mitigation - 2026-11-10
 
+Publication follow-up, verified 2026-11-11: map/startup source **2b794c6** was
+pushed and deployed through Render **dep-dbpn420m7kps73815fn0**, retaining this
+health/monitor policy. Public serving of the new bundle, readiness and PWA
+offline startup pass. The 93ac4c3 deployment below is the earlier same-source
+health-policy checkpoint. [Current publication receipt](STATUS.md).
+
 ## Requirement and budget
 
 The user requested removal of the server wait, then explicitly kept **0 cost and

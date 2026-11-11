@@ -1,18 +1,55 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-10. Development branch: codex/offline-foundation.
+Updated: 2026-11-11. Development branch: codex/offline-foundation.
 
-## Publication authorized - 2026-11-10
+## Published map/startup changes - verified 2026-11-11
 
-User explicitly requested commit, push and deployment of the current map/startup
-and free-hosting changes to the existing codex/offline-foundation branch and
-Render service. Candidate application source is unchanged since the recorded
-89 mobile tests, TypeScript, Android/iOS/web exports, 52 HTTP scenarios and 13
-Chromium PWA checkpoints passed. Windows WebKit bootstrap timed out; push CI
-provides the required Linux Chromium/WebKit rerun before deployment. No APK
-installation or physical device acceptance is implied by this web/API publication.
-Render Free, DB-free health checks and the existing external monitor remain.
-The final publication receipt will record verified SHAs, CI and deployment status.
+User explicitly authorized commit, push and deployment, then resumed final
+verification. Published **2b794c671fb094f49ca64adc01b5bbe67e929299** (`feat:
+preserve map exploration and keep free beta responsive`) to the existing
+codex/offline-foundation branch; local and remote SHA matched after push.
+Only the reviewed 20 source/test/config/documentation files were committed;
+local-data, credentials, generated bundles and screenshots remain ignored.
+
+[GitHub CI run 42886094795](https://github.com/dcirko-side-projects/tripora/actions/runs/42886094795)
+completed **success** on this exact source: mobile/API jobs, **89 mobile tests**,
+TypeScript, dependency high-severity audit, Android/iOS/web exports, API Release
+build/liveness, backup guards, **52 PostgreSQL/HTTP scenarios** and **25 PWA
+checkpoints in Linux Chromium + WebKit**. The earlier local Windows WebKit
+bootstrap timeout is superseded by this successful Linux verification.
+
+Triggered Render deployment **dep-dbpn420m7kps73815fn0** for this exact commit
+on 2026-11-10 at **20:35:36 CET**, retaining the existing service/Free plan,
+public origin, provider secrets, DB-free `/health/live` health path and external
+monitor. Build logs exported web bundle
+`/_expo/static/js/web/index-409306c51c1f6b5d7adc34b654498228.js` and all 13 shell
+assets. The last dashboard observation before interruption was waiting for
+internal `/health/live` after a successful image build. On resume Chrome's
+browser connection was unavailable; no duplicate deploy was triggered. Delivery
+is verified independently by the public site serving that exact new bundle,
+including the new filter label and nonblocking-sync message, on 2026-11-11.
+No unobserved dashboard completion time/status is claimed.
+
+Public checks at **16:59 CET on 2026-11-11** pass: liveness 200/254 ms,
+DB readiness 200/3,123 ms, confirmed-email options true, anonymous sync 401 with
+private/no-store, root/manifest/service worker/all **13 shell assets** 200,
+WASM MIME and CSP/COOP/COEP headers. The short DB wake remains distinct from the
+removed tens-of-seconds API idle wake. Isolated **public Chromium** also passes
+HTTPS bootstrap, service-worker installation, offline reload, cache privacy and
+no uncaught browser errors. Production accounts/trips/photos were not mutated.
+Public WebKit was not rerun on Windows; Linux CI covers both browser engines.
+
+Ignored evidence: `local-data/hosting-setup/release-http-2026-11-10.json`
+(the report's checkedAt is 2026-11-11), the public Chromium check script and
+`local-data/hosting-setup/public-release-2026-11-11.png`. Both architecture files
+retain the accepted map/startup/hosting decisions; relative links and diff checks
+pass. This final receipt is a documentation-only follow-up to the tested source.
+
+Web/PWA changes are deployed. No new Android APK was built or installed in this
+publication step; native map/UI changes require a separate retaining upgrade.
+Next: user reviews map return/filter/labels in the PWA; prepare and install an
+Android upgrade when requested. Physical Samsung/iPhone acceptance remains
+separate from exports and browser tests. No paid infrastructure was introduced.
 
 ## Server idle-wake mitigation - 2026-11-10
 
@@ -67,8 +104,9 @@ matching architecture decisions and git diff --check pass.
 Full configuration, evidence, source links, limitations and rollback:
 [server wake report](SERVER_WAKE_2026-11-10.md). Hosting mitigation is active for
 the existing installed app without a new APK. Next: user compares normal app
-opening; review/publish earlier map/startup source changes separately on request.
-Those changes below remain local and were not deployed by this hosting step.
+opening; the later map/startup publication is recorded above.
+At that hosting checkpoint the map/startup changes were local; the publication
+receipt above now records their later web/PWA delivery.
 
 ## Map navigation, filters and responsive local startup - 2026-11-10
 
@@ -111,15 +149,16 @@ account isolation; no uncaught browser errors.
 
 The combined Chromium/WebKit run passed all Chromium checkpoints, including real
 Leaflet/fullscreen/details/editing/filter controls, then Windows WebKit timed out
-during PWA bootstrap after its storage-capability probe. WebKit is **not passed**.
-Its downloaded test browsers and generated artifacts remain ignored in local-data;
-Linux browser rerun and physical Samsung/iPhone gesture/layout acceptance remain.
-No new APK, installation, commit, push or public deployment performed.
+during PWA bootstrap after its storage-capability probe. That local WebKit run did **not pass**; the publication receipt above records
+the subsequent successful Linux Chromium/WebKit CI run. Downloaded test browsers
+and artifacts remain ignored in local-data; physical device acceptance remains.
+At this pre-publication checkpoint no new APK, installation, commit, push or
+public deployment was performed. The publication receipt above supersedes the
+commit/push/web-deployment boundary; native installation remains separate.
 
-Next concrete step: prepare/review the new Android upgrade and PWA publication
-on user instruction, then verify real-device
-map pan/zoom/Back plus cold launch against the sleeping host. Existing published
-beta/installed APK still contain the earlier behavior until that delivery step.
+Next concrete step after this checkpoint was publication. Web/PWA publication
+is now verified above; the installed native APK still requires an upgrade for
+map/UI changes. Real-device pan/zoom/Back and startup acceptance remain.
 
 ## iPhone PWA — published; physical iPhone acceptance next
 
