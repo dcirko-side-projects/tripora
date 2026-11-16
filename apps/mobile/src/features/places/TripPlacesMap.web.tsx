@@ -35,13 +35,17 @@ function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: 
       ring.appendChild(face);
       const marker = L.marker(coordinate, { title: `${appearance.label}: ${place.name}`, alt: place.name,
         icon: L.divIcon({ html: ring, className: 'tripora-marker', iconSize: [52,52], iconAnchor: [26,26] }) })
-        .on('click', () => select.current(place.id)).addTo(map);
-      marker.getElement()?.setAttribute('aria-label', `${appearance.label}: ${place.name}`);
-      marker.getElement()?.addEventListener('keydown', event => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault(); event.stopPropagation(); select.current(place.id);
-        }
-      });
+        .on('click', () => select.current(place.id))
+        .on('add', event => {
+          // Leaflet creates the icon only once the map has its initial view.
+          const element = (event.target as L.Marker).getElement();
+          element?.setAttribute('aria-label', `${appearance.label}: ${place.name}`);
+          element?.addEventListener('keydown', keyEvent => {
+            if (keyEvent.key === 'Enter' || keyEvent.key === ' ') {
+              keyEvent.preventDefault(); keyEvent.stopPropagation(); select.current(place.id);
+            }
+          });
+        }).addTo(map);
       markers.current.set(place.id, { marker, ring });
     });
     if (viewport.current) map.setView(viewport.current.center, viewport.current.zoom);
