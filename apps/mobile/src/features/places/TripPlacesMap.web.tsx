@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import * as L from 'leaflet';
-import { markerLabel, MapProps } from './mapPresentation';
+import { markerAppearance, markerSvg, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
 import { FullscreenMapFrame } from './FullscreenMapFrame';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Place[]; config: Config; fullscreen: boolean; onSelect: (id: string) => void; viewport: { current: { center: L.LatLng; zoom: number } | undefined } }) {
+function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: { places: Place[]; config: Config; fullscreen: boolean; onSelect: (id: string) => void; selectedId?: string; viewport: { current: { center: L.LatLng; zoom: number } | undefined } }) {
   const container = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const select = useRef(onSelect); select.current = onSelect;
+  const markers = useRef(new Map<string, { marker: L.Marker; ring: HTMLElement }>());
   const key = places.map(p => [p.id, p.name, p.category, p.location?.latitude, p.location?.longitude].join(':')).join('|');
   useEffect(() => {
     if (!container.current) return;
@@ -24,12 +25,19 @@ function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Pl
     places.forEach((place) => {
       const coordinate: L.LatLngTuple = [place.location!.latitude, place.location!.longitude];
       bounds.push(coordinate);
-      const marker = document.createElement('span');
-      marker.textContent = markerLabel(place);
-      marker.style.cssText = `display:grid;place-items:center;width:36px;height:36px;border:2px solid white;border-radius:50%;color:white;font-weight:700;background:${place.category === 'food' ? tokens.color.accentInk : place.category === 'nightlife' ? tokens.color.text : tokens.color.primaryInk}`;
-      L.marker(coordinate, { title: `${markerLabel(place)}. ${place.name}`, alt: place.name,
-        icon: L.divIcon({ html: marker, className: 'tripora-marker', iconSize: [40,40], iconAnchor: [20,20] }) })
+      const appearance = markerAppearance(place.category);
+      const ring = document.createElement('span');
+      ring.style.cssText = 'display:grid;place-items:center;box-sizing:border-box;width:52px;height:52px;border:3px solid transparent;border-radius:50%';
+      const face = document.createElement('span');
+      face.dataset.icon = appearance.icon;
+      face.innerHTML = markerSvg(appearance.icon);
+      face.style.cssText = `display:grid;place-items:center;box-sizing:border-box;width:40px;height:40px;border:2px solid ${tokens.color.surface};border-radius:50%;color:${tokens.color.surface};background:${appearance.color};box-shadow:0 2px 5px #15334340`;
+      ring.appendChild(face);
+      const marker = L.marker(coordinate, { title: `${appearance.label}: ${place.name}`, alt: place.name,
+        icon: L.divIcon({ html: ring, className: 'tripora-marker', iconSize: [52,52], iconAnchor: [26,26] }) })
         .on('click', () => select.current(place.id)).addTo(map);
+      marker.getElement()?.setAttribute('aria-label', `${appearance.label}: ${place.name}`);
+      markers.current.set(place.id, { marker, ring });
     });
     if (viewport.current) map.setView(viewport.current.center, viewport.current.zoom);
     else if (bounds.length && bounds.every(c => c[0] === bounds[0][0] && c[1] === bounds[0][1])) map.setView(bounds[0], 14);
@@ -38,8 +46,17 @@ function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Pl
     const remember = () => { viewport.current = { center: map.getCenter(), zoom: map.getZoom() }; };
     map.on('moveend zoomend', remember);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(container.current);
-    return () => { remember(); observer.disconnect(); map.off('moveend zoomend', remember); map.remove(); };
+    return () => { remember(); observer.disconnect(); markers.current.clear(); map.off('moveend zoomend', remember); map.remove(); };
   }, [key, config, fullscreen]);
+  useEffect(() => {
+    for (const [id, { marker, ring }] of markers.current) {
+      const selected = id === selectedId;
+      ring.style.borderColor = selected ? tokens.color.primaryInk : 'transparent';
+      ring.style.background = selected ? tokens.color.surface : 'transparent';
+      marker.setZIndexOffset(selected ? 1000 : 0);
+      marker.getElement()?.setAttribute('aria-pressed', String(selected));
+    }
+  }, [selectedId, key, config, fullscreen]);
   return <View style={fullscreen ? { flex: 1, minHeight: 0 } : undefined}>
     {failed ? <Text accessibilityRole="alert" style={ui.error}>Dio karte nije dostupan. Provjeri internet; spremljeni popis ostaje dostupan.</Text> : null}
     <div ref={container} role="region" aria-label="Karta spremljenih mjesta" style={{ height: fullscreen ? '100%' : 380, minHeight: fullscreen ? 0 : 200, flex: 1, borderRadius: fullscreen ? 0 : 16, isolation: 'isolate' }} />
@@ -51,6 +68,7 @@ export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string>();
   const located = places.filter(p => !p.deleted && p.location);
   useEffect(() => {
     let active = true;
@@ -65,17 +83,17 @@ export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch
   if (error) return <View>{filters}<Text style={ui.error}>{error}</Text><Button title="Pokušaj učitati kartu ponovno" onPress={() => setAttempt(n => n + 1)} />{overlay?.(false)}</View>;
   if (!config) return <View>{filters}<Loading />{overlay?.(false)}</View>;
   const mapFilters = <>{filters}{!located.length ? <Text style={ui.muted}>Nema mjesta s položajem za odabrane filtre.</Text> : null}</>;
-  const select = onSelect;
+  const select = (id: string) => { setSelectedId(id); onSelect(id); };
   return <View style={{ gap: 8 }}>
     <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
-    {!fullscreen ? <>{mapFilters}<View><WebMap viewport={viewport} places={located} config={config} fullscreen={false} onSelect={select} />{overlay?.(false)}</View></> : null}
+    {!fullscreen ? <>{mapFilters}<View><WebMap viewport={viewport} places={located} config={config} fullscreen={false} selectedId={selectedId} onSelect={select} />{overlay?.(false)}</View></> : null}
     <Modal visible={fullscreen} onRequestClose={() => overlay ? onCloseOverlay?.() : setFullscreen(false)}>
       {fullscreen ? <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!located.length}
         onClose={() => setFullscreen(false)} overlay={overlay?.(true)}>
-        <WebMap viewport={viewport} places={located} config={config} fullscreen onSelect={select} />
+        <WebMap viewport={viewport} places={located} config={config} fullscreen selectedId={selectedId} onSelect={select} />
       </FullscreenMapFrame> : null}
     </Modal>
-    <Text style={ui.caption}>M: mjesta · H: hrana · I: izlasci. Slova iza točke su inicijali naziva. Dodirni oznaku za detalje. Karta treba internet.</Text>
+    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci. Dodirni oznaku za detalje; prsten označava odabrano mjesto. Karta treba internet.</Text>
     {config.attributionUrl.startsWith('https://') ? <a href={config.attributionUrl} target="_blank" rel="noopener noreferrer">{config.attribution}</a> : <Text>{config.attribution}</Text>}
   </View>;
 }

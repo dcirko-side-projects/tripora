@@ -230,6 +230,11 @@ try {
       assert.equal((await api('/api/places/push', tokens.accessToken, { operationId: randomUUID(), tripId: savedTrip.id, placeId, kind: 'place.create', baseVersion: 0,
         data: { category: 'place', name: 'Synthetic marker', notes: '', address: '', link: '', visited: false,
           location: { latitude: 45.8, longitude: 16, displayName: 'Synthetic marker', provider: 'osm', providerId: 'N999' } } })).status, 200);
+      for (const [category, label, latitude] of [['food', 'Synthetic dining', 45.801], ['nightlife', 'Synthetic evening', 45.799]]) {
+        assert.equal((await api('/api/places/push', tokens.accessToken, { operationId: randomUUID(), tripId: savedTrip.id, placeId: randomUUID(), kind: 'place.create', baseVersion: 0,
+          data: { category, name: label, notes: '', address: '', link: '', visited: false,
+            location: { latitude, longitude: 16.002, displayName: label, provider: 'osm', providerId: 'N' + category } } })).status, 200);
+      }
       // Render real Leaflet controls/markers using synthetic tiles; no external service calls.
       await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({ status: 200, contentType: 'image/png',
         headers: { 'Access-Control-Allow-Origin': '*', 'Cross-Origin-Resource-Policy': 'cross-origin' }, body: syntheticPng }));
@@ -243,6 +248,19 @@ try {
       await page.getByRole('button', { name: 'Otvori kartu preko cijelog zaslona', exact: true }).click();
       assert.equal(await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).count(), 1);
       assert.equal(await page.getByTestId('fullscreen-map-frame').evaluate(element => element.style.paddingTop), 'env(safe-area-inset-top, 0px)', 'CSS safe-area padding survives native/web style adapters');
+      assert.deepEqual((await page.locator('.leaflet-marker-icon [data-icon]').evaluateAll(nodes => nodes.map(n => n.dataset.icon))).sort(), ['food', 'nightlife', 'pin']);
+      for (const [category, icon, label] of [['Hrana', 'food', 'Hrana: Synthetic dining'], ['Izlasci', 'nightlife', 'Izlasci: Synthetic evening']]) {
+        await page.getByLabel('Kategorije mjesta', { exact: true }).getByRole('tab', { name: category, exact: true }).click();
+        assert.equal(await page.locator('.leaflet-marker-icon [data-icon]').getAttribute('data-icon'), icon);
+        await page.getByRole('button', { name: label, exact: true }).press('Enter');
+        await page.getByRole('heading', { name: 'Detalji mjesta', exact: true }).waitFor();
+        await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
+        assert.equal(await page.locator('.leaflet-marker-icon').getAttribute('aria-pressed'), 'true');
+      }
+      await page.getByLabel('Kategorije mjesta', { exact: true }).getByRole('tab', { name: 'Sve kategorije', exact: true }).click();
+      assert.equal(await page.locator('.leaflet-marker-icon[aria-pressed="true"]').count(), 1);
+      await page.screenshot({ path: join(artifacts, name + '-marker-icons.png') });
+      await page.getByLabel('Pretraži spremljena mjesta', { exact: true }).fill('Synthetic marker');
       for (const size of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 1440, height: 900 }]) {
         await page.setViewportSize(size);
         const search = page.getByRole('textbox', { name: 'Pretraži spremljena mjesta', exact: true });
@@ -278,7 +296,10 @@ try {
       await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).waitFor();
       assert.equal(await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).count(), 1);
-      assert.equal(await page.locator('.leaflet-marker-icon').innerText(), 'M\u00b7SM');
+      assert.equal(await page.locator('.leaflet-marker-icon').innerText(), '');
+      assert.equal(await page.locator('.leaflet-marker-icon [data-icon]').getAttribute('data-icon'), 'pin');
+      assert.equal(await page.locator('.leaflet-marker-icon svg').count(), 1);
+      assert.equal(await page.locator('.leaflet-marker-icon').getAttribute('aria-pressed'), 'true');
       const markerPosition = () => page.locator('.leaflet-marker-icon').getAttribute('style');
       const beforeDetails = await markerPosition();
       await page.locator('.leaflet-marker-icon').click();
@@ -292,7 +313,7 @@ try {
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).waitFor();
       await page.getByLabel('Pretraži spremljena mjesta', { exact: true }).fill('Synthetic marker');
       await page.locator('.leaflet-marker-icon').waitFor();
-      pass(name + ': actual Leaflet map/tiles, retained fullscreen/viewport after details/edit, category initials and live filters');
+      pass(name + ': actual Leaflet map/tiles, retained fullscreen/viewport after details/edit, category icons/selection and live filters');
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).click();
       await context.setOffline(true); await page.reload();
       await page.getByRole('button', { name: 'Otvori putovanje PWA local conflict ' + name, exact: true }).click();

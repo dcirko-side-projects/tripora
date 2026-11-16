@@ -2,6 +2,28 @@
 
 Updated: 2026-11-16. Development branch: codex/offline-foundation.
 
+## Category icon markers - 2026-11-16
+
+User requested replacing marker initials with category icons and a visible selected
+state. Existing categories are place/food/nightlife; pin/utensils/cocktail icons now
+share the application's outline SVG paths across native/Leaflet. Unknown or missing
+category falls back to the pin. No venue-type guessing, new category, dependency,
+API/schema/sync change. Markers keep full accessible names, stable coordinates,
+52 px targets, 40 px faces and a contrasting selection ring/raised stacking.
+Selection persists after closing details/editing and map size transitions.
+
+Local validation: clean mobile/E2E npm ci, typecheck, 90/90 mobile tests and all
+three platform exports pass. Tests cover category icons, no marker text, neutral
+fallback, changing selected marker, details/editing/filter/camera regressions.
+API Release build passes with 0 errors/warnings, but Windows Application Control
+blocks executing the newly built Tripora.Api.dll (0x800711C7), including one retry;
+local HTTP/PWA integration cannot run. No security policy was changed or bypassed.
+The browser E2E suite now verifies all category icons, keyboard activation,
+exclusive selection, filter/detail return and four responsive sizes with synthetic
+data. Next: run Linux CI for the pushed source, fix any failures, deploy that exact
+passing commit on the existing Render Free service and verify public delivery.
+No new Android APK/install or physical-device acceptance is claimed.
+
 ## Fullscreen map publication verified - 2026-11-16
 
 User authorized commit, push and deployment. Source commits 860eab1 (responsive

@@ -7,6 +7,12 @@ const { tmpdir } = require('node:os');
 const point = { latitude: 45.81, longitude: 15.98, displayName: 'Synthetic cafe, QA island', provider: 'osm', providerId: 'N123' };
 const config = { tileUrl: 'https://tile.example.test/{z}/{x}/{y}.png', attribution: 'Synthetic attribution', attributionUrl: 'https://example.test/copyright' };
 
+test('unknown or missing place category uses the neutral location icon', () => {
+  const { loader } = require('./uiHarness.cjs');
+  const { markerAppearance } = loader({ 'react-native': { StyleSheet: { create: value => value } }, 'react-native-svg': {} })(join(__dirname, '../src/features/places/mapPresentation.ts'));
+  for (const category of [undefined, '', 'unknown', 'restaurant']) assert.equal(markerAppearance(category).icon, 'pin');
+});
+
 for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is isolated from scrolling, closes with back/button and opens marker details`, async () => {
   const h = await featureHarness('places', { platform, requests: async path => path.endsWith('/search') ? { items: [point] } : config });
   try {
@@ -26,6 +32,7 @@ for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is i
     assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 0);
     await h.press('Otvori kartu preko cijelog zaslona');
     await h.run(() => h.root.findByType('MapMarker').props.onPress());
+    assert.equal(h.root.findByType('MapMarker').props.selected, true);
     assert.match(h.text(), /Otvori navigaciju/);
     assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
     const nativeMap = h.root.findByType('NativeMap');
@@ -39,6 +46,7 @@ for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is i
       assert.ok(h.button('Spremi mjesto'), 'keyboard back retains editor draft');
     }
     await h.press('Zatvori obrazac');
+    assert.equal(h.root.findByType('MapMarker').props.selected, true, 'selection remains after details/editor closes');
     assert.equal(h.root.findByType('NativeMap'), nativeMap, 'details do not remount the map');
     assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
     await h.run(() => h.root.findByType('MapMarker').props.onPress());
@@ -159,7 +167,7 @@ test('selected search result survives SQLite close/reopen and renders the same m
   } finally { await h?.close(); rmSync(folder, { recursive: true, force: true }); }
 });
 
- test('map filters combine category, visit status and accent-insensitive city/name/address; labels identify each category', async () => {
+ test('map filters combine category, visit status and accent-insensitive city/name/address; icons identify each category', async () => {
   const h = await featureHarness('places', { requests: async () => config });
   try {
     for (const [category, name, address, visited] of [
@@ -169,7 +177,18 @@ test('selected search result survives SQLite close/reopen and renders the same m
     ]) places.savePlace(h.db, 'qa-trip', { category, name, address, visited, notes: '', link: '', location: { ...point, displayName: address } }, require('node:crypto').randomUUID);
     await h.refresh(); await h.press('Karta');
     assert.equal(h.root.findAllByType('MapMarker').length, 3);
-    assert.match(h.text(), /M\u00b7SM/); assert.match(h.text(), /H\u00b7SC/); assert.match(h.text(), /I\u00b7SB/);
+    const markers = h.root.findAllByType('MapMarker');
+    const iconsByCategory = Object.fromEntries(markers.map(marker => [
+      marker.findAllByType('View').find(n => n.props.accessibilityLabel)?.props.accessibilityLabel.split(':')[0],
+      marker.findAll(n => n.type?.name === 'Icon')[0].props.name,
+    ]));
+    assert.deepEqual(iconsByCategory, { Mjesto: 'pin', Hrana: 'food', Izlasci: 'nightlife' });
+    for (const marker of markers) assert.equal(marker.findAllByType('Text').length, 0, 'no initials in markers');
+    await h.run(() => markers[0].props.onPress());
+    await h.press('Zatvori obrazac');
+    await h.run(() => h.root.findAllByType('MapMarker')[1].props.onPress());
+    await h.press('Zatvori obrazac');
+    assert.deepEqual(h.root.findAllByType('MapMarker').map(m => m.props.selected), [false, true, false]);
     await h.fill('Filtriraj grad, naziv ili adresu', 'sibenik');
     assert.equal(h.root.findAllByType('MapMarker').length, 2);
     await h.press('Hrana'); assert.equal(h.root.findAllByType('MapMarker').length, 0);

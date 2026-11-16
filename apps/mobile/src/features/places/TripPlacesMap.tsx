@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Modal, Text, View } from 'react-native';
 import type * as MapLibre from '@maplibre/maplibre-react-native';
-import { markerLabel, MapProps } from './mapPresentation';
+import { markerAppearance, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
 import { FullscreenMapFrame } from './FullscreenMapFrame';
+import { Icon } from '../../ui/Icon';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 
 export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
@@ -36,8 +37,9 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
   const { Map, Camera, Marker, TransformRequestManager } = native;
   const [networkReady, setNetworkReady] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string>();
   const viewport = useRef<MapLibre.InitialViewState | undefined>(undefined);
-  const selectPlace = onSelect;
+  const selectPlace = (id: string) => { setSelectedId(id); onSelect(id); };
   const coordinates = places.map(p => [p.location!.longitude, p.location!.latitude]);
   const xs = coordinates.map(c => c[0]), ys = coordinates.map(c => c[1]);
   const samePoint = Math.max(...xs) === Math.min(...xs) && Math.max(...ys) === Math.min(...ys);
@@ -58,12 +60,19 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
       <Camera maxZoom={19} initialViewState={viewport.current ?? (!places.length ? undefined : samePoint
         ? { center: [xs[0], ys[0]], zoom: 14 }
         : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: fullscreen ? 160 : 48, left: 48, right: 48 } })} />
-      {places.map((p) => <Marker key={p.id} id={p.id} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => selectPlace(p.id)}>
-        <View accessibilityLabel={`${markerLabel(p)}. ${p.name}`} style={{ minWidth: 40, minHeight: 40, padding: 8, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: tokens.color.surface,
-          backgroundColor: p.category === 'food' ? tokens.color.accentInk : p.category === 'nightlife' ? tokens.color.text : tokens.color.primaryInk }}>
-          <Text style={{ color: tokens.color.surface, fontWeight: '700' }}>{markerLabel(p)}</Text>
-        </View>
-      </Marker>)}
+      {places.map((p) => {
+        const appearance = markerAppearance(p.category), selected = p.id === selectedId;
+        return <Marker key={p.id} id={p.id} selected={selected} style={{ zIndex: selected ? 1 : 0 }} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => selectPlace(p.id)}>
+          <View accessibilityLabel={`${appearance.label}: ${p.name}`} accessibilityState={{ selected }}
+            style={{ width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: selected ? tokens.color.primaryInk : 'transparent',
+              alignItems: 'center', justifyContent: 'center', backgroundColor: selected ? tokens.color.surface : 'transparent', zIndex: selected ? 1 : 0 }}>
+            <View style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: tokens.color.surface,
+              alignItems: 'center', justifyContent: 'center', backgroundColor: appearance.color }}>
+              <Icon name={appearance.icon} size={22} color={tokens.color.surface} />
+            </View>
+          </View>
+        </Marker>;
+      })}
     </Map>;
   return <View style={{ gap: 8 }}>
     <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
@@ -75,7 +84,7 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
         {map}
       </FullscreenMapFrame> : null}
     </Modal>
-    <Text style={ui.caption}>M: mjesta · H: hrana · I: izlasci. Slova iza točke su inicijali naziva. Dodirni oznaku za detalje.</Text>
+    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci. Dodirni oznaku za detalje; prsten označava odabrano mjesto.</Text>
     <Text style={ui.caption}>Karta treba internet. Mjesta bez položaja prikazana su samo u popisu.</Text>
     <Button title={config.attribution} variant="ghost" onPress={() => {
       if (config.attributionUrl.startsWith('https://')) void Linking.openURL(config.attributionUrl).catch(onError);

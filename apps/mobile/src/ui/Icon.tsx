@@ -2,6 +2,8 @@ import Svg, { Path, Circle, Rect } from "react-native-svg";
 import { tokens } from "./theme";
 
 export type IconName =
+  | "food"
+  | "nightlife"
   | "expand"
   | "trips"
   | "calendar"
@@ -22,7 +24,9 @@ export type IconName =
   | "clock"
   | "download"
   | "alert";
-const paths: Record<IconName, string> = {
+export const iconPaths: Record<IconName, string> = {
+  food: "M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 3c-4 0-5 4-5 8h5M20 3v18",
+  nightlife: "M3 4h18l-9 9-9-9ZM12 13v8M7 21h10M7 8h10",
   expand: "M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5",
   trips: "M8 6V4h8v2M4 7h16v13H4zM8 7v13M16 7v13",
   calendar: "M4 5h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2",
@@ -65,7 +69,7 @@ export function Icon({
       strokeLinejoin="round"
       accessible={false}
     >
-      <Path d={paths[name]} />
+      <Path d={iconPaths[name]} />
       {name === "pin" ? <Circle cx={12} cy={10} r={2} /> : null}
       {name === "user" ? <Circle cx={12} cy={6} r={4} /> : null}
       {name === "people" ? (

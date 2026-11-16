@@ -2,6 +2,18 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Category icon markers - 2026-11-16
+
+Markers use the application's outline SVG icons instead of initials: pin for
+place, utensils for food, cocktail glass for nightlife. Unknown/missing categories
+fall back to the pin. These are the only persisted categories; no inferred venue
+subtypes, schema or provider lookup is introduced. Native Icon and Leaflet SVG
+share the same paths and category palette. A fixed 52 px target contains a 40 px
+face; selection adds a contrasting outer ring and raises the marker without
+changing its coordinates or remounting the map. Full category/place names remain
+accessible, including keyboard activation on web. Last selection survives sheets
+and inline/fullscreen transitions while the map component remains mounted.
+
 ## Compact fullscreen map - 2026-11-16
 
 Fullscreen uses a shared native/web frame: a compact local search and accessible
