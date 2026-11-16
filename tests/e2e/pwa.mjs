@@ -242,6 +242,7 @@ try {
       await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-loaded').length > 0);
       await page.getByRole('button', { name: 'Otvori kartu preko cijelog zaslona', exact: true }).click();
       assert.equal(await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).count(), 1);
+      assert.equal(await page.getByTestId('fullscreen-map-frame').evaluate(element => element.style.paddingTop), 'env(safe-area-inset-top, 0px)', 'CSS safe-area padding survives native/web style adapters');
       for (const size of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 1440, height: 900 }]) {
         await page.setViewportSize(size);
         const search = page.getByRole('textbox', { name: 'Pretraži spremljena mjesta', exact: true });

@@ -21,7 +21,13 @@ details/editing. Responsive assertions/screenshots cover 320x568, 390x844,
 844x390 and 1440x900; map height exceeds 80% at each size, controls stay inside
 the viewport and search/X do not overlap. Synthetic tiles/accounts only.
 Screenshots remain ignored under local-data/pwa-qa/chromium-map-*.png.
-Windows WebKit and Linux CI results will be recorded with publication evidence.
+Final source review caught the web safe-area adapter adding numeric insets to CSS
+env() strings. Web now uses a plain View, native retains SafeAreaView; an actual
+browser assertion verifies the CSS padding survives. Chromium's final 13/13 run
+passes this regression and all four responsive sizes. Windows WebKit stalled at
+PWA bootstrap and hit the suite watchdog; no local WebKit pass is claimed.
+Linux CI for initial source 860eab1 passes both jobs, including Chromium/WebKit;
+the final safe-area follow-up will have its own CI/deployment receipt below.
 No physical-device test or new native APK/installation is claimed. Native users
 need a retaining Android upgrade to receive this UI; web/PWA uses Render deploy.
 Next: publish the reviewed commit to the existing branch, deploy that exact SHA

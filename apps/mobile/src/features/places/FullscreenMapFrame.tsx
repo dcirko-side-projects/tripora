@@ -9,7 +9,9 @@ export function FullscreenMapFrame({ search, filters, empty, onClose, children, 
   search?: ReactNode; filters?: ReactNode; empty: boolean; onClose: () => void;
   children: ReactNode; overlay?: ReactNode;
 }) {
-  return <SafeAreaView style={[ui.safe, styles.safe, Platform.OS === 'web' ? {
+  // Web SafeAreaView adds numeric insets to padding; CSS env() needs a plain View.
+  const Frame = Platform.OS === 'web' ? View : SafeAreaView;
+  return <Frame testID="fullscreen-map-frame" style={[ui.safe, styles.safe, Platform.OS === 'web' ? {
     paddingTop: 'env(safe-area-inset-top, 0px)', paddingBottom: 'env(safe-area-inset-bottom, 0px)',
     paddingLeft: 'env(safe-area-inset-left, 0px)', paddingRight: 'env(safe-area-inset-right, 0px)',
   } as unknown as ViewStyle : undefined]}>
@@ -26,7 +28,7 @@ export function FullscreenMapFrame({ search, filters, empty, onClose, children, 
       <View pointerEvents="box-none" style={styles.filters}><View style={styles.filterPanel}>{filters}</View></View>
     </View>
     {overlay}
-  </SafeAreaView>;
+  </Frame>;
 }
 const styles = StyleSheet.create({
   safe: { backgroundColor: tokens.color.surface, minHeight: 0 },
