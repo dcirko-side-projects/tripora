@@ -37,6 +37,11 @@ function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: 
         icon: L.divIcon({ html: ring, className: 'tripora-marker', iconSize: [52,52], iconAnchor: [26,26] }) })
         .on('click', () => select.current(place.id)).addTo(map);
       marker.getElement()?.setAttribute('aria-label', `${appearance.label}: ${place.name}`);
+      marker.getElement()?.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault(); event.stopPropagation(); select.current(place.id);
+        }
+      });
       markers.current.set(place.id, { marker, ring });
     });
     if (viewport.current) map.setView(viewport.current.center, viewport.current.zoom);

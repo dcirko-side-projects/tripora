@@ -252,7 +252,7 @@ try {
       for (const [category, icon, label] of [['Hrana', 'food', 'Hrana: Synthetic dining'], ['Izlasci', 'nightlife', 'Izlasci: Synthetic evening']]) {
         await page.getByLabel('Kategorije mjesta', { exact: true }).getByRole('tab', { name: category, exact: true }).click();
         assert.equal(await page.locator('.leaflet-marker-icon [data-icon]').getAttribute('data-icon'), icon);
-        await page.getByRole('button', { name: label, exact: true }).press('Enter');
+        await page.getByRole('button', { name: label, exact: true }).press(icon === 'food' ? 'Enter' : 'Space');
         await page.getByRole('heading', { name: 'Detalji mjesta', exact: true }).waitFor();
         await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
         assert.equal(await page.locator('.leaflet-marker-icon').getAttribute('aria-pressed'), 'true');
