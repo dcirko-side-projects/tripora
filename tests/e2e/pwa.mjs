@@ -233,7 +233,7 @@ try {
       for (const [category, label, latitude] of [['food', 'Synthetic dining', 45.801], ['nightlife', 'Synthetic evening', 45.799]]) {
         assert.equal((await api('/api/places/push', tokens.accessToken, { operationId: randomUUID(), tripId: savedTrip.id, placeId: randomUUID(), kind: 'place.create', baseVersion: 0,
           data: { category, name: label, notes: '', address: '', link: '', visited: false,
-            location: { latitude, longitude: 16.002, displayName: label, provider: 'osm', providerId: 'N' + category } } })).status, 200);
+            location: { latitude, longitude: 16.002, displayName: label, provider: 'osm', providerId: category === 'food' ? 'N1000' : 'N1001' } } })).status, 200);
       }
       // Render real Leaflet controls/markers using synthetic tiles; no external service calls.
       await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({ status: 200, contentType: 'image/png',
