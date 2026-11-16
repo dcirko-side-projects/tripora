@@ -2,6 +2,41 @@
 
 Updated: 2026-11-16. Development branch: codex/offline-foundation.
 
+## Category icon markers publication verified - 2026-11-16
+
+User authorized commit/push/deploy. Category icons/selection were implemented in
+07b349c; final source **613b8f744aed2f71a452802ec35fe918ca2fe067** includes valid
+synthetic OSM fixtures and the keyboard repair discovered by CI. Leaflet creates
+the DOM icon after the initial map view exists, so accessible labels and
+Enter/Space listeners now attach on the marker's add event. Selection updates
+existing markers without rebuilding the map. No failed CI source was deployed.
+
+[Final GitHub CI](https://github.com/dcirko-side-projects/tripora/actions/runs/43912993862)
+passes both jobs: 90 mobile tests, typecheck/audit, Android/iOS/web exports, API
+build/liveness, backup guards, all 52 HTTP/PostgreSQL and all 25 Chromium/WebKit
+PWA checkpoints. Both browser engines verify all three icons, keyboard activation,
+one selected marker, filter/detail/edit return and four responsive viewport sizes.
+No uncaught browser errors. Local API execution remains blocked by Windows
+Application Control; the Linux results supply integration evidence, not a local
+or physical-device pass.
+
+Render **dep-dbtjde8n74is73cobo00** for exact source **613b8f7** reports
+**Deploy succeeded | Live**, duration **1m 40s**, triggered **18:00:41 CET** on
+2026-11-16. Same existing Free service/configuration. Public HTTP checks at
+**18:02:49 CET** pass: liveness 200/286 ms, DB readiness 200/1,029 ms,
+confirmed-email options true, anonymous sync 401/no-store, root/manifest/security
+headers and all 13 PWA shell assets. Public Linux bundle
+`/_expo/static/js/web/index-048d4e2d4936ad2414679d76815164c7.js` contains category
+icon/selection code and the new legend; the initials legend is absent.
+Isolated public Chromium passes HTTPS startup, service-worker/offline reload,
+readiness and cache privacy without modifying production users or travel data.
+Ignored HTTP proof: local-data/hosting-setup/marker-release-http-2026-11-16.json;
+probe: local-data/fullscreen-map/marker-public-http.cjs.
+
+Web/PWA delivery is complete. No Android APK/install or physical phone test was
+performed. Next: retaining native Android upgrade and physical review if requested.
+Pre-existing beta16 documentation remains preserved and outside these commits.
+
 ## Category icon markers - 2026-11-16
 
 User requested replacing marker initials with category icons and a visible selected
