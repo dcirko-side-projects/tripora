@@ -2,6 +2,31 @@
 
 Updated: 2026-11-11. Development branch: codex/offline-foundation.
 
+## Compact fullscreen map - 2026-11-16
+
+Implemented the requested bounded fullscreen UX update on native and web:
+compact saved-place search with a 48 px accessible X at the top, expanding map,
+floating category/status filters above attribution, safe-area padding and
+horizontal overflow for large text/narrow screens. Wide screens place both filter
+groups side by side. Inline/list UI and existing local filtering stay unchanged.
+Details/editing retain their embedded sheet and camera. Resize regression found
+and repaired: ResizeObserver owns map resizing and cleanup removes camera event
+listeners before disposing Leaflet, preventing a late access to a removed pane.
+
+Validation: clean mobile/E2E npm ci, TypeScript, 89/89 mobile tests, Android/iOS/web
+exports, API Release build (0 errors/warnings), HTTP liveness pass. Chromium passes
+all 13 PWA checkpoints with no uncaught runtime errors, including actual Leaflet
+markers/tiles, search, category/status filtering, fullscreen close and return from
+details/editing. Responsive assertions/screenshots cover 320x568, 390x844,
+844x390 and 1440x900; map height exceeds 80% at each size, controls stay inside
+the viewport and search/X do not overlap. Synthetic tiles/accounts only.
+Screenshots remain ignored under local-data/pwa-qa/chromium-map-*.png.
+Windows WebKit and Linux CI results will be recorded with publication evidence.
+No physical-device test or new native APK/installation is claimed. Native users
+need a retaining Android upgrade to receive this UI; web/PWA uses Render deploy.
+Next: publish the reviewed commit to the existing branch, deploy that exact SHA
+to the existing Free Render service and verify public shell/readiness.
+
 ## Published map/startup changes - verified 2026-11-11
 
 User explicitly authorized commit, push and deployment, then resumed final

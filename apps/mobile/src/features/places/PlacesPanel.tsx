@@ -1,6 +1,6 @@
 import { Alert } from "../../ui/alert";
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, Linking, Platform, Pressable, Text, View } from "react-native";
+import { Keyboard, Linking, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { LocalDatabase } from "../../core/localStore";
 import {
   Place,
@@ -18,6 +18,7 @@ import { ui } from "../../ui/theme";
 import { actionError } from "../../core/actionError";
 import { ApiClient, ApiError } from "../../core/sync";
 import { TripPlacesMap } from "./TripPlacesMap";
+import { CompactMapFilters } from "./CompactMapFilters";
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hr").replace(/đ/g, "d").trim();
 const categories = [
   ["place", "Mjesta"],
@@ -367,6 +368,13 @@ export function PlacesPanel({
     <Choice options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
     <Choice options={[["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const} value={filter} onChange={setFilter} />
   </View>;
+  const fullscreenSearch = <TextInput accessibilityLabel="Pretraži spremljena mjesta" placeholder="Pretraži mjesta"
+    value={mapQuery} onChangeText={setMapQuery} maxLength={300} returnKeyType="search"
+    onSubmitEditing={() => Keyboard.dismiss()} style={[ui.input, { minHeight: 48, paddingVertical: 10 }]} />;
+  const fullscreenFilters = <>
+    <CompactMapFilters label="Kategorije mjesta" options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
+    <CompactMapFilters label="Status posjeta" options={[["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const} value={filter} onChange={setFilter} />
+  </>;
   return (
     <View style={ui.panel}>
       <View>
@@ -389,7 +397,7 @@ export function PlacesPanel({
           Preuzeta kopija · pristup za izmjene je uklonjen.
         </Text>
       )}
-      {view === 'map' ? <TripPlacesMap places={records} api={api} filters={filters} overlay={selected ? details : form && !readOnly ? editor : undefined} onCloseOverlay={closeMapSheet} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
+      {view === 'map' ? <TripPlacesMap places={records} api={api} filters={filters} fullscreenSearch={fullscreenSearch} fullscreenFilters={fullscreenFilters} overlay={selected ? details : form && !readOnly ? editor : undefined} onCloseOverlay={closeMapSheet} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
         <Empty
           icon="pin"
           title="Ovdje počinje istraživanje"

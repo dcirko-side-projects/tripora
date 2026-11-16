@@ -15,7 +15,9 @@ for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is i
     await h.press('Karta'); await h.press('Otvori kartu preko cijelog zaslona');
     const fullscreen = h.root.findAllByType('Modal').find(n => n.props.presentationStyle === 'fullScreen');
     assert.ok(fullscreen);
-    assert.equal(fullscreen.findAllByType('ScrollView').length, 0);
+    assert.equal(fullscreen.findAllByType('ScrollView').filter(n => !n.props.horizontal).length, 0, 'only filter rows scroll; map gestures stay isolated');
+    assert.equal(fullscreen.findAllByType('ScrollView').length, 2);
+    assert.equal(fullscreen.findAllByType('Text').some(n => n.children.includes('Zatvori kartu')), false, 'close is an accessible icon without a large text button');
     assert.equal(fullscreen.findByType('NativeMap').props.style.flex, 1);
     assert.equal(h.root.findAllByType('NativeMap').length, 1);
     await h.run(() => fullscreen.props.onRequestClose());
@@ -49,10 +51,10 @@ for (const platform of ['android', 'ios']) test(`${platform} fullscreen map is i
     assert.deepEqual(h.root.findByType('MapCamera').props.initialViewState, camera);
     await h.press('Otvori kartu preko cijelog zaslona');
     assert.deepEqual(h.root.findByType('MapCamera').props.initialViewState, camera);
-    await h.fill('Filtriraj grad, naziv ili adresu', 'no synthetic match');
+    await h.fill('Pretraži spremljena mjesta', 'no synthetic match');
     assert.equal(h.root.findAllByType('MapMarker').length, 0);
     assert.equal(h.root.findAllByType('Modal').filter(n => n.props.presentationStyle === 'fullScreen' && n.props.visible).length, 1);
-    await h.fill('Filtriraj grad, naziv ili adresu', 'QA island');
+    await h.fill('Pretraži spremljena mjesta', 'QA island');
     assert.equal(h.root.findAllByType('MapMarker').length, 1);
 
   } finally { await h.close(); }

@@ -7,6 +7,8 @@ export type MapProps = {
   api?: ApiClient;
   onSelect: (id: string) => void;
   filters?: ReactNode;
+  fullscreenSearch?: ReactNode;
+  fullscreenFilters?: ReactNode;
   overlay?: (fullscreen: boolean) => ReactNode;
   onCloseOverlay?: () => void;
 };

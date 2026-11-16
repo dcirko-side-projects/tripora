@@ -90,7 +90,7 @@ try {
     const context = await engine.launchPersistentContext(join(folder, 'browser-' + name), { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     browser = context.browser();
     let page = await context.newPage();
-    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    const errors = []; page.on('pageerror', error => { errors.push(error.message); console.error(error.stack); });
     if (process.env.TRIPORA_PWA_DEBUG) page.on('requestfailed', request => console.log(name + ' failed request: ' + new URL(request.url()).pathname + ' ' + request.failure()?.errorText));
     page.on('response', response => { if (response.status() >= 500) console.log(name + ' HTTP ' + response.status() + ' ' + new URL(response.url()).pathname); });
     if (process.env.TRIPORA_PWA_DEBUG) page.on('console', message => { if (['error', 'warning'].includes(message.type())) console.log(name + ' browser: ' + message.text().slice(0, 350)); });
@@ -242,6 +242,35 @@ try {
       await page.waitForFunction(() => document.querySelectorAll('.leaflet-tile-loaded').length > 0);
       await page.getByRole('button', { name: 'Otvori kartu preko cijelog zaslona', exact: true }).click();
       assert.equal(await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).count(), 1);
+      for (const size of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }, { width: 1440, height: 900 }]) {
+        await page.setViewportSize(size);
+        const search = page.getByRole('textbox', { name: 'Pretraži spremljena mjesta', exact: true });
+        const close = page.getByRole('button', { name: 'Zatvori kartu', exact: true });
+        await search.waitFor();
+        await page.waitForTimeout(150); // Leaflet ResizeObserver and RN layout settle.
+        const mapBox = await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).boundingBox();
+        const searchBox = await search.boundingBox(), closeBox = await close.boundingBox();
+        assert.ok(mapBox.height >= size.height * 0.8, 'map fills at least 80% of the viewport');
+        assert.ok(searchBox.x + searchBox.width <= closeBox.x, 'search and close never overlap');
+        assert.ok(closeBox.width >= 44 && closeBox.height >= 44, 'accessible close target');
+        assert.equal(await close.innerText(), '', 'close has only an icon');
+        for (const title of ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Sve', 'Za posjetiti', 'Posjećeno']) {
+          const group = ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci'].includes(title) ? 'Kategorije mjesta' : 'Status posjeta';
+          const tab = page.getByLabel(group, { exact: true }).getByRole('tab', { name: title, exact: true });
+          await tab.scrollIntoViewIfNeeded();
+          const box = await tab.boundingBox();
+          assert.ok(box.x >= 0 && box.x + box.width <= size.width + 1 && box.y >= mapBox.y && box.y + box.height <= size.height - 20, 'filters fit within safe map area: ' + title);
+        }
+        await page.screenshot({ path: join(artifacts, `${name}-map-${size.width}x${size.height}.png`) });
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.getByRole('tab', { name: 'Hrana', exact: true }).click();
+      assert.equal(await page.locator('.leaflet-marker-icon').count(), 0);
+      await page.getByRole('tab', { name: 'Sve kategorije', exact: true }).click();
+      await page.getByRole('tab', { name: 'Posjećeno', exact: true }).click();
+      assert.equal(await page.locator('.leaflet-marker-icon').count(), 0);
+      await page.getByRole('tab', { name: 'Sve', exact: true }).click();
+      await page.locator('.leaflet-marker-icon').waitFor();
       await page.locator('.leaflet-marker-icon').click();
       await page.getByRole('heading', { name: 'Detalji mjesta', exact: true }).waitFor();
       assert.equal(await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).count(), 1);
@@ -257,10 +286,10 @@ try {
       await page.getByRole('heading', { name: 'Uredi mjesto', exact: true }).waitFor();
       await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
       assert.equal(await markerPosition(), beforeDetails);
-      await page.getByLabel('Filtriraj grad, naziv ili adresu', { exact: true }).fill('no synthetic match');
+      await page.getByLabel('Pretraži spremljena mjesta', { exact: true }).fill('no synthetic match');
       assert.equal(await page.locator('.leaflet-marker-icon').count(), 0);
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).waitFor();
-      await page.getByLabel('Filtriraj grad, naziv ili adresu', { exact: true }).fill('Synthetic marker');
+      await page.getByLabel('Pretraži spremljena mjesta', { exact: true }).fill('Synthetic marker');
       await page.locator('.leaflet-marker-icon').waitFor();
       pass(name + ': actual Leaflet map/tiles, retained fullscreen/viewport after details/edit, category initials and live filters');
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).click();

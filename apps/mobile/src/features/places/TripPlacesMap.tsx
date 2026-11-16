@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Linking, Modal, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import type * as MapLibre from '@maplibre/maplibre-react-native';
 import { markerLabel, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
+import { FullscreenMapFrame } from './FullscreenMapFrame';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 
-export function TripPlacesMap({ places, api, onSelect, filters, overlay, onCloseOverlay }: MapProps) {
+export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
   const [config, setConfig] = useState<Config>();
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -29,10 +29,10 @@ export function TripPlacesMap({ places, api, onSelect, filters, overlay, onClose
   let native: typeof MapLibre;
   try { native = require('@maplibre/maplibre-react-native'); }
   catch { return <View>{filters}<Text style={ui.muted}>Za kartu treba nova instalacijska verzija aplikacije. Spremljeni popis i dalje radi.</Text>{overlay?.(false)}</View>; }
-  return <NativePlacesMap filters={filters} overlay={overlay} onCloseOverlay={onCloseOverlay} native={native} config={config} places={located} onSelect={onSelect} onError={() => setError('Podloga karte nije dostupna. Spremljeni popis ostaje dostupan.')} />;
+  return <NativePlacesMap filters={filters} fullscreenSearch={fullscreenSearch} fullscreenFilters={fullscreenFilters} overlay={overlay} onCloseOverlay={onCloseOverlay} native={native} config={config} places={located} onSelect={onSelect} onError={() => setError('Podloga karte nije dostupna. Spremljeni popis ostaje dostupan.')} />;
 }
 
-function NativePlacesMap({ native, config, places, onSelect, onError, filters, overlay, onCloseOverlay }: Omit<MapProps, 'api'> & { native: typeof MapLibre; config: Config; onError: () => void }) {
+function NativePlacesMap({ native, config, places, onSelect, onError, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: Omit<MapProps, 'api'> & { native: typeof MapLibre; config: Config; onError: () => void }) {
   const { Map, Camera, Marker, TransformRequestManager } = native;
   const [networkReady, setNetworkReady] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -57,7 +57,7 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, o
       onRegionDidChange={event => { const { center, zoom, bearing, pitch } = event.nativeEvent; viewport.current = { center, zoom, bearing, pitch }; }}>
       <Camera maxZoom={19} initialViewState={viewport.current ?? (!places.length ? undefined : samePoint
         ? { center: [xs[0], ys[0]], zoom: 14 }
-        : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: 48, left: 48, right: 48 } })} />
+        : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: fullscreen ? 160 : 48, left: 48, right: 48 } })} />
       {places.map((p) => <Marker key={p.id} id={p.id} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => selectPlace(p.id)}>
         <View accessibilityLabel={`${markerLabel(p)}. ${p.name}`} style={{ minWidth: 40, minHeight: 40, padding: 8, borderRadius: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: tokens.color.surface,
           backgroundColor: p.category === 'food' ? tokens.color.accentInk : p.category === 'nightlife' ? tokens.color.text : tokens.color.primaryInk }}>
@@ -70,15 +70,10 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, o
     {!fullscreen ? <>{mapFilters}<View>{map}{overlay?.(false)}</View></> : null}
     <Modal visible={fullscreen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => overlay ? onCloseOverlay?.() : setFullscreen(false)}>
       {fullscreen ?
-      <SafeAreaView style={ui.safe}>
-        <View style={{ padding: 12, gap: 4 }}>
-          <Text accessibilityRole="header" style={ui.subheading}>Karta putovanja</Text>
-          <Button title="Zatvori kartu" variant="secondary" icon="close" onPress={() => setFullscreen(false)} />
-        </View>
-        {mapFilters}
+      <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!places.length}
+        onClose={() => setFullscreen(false)} overlay={overlay?.(true)}>
         {map}
-        {overlay?.(true)}
-      </SafeAreaView> : null}
+      </FullscreenMapFrame> : null}
     </Modal>
     <Text style={ui.caption}>M: mjesta · H: hrana · I: izlasci. Slova iza točke su inicijali naziva. Dodirni oznaku za detalje.</Text>
     <Text style={ui.caption}>Karta treba internet. Mjesta bez položaja prikazana su samo u popisu.</Text>

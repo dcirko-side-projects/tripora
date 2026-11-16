@@ -5,6 +5,7 @@ import { markerLabel, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
+import { FullscreenMapFrame } from './FullscreenMapFrame';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Place[]; config: Config; fullscreen: boolean; onSelect: (id: string) => void; viewport: { current: { center: L.LatLng; zoom: number } | undefined } }) {
@@ -15,7 +16,8 @@ function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Pl
   useEffect(() => {
     if (!container.current) return;
     setFailed(false);
-    const map = L.map(container.current, { scrollWheelZoom: false });
+    // ResizeObserver handles the actual map box, including orientation/keyboard changes.
+    const map = L.map(container.current, { scrollWheelZoom: false, trackResize: false });
     L.tileLayer(config.tileUrl, { maxZoom: 19, crossOrigin: 'anonymous',
       attribution: escapeHtml(config.attribution) }).on('tileerror', () => setFailed(true)).addTo(map);
     const bounds: L.LatLngTuple[] = [];
@@ -31,19 +33,19 @@ function WebMap({ places, config, fullscreen, onSelect, viewport }: { places: Pl
     });
     if (viewport.current) map.setView(viewport.current.center, viewport.current.zoom);
     else if (bounds.length && bounds.every(c => c[0] === bounds[0][0] && c[1] === bounds[0][1])) map.setView(bounds[0], 14);
-    else if (bounds.length) map.fitBounds(bounds, { padding: [40,40], maxZoom: 16 });
+    else if (bounds.length) map.fitBounds(bounds, { paddingTopLeft: [40,40], paddingBottomRight: [40, fullscreen ? 160 : 40], maxZoom: 16 });
     if (!bounds.length && !viewport.current) map.setView([0, 0], 2);
     const remember = () => { viewport.current = { center: map.getCenter(), zoom: map.getZoom() }; };
     map.on('moveend zoomend', remember);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(container.current);
-    return () => { remember(); observer.disconnect(); map.remove(); };
+    return () => { remember(); observer.disconnect(); map.off('moveend zoomend', remember); map.remove(); };
   }, [key, config, fullscreen]);
-  return <View style={fullscreen ? { flex: 1, minHeight: 200 } : undefined}>
+  return <View style={fullscreen ? { flex: 1, minHeight: 0 } : undefined}>
     {failed ? <Text accessibilityRole="alert" style={ui.error}>Dio karte nije dostupan. Provjeri internet; spremljeni popis ostaje dostupan.</Text> : null}
-    <div ref={container} role="region" aria-label="Karta spremljenih mjesta" style={{ height: fullscreen ? '100%' : 380, minHeight: 200, flex: 1, borderRadius: fullscreen ? 0 : 16, isolation: 'isolate' }} />
+    <div ref={container} role="region" aria-label="Karta spremljenih mjesta" style={{ height: fullscreen ? '100%' : 380, minHeight: fullscreen ? 0 : 200, flex: 1, borderRadius: fullscreen ? 0 : 16, isolation: 'isolate' }} />
   </View>;
 }
-export function TripPlacesMap({ places, api, onSelect, filters, overlay, onCloseOverlay }: MapProps) {
+export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
   const viewport = useRef<{ center: L.LatLng; zoom: number } | undefined>(undefined);
   const [config, setConfig] = useState<Config>();
   const [error, setError] = useState('');
@@ -68,7 +70,10 @@ export function TripPlacesMap({ places, api, onSelect, filters, overlay, onClose
     <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
     {!fullscreen ? <>{mapFilters}<View><WebMap viewport={viewport} places={located} config={config} fullscreen={false} onSelect={select} />{overlay?.(false)}</View></> : null}
     <Modal visible={fullscreen} onRequestClose={() => overlay ? onCloseOverlay?.() : setFullscreen(false)}>
-      {fullscreen ? <View style={[ui.safe, { paddingTop: 16 }]}><Button title="Zatvori kartu" variant="secondary" onPress={() => setFullscreen(false)} />{mapFilters}<WebMap viewport={viewport} places={located} config={config} fullscreen onSelect={select} />{overlay?.(true)}</View> : null}
+      {fullscreen ? <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!located.length}
+        onClose={() => setFullscreen(false)} overlay={overlay?.(true)}>
+        <WebMap viewport={viewport} places={located} config={config} fullscreen onSelect={select} />
+      </FullscreenMapFrame> : null}
     </Modal>
     <Text style={ui.caption}>M: mjesta · H: hrana · I: izlasci. Slova iza točke su inicijali naziva. Dodirni oznaku za detalje. Karta treba internet.</Text>
     {config.attributionUrl.startsWith('https://') ? <a href={config.attributionUrl} target="_blank" rel="noopener noreferrer">{config.attribution}</a> : <Text>{config.attribution}</Text>}

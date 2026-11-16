@@ -2,6 +2,17 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Compact fullscreen map - 2026-11-16
+
+Fullscreen uses a shared native/web frame: a compact local search and accessible
+48 px close icon above an otherwise expanding map. Category and visit-status
+filters float above the bottom attribution, with horizontally scrollable rows
+that sit side by side on wide screens. SafeAreaView on native and CSS safe-area
+insets on web protect controls from cutouts/home indicators. Details/editing keep
+their embedded sheet and retained camera behavior. Search still matches saved
+name/address/display-name text; no provider lookup or data contract changes.
+Inline/list controls retain their existing layout.
+
 ## Free hosting wake mitigation - 2026-11-10
 
 User requested eliminating the observed server wait and explicitly reaffirmed
