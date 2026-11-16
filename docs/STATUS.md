@@ -1,6 +1,37 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-11. Development branch: codex/offline-foundation.
+Updated: 2026-11-16. Development branch: codex/offline-foundation.
+
+## Fullscreen map publication verified - 2026-11-16
+
+User authorized commit, push and deployment. Source commits 860eab1 (responsive
+fullscreen controls) and **6341e749090d612fb7ba27e0839a8ce41ae82097** (final web
+safe-area repair) are pushed to the existing codex/offline-foundation branch.
+[Final GitHub CI](https://github.com/dcirko-side-projects/tripora/actions/runs/43908834379)
+passes both jobs: 89 mobile tests, typecheck/audit, all platform exports, API
+Release/liveness, backup guards, 52 HTTP/PostgreSQL scenarios and 25 combined
+Chromium/WebKit PWA checkpoints. The final map responsive assertions run in both
+Linux browser engines. Local Chromium separately passes all 13 checkpoints;
+Windows WebKit bootstrap reached the watchdog and is not counted as a pass.
+
+Render deployment **dep-dbtj10jbc2fs73brr2v0** for exact source **6341e74** shows
+**Deploy succeeded | Live**, duration **1m 2s**, triggered **17:34:10 CET** on
+2026-11-16. Same Free service, origin, provider configuration and health path.
+Public HTTP verification at **17:37:31 CET** passes: liveness 200/239 ms,
+DB readiness 200/99 ms, confirmed-email options true, anonymous sync 401 with
+no-store, manifest/root/security headers and all 13 public shell assets.
+Deployed Linux bundle: `/_expo/static/js/web/index-250107f10eeeaaff7143b64b5f166a0b.js`;
+its final fullscreen frame and compact search are verified after decoding JS
+Unicode escapes. Platform-specific export hashes differ from local Windows.
+Isolated public Chromium passes HTTPS startup, service-worker installation,
+offline reload, readiness and cache privacy without modifying production users.
+Ignored evidence: local-data/hosting-setup/release-http-2026-11-16.json,
+local-data/fullscreen-map/public-http.cjs and local-data/pwa-qa/*-map-*.png.
+
+Web/PWA publication is complete. No native APK was built/installed and no physical
+phone acceptance is claimed. Next concrete step: retaining Android upgrade when
+requested, followed by physical Android/iPhone safe-area/keyboard review.
+The pre-existing beta16 documentation change remains preserved and uncommitted.
 
 ## Compact fullscreen map - 2026-11-16
 
