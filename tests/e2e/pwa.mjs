@@ -364,14 +364,17 @@ try {
       await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.waiting);
       await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).waitFor();
       assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
+      // The form deliberately covers background controls. The pending worker must
+      // preserve it; the user closes it before choosing to update.
+      await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
       await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Odustani', exact: true }).click();
-      assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
+      await page.getByRole('button', { name: 'Otvori putovanje PWA pending update', exact: true }).waitFor();
       const otherWindow = await context.newPage(); await otherWindow.goto(base);
       await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
       await page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click();
       await page.getByText('Zatvori ostale Tripora kartice i prozore pa pokušaj ponovno.', { exact: true }).waitFor();
-      assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
+      await page.getByRole('button', { name: 'Otvori putovanje PWA pending update', exact: true }).waitFor();
       await otherWindow.close();
       await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
       await page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click();
