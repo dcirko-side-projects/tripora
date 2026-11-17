@@ -362,8 +362,19 @@ try {
       await writeFile(workerPath, originalWorker.replace(/tripora-shell-[a-f0-9]+/, 'tripora-shell-qa-' + randomBytes(8).toString('hex')));
       await page.evaluate(async () => { await (await navigator.serviceWorker.getRegistration()).update(); });
       await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.waiting);
+      await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).waitFor();
       assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
-      await page.close(); page = await context.newPage(); await page.goto(base);
+      await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Odustani', exact: true }).click();
+      assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
+      const otherWindow = await context.newPage(); await otherWindow.goto(base);
+      await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
+      await page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click();
+      await page.getByText('Zatvori ostale Tripora kartice i prozore pa pokušaj ponovno.', { exact: true }).waitFor();
+      assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'Keep unsaved draft through update');
+      await otherWindow.close();
+      await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
+      await page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click();
       await page.getByRole('button', { name: 'Otvori putovanje PWA local conflict ' + name, exact: true }).waitFor();
       await page.getByRole('button', { name: 'Otvori putovanje PWA pending update', exact: true }).waitFor();
       assert.equal((await api('/api/sync/pull', tokens.accessToken)).data.items.filter(t => t.name === 'PWA pending update').length, 0);
@@ -380,7 +391,7 @@ try {
       await page.getByRole('button', { name: 'Otvori uspomenu Synthetic offline photo', exact: true }).click();
       await page.getByRole('img', { name: 'Fotografija uspomene', exact: true }).waitFor();
       await page.waitForFunction(() => Array.from(document.images).some(image => image.complete && image.naturalWidth === 1280));
-      pass(name + ': update preserves active draft and persisted outbox; new shell restores session and sends queued trip exactly once');
+      pass(name + ': update notice/cancel/multiple-window guard preserve draft; confirmed update restores session and sends persisted outbox exactly once');
       const keys = await page.evaluate(async () => {
         const urls = []; for (const name of await caches.keys()) { for (const request of await (await caches.open(name)).keys()) urls.push(request.url); } return urls;
       });

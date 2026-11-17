@@ -97,10 +97,17 @@ Browser tokens are not Keychain-protected. Same-origin HTTPS, CSP/no third-party
 scripts and private/no-store API responses are required. HTML dates/confirmations and
 online Leaflet maps replace native bridges on web. Public PWA assets ship with the
 existing API image; no extra provider/CORS. Service worker caches build assets only,
-waits for old clients to close and preserves snapshots/outbox/photos. Eviction/user
+normally waits for old clients to close and preserves snapshots/outbox/photos. Eviction/user
 clearing and no background-sync guarantee remain explicit. All autonomous checks
 precede physical iPhone acceptance. [Plan](docs/IPHONE_PWA_PLAN.md) and STATUS track
 browser, deployment and device evidence separately. This supersedes iPhone deferral.
+
+PWA updates (2026-11-17) check on startup/foreground/reconnect and offer a manual
+check plus a visible update notice. Explicit confirmation may activate the waiting
+worker with one open window and reload only that page; multiple windows block the
+action. Warn about unsaved drafts; retain all saved account data and pending work.
+Legacy cache-first clients can load `/?update=20261117` without clearing storage;
+the new entry removes that recovery query for subsequent offline root reloads.
 
 ## Trip overview and expanded map — 2026-11-02
 

@@ -1,6 +1,33 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-16. Development branch: codex/offline-foundation.
+Updated: 2026-11-17. Development branch: codex/offline-foundation.
+
+## Safari stale shell / explicit PWA updates - 2026-11-17
+
+User reports an old fullscreen map on a companion's iPhone and confirms she opens
+the link in Safari. Public root still correctly serves the published marker build
+index-048d4e2d4936ad2414679d76815164c7.js / shell ea42af671f7c91d9.
+The deployed worker serves cached HTML first and waits for every old window to
+close, with no pending-update UI. This explains stale open Safari tabs; no access
+to the physical iPhone or its private data is claimed. Same-origin recovery link
+https://tripora-l4c7.onrender.com/?update=20261117 bypasses that legacy worker.
+
+Added startup/foreground/reconnect worker checks, manual check and waiting notice.
+Applying an update explicitly warns about unsaved forms and reloads only after
+activation; multiple open windows block activation with close-other-tabs guidance.
+Normal automatic activation still waits for old clients to close. Saved account
+snapshots, outbox, IndexedDB photos/tokens remain untouched. The recovery query is
+removed after bootstrap so subsequent root reloads also work offline.
+
+Clean mobile npm ci, typecheck, 90 mobile tests and Android/iOS/web exports pass.
+Isolated Chromium reproduces stale legacy navigation and verifies recovery,
+confirmation cancellation, multiple-window guard, retained storage and new offline
+shell. Full PWA integration now asserts notice/cancel/guard/confirmed activation
+with pending outbox, session and photo retention. CI also runs the independent
+legacy upgrade scenario in Chromium/WebKit. Local Windows WebKit exits at launch
+(3236495362); this is not a browser or physical iPhone pass. Linux CI and public
+deployment verification are the next release gates. Existing beta16/beta17 working
+documentation is preserved separately from the intended release changes.
 
 ## Category icon markers publication verified - 2026-11-16
 

@@ -119,11 +119,22 @@ CSP/no external scripts and private/no-store API responses are required. Account
 scoped PNG/thumbnail blobs commit together in IndexedDB before media metadata; hash
 checks/bounds and existing private API access remain. Temporary object URLs are views,
 not durable storage. Unsupported images keep the text draft. Service worker precache
-contains only public build assets, waits for old clients to close and never deletes
+contains only public build assets, normally waits for old clients to close and never deletes
 account snapshots/IndexedDB or caches API/media/tile responses. Browser data eviction
 and user clearing remain possible; persistence requests are not backups. No background
 sync guarantee. Deployment/browser checks and physical iPhone acceptance remain
 separate evidence in STATUS.
+
+PWA update repair (2026-11-17): check for a new worker at startup, foreground return
+and reconnect, with a manual check and visible waiting-version notice. Activation
+requires explicit confirmation warning about unsaved drafts; saved snapshots,
+outbox, tokens and photos remain untouched. A worker message permits skipWaiting
+only with a single window client; multiple windows receive close-other-tabs guidance.
+Only the confirming page reloads after activation. No automatic reload or clients.claim.
+For older cache-first clients without this UI, a same-origin `/?update=20261117`
+navigation bypasses the legacy worker. The new entry removes only that recovery
+query after loading so later offline reloads use the cached root. This is an update
+of existing PWA delivery, with no new service or account/sync/media contract.
 
 ## Trip overview and expanded map — 2026-11-02
 

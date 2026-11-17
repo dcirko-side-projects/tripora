@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import { initializeWebStorage } from './src/core/webRuntime';
 import { currentAlert, dismissAlert, subscribeAlerts } from './src/ui/alert.web';
+import { PwaUpdate } from './src/ui/PwaUpdate';
 
 function AlertHost() {
   const [, changed] = useState(0);
@@ -59,6 +60,7 @@ function WebApp() {
       <p>Za put pripremi podatke i posebno preuzmi fotografije. Nemoj brisati podatke stranice dok postoje neposlane promjene. Preglednik ili sustav mogu ukloniti lokalne podatke pri manjku prostora; redovito sinkroniziraj. Koristi uobičajeni, a ne privatni prozor. Karta treba internet.</p>
       <p role="status">{offlineReady ? 'Otvaranje aplikacije bez interneta je spremno. Podatke i fotografije pripremi u svom putovanju.' : 'Priprema otvaranja aplikacije bez interneta… Ostani povezan dok priprema ne završi.'}</p>
     </details>
+    <PwaUpdate />
     {error ? <p role="alert" style={{ padding: 16 }}>{error}</p> : null}
     {state === 'ready' ? <App /> : <main style={{ padding: 24 }}><h1>Tripora</h1>{state === 'loading' ? <p>Otvaranje lokalnih podataka…</p> : <button onClick={() => location.reload()}>Pokušaj ponovno</button>}</main>}
     <AlertHost />

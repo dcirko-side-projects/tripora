@@ -32,6 +32,13 @@ const worker = `const CACHE='tripora-shell-${version.digest('hex').slice(0,16)}'
 const ASSETS=${JSON.stringify(assets)};
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS))));
 // Wait for all old clients to close. Never reload an active form or delete user storage.
+self.addEventListener('message', event => {
+ if(event.data?.type!=='TRIPORA_APPLY_UPDATE')return;
+ event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(clients=>{
+   if(clients.length>1){event.source?.postMessage({type:'TRIPORA_UPDATE_BLOCKED'});return;}
+   return self.skipWaiting();
+ }));
+});
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('tripora-shell-') && key !== CACHE).map(key => caches.delete(key))))));
 self.addEventListener('fetch', event => {
  const url=new URL(event.request.url);

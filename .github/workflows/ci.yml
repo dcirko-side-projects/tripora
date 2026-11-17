@@ -43,4 +43,5 @@ jobs:
       - run: node --experimental-sqlite tests/e2e/auth-sync.mjs
       - run: npm run export:web --prefix apps/mobile
       - run: node apps/mobile/node_modules/playwright/cli.js install --with-deps chromium webkit
+      - run: node tests/e2e/pwa-update.mjs
       - run: node tests/e2e/pwa.mjs
