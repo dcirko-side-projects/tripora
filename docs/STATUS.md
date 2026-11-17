@@ -22,12 +22,31 @@ removed after bootstrap so subsequent root reloads also work offline.
 Clean mobile npm ci, typecheck, 90 mobile tests and Android/iOS/web exports pass.
 Isolated Chromium reproduces stale legacy navigation and verifies recovery,
 confirmation cancellation, multiple-window guard, retained storage and new offline
-shell. Full PWA integration now asserts notice/cancel/guard/confirmed activation
-with pending outbox, session and photo retention. CI also runs the independent
-legacy upgrade scenario in Chromium/WebKit. Local Windows WebKit exits at launch
-(3236495362); this is not a browser or physical iPhone pass. Linux CI and public
-deployment verification are the next release gates. Existing beta16/beta17 working
-documentation is preserved separately from the intended release changes.
+shell. Final source **1789f3ec4827034bfb07d07f38375d880db8c21c** passes both jobs in
+[GitHub CI](https://github.com/dcirko-side-projects/tripora/actions/runs/44124173209):
+90 mobile tests, typecheck/audit/three exports, API build/liveness, backup guards,
+52 HTTP/PostgreSQL scenarios, 25 PWA checkpoints and two independent legacy-upgrade
+scenarios in Linux Chromium/WebKit. Confirmed update retains session, pending
+outbox (sent exactly once) and photo. Initial CI exposed the test attempting to
+click behind an open form; corrected to verify the draft before closing the form,
+then exercise update/cancel/guard. No failed-CI commit was deployed. Local Windows
+WebKit exits at launch (3236495362); Linux results provide browser evidence, not a
+physical iPhone pass.
+
+Render **dep-dbu7v3nf3r2c73da8cj0** for exact source **1789f3e** reports
+**Deploy succeeded | Live**, duration **1m 21s**, triggered **17:23:42 CET** on
+2026-11-17. Existing Free service/providers/settings unchanged. Public checks pass:
+root/recovery URL, all 13 shell assets, liveness and DB readiness return 200;
+Linux bundle `/_expo/static/js/web/index-01f62e7acb6ec46f94f9add87e3f8153.js`
+and worker both contain the explicit update handler. Isolated public Chromium
+confirms the manual version button, HTTPS startup, shell installation, offline
+reload and cache privacy without registration/login or production user mutations.
+Ignored evidence: local-data/pwa-qa/safari-update-public.png and
+local-data/fullscreen-map/pwa-update-public-smoke.mjs.
+Next: companion saves her form and opens the recovery link in the same Safari;
+close other Tripora tabs if the storage/update guard requests it, then confirm
+fullscreen map and category icons on the physical phone. No Safari storage clearing
+or reinstall. Existing beta16/beta17 working documentation is preserved separately.
 
 ## Category icon markers publication verified - 2026-11-16
 

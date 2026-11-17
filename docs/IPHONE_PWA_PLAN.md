@@ -64,6 +64,20 @@ Android nastavlja raditi. Spremanje ne smije prijaviti uspjeh prije trajnog zapi
 
 ## Dokazi i nastavak
 
+### Safari prikazuje staru verziju
+
+Prvo spremi otvoreni unos. Otvori
+[svježu Triporu](https://tripora-l4c7.onrender.com/?update=20261117) u istom,
+uobičajenom Safariju. Ta poveznica zaobilazi staru offline kopiju; ne briše podatke.
+Ako piše da je Tripora već otvorena, zatvori ostale Tripora kartice/prozore i
+ponovno otvori poveznicu. Nemoj brisati Safari podatke niti ponovno instalirati
+aplikaciju radi nadogradnje jer lokalni podaci mogu sadržavati neposlane promjene.
+
+Nova verzija nudi **Provjeri novu verziju**, a nakon preuzimanja **Ažuriraj Triporu**.
+Prije potvrde spremi obrasce i zatvori ostale Tripora prozore. Potvrđena nadogradnja
+ponovno učitava stranicu uz očuvanje prijave, spremljenih podataka i reda slanja.
+Sama dostupnost nove verzije ne zatvara otvoreni obrazac.
+
 Implementirani su koraci 1–4: zajednički web klijent, trajni računski SQLite red,
 IndexedDB fotografije/sesija, web karta/datum/potvrde, instalacijske upute, manifest,
 ikone i verzionirani offline app shell. Pripremljen je i korak 6: isti origin i
