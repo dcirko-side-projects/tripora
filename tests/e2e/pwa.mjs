@@ -200,6 +200,8 @@ try {
       assert.equal(image.status, 200); assert.match(image.data.sha256, /^[a-f0-9]{64}$/i);
       assert.equal((await api('/api/media/' + memory.data.mediaId)).status, 401);
       assert.ok(uploadCalls >= 2); assert.equal(entries.data.items.filter(e => e.tripId === savedTrip.id && e.feature === 'memory').length, 1);
+      // The outbox can reach zero before the last metadata pull finishes.
+      await page.getByText('Sinkroniziram…', { exact: true }).waitFor({ state: 'hidden' });
       pass(name + ': photo upload lost acknowledgement survives reload/retry without duplicate memory; anonymous photo denied');
 
       // Competing real server edit while this browser edits the old version offline.
