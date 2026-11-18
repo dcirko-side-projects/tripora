@@ -1,6 +1,7 @@
 import { InputError, LocalDatabase } from './localStore';
 
-export type PlaceCategory = 'place' | 'food' | 'nightlife';
+export const placeCategories = ['place', 'food', 'nightlife', 'accommodation'] as const;
+export type PlaceCategory = typeof placeCategories[number];
 export type PlaceLocation = { latitude: number; longitude: number; displayName: string; provider: 'osm'; providerId: string };
 export type PlaceInput = { category: PlaceCategory; name: string; notes: string; address: string; link: string; visited: boolean; location?: PlaceLocation | null };
 export type Place = PlaceInput & { id: string; tripId: string; createdAt: string; version: number; deleted: boolean };
@@ -17,7 +18,7 @@ export function initPlaceStore(db: LocalDatabase): void {
     INSERT INTO place_meta VALUES (1, 0);`);
 }
 export function validatePlace(input: PlaceInput): PlaceInput {
-  if (!['place', 'food', 'nightlife'].includes(input.category)) throw new InputError('Odaberi kategoriju mjesta.');
+  if (!placeCategories.includes(input.category)) throw new InputError('Odaberi kategoriju mjesta.');
   const data = { ...input, name: input.name.trim(), notes: input.notes.trim(), address: input.address.trim(), link: input.link.trim() };
   if (!data.name || data.name.length > 120) throw new InputError('Naziv mjesta je obavezan, do 120 znakova.');
   if (data.notes.length > 2000 || data.address.length > 300 || data.link.length > 1000) throw new InputError('Bilješka, adresa ili poveznica je preduga.');

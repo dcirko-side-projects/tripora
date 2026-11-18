@@ -3,6 +3,32 @@
 Status: planning, personal packing, expenses and memories checkpoint 2026-10-22. Read docs/STATUS.md for verification and remaining boundaries.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
+## Places in the daily plan and file exports — 2026-11-18
+
+The daily picker creates a regular plan entry with a calendar date and a
+`placeId` pointing to a saved place in the same trip. Each day's entry can be
+edited or removed independently. The same place can be used on multiple days.
+Removing a plan entry uses the existing entry tombstone and sync flow. Existing
+activity titles, times and notes are retained. Deleted places remain unavailable
+in linked entries as before.
+
+Plan and Places use the same MapLibre/Leaflet components, place filters and
+details. The plan adds a date scope, including all dates and unscheduled
+entries. It resolves active references against saved places and renders one
+marker per place. Changing the date scope fits its markers. Category
+`accommodation` is a saved-place value validated by the client and API. Its
+bed icon is shared with the plan. A new plan entry from accommodation defaults
+to the existing `stay` activity type. Both changes use existing storage schemas.
+
+Exports are generated from the current account's local snapshot and include
+pending local data for trips with access. Scopes are all trips, one trip's saved
+places, linked places in its whole plan, or linked places for one date or the
+unscheduled group. JSON includes available place fields and schedule context.
+GeoJSON contains point features for places with coordinates. The files omit
+account identity and sync metadata. The browser downloads a local file and
+native uses the Expo Sharing sheet. Map imagery continues to come from the
+configured tile provider.
+
 ## Category icon markers - 2026-11-16
 
 Markers use the application's outline SVG icons instead of initials: pin for

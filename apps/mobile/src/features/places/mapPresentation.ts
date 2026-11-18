@@ -1,11 +1,12 @@
 import type { ReactNode } from 'react';
 import type { ApiClient } from '../../core/sync';
-import type { Place } from '../../core/placeStore';
+import { placeCategories, type Place, type PlaceCategory } from '../../core/placeStore';
 import { iconPaths, type IconName } from '../../ui/Icon';
 import { tokens } from '../../ui/theme';
 
 export type MapProps = {
   places: Place[];
+  scopeKey?: string;
   api?: ApiClient;
   onSelect: (id: string) => void;
   filters?: ReactNode;
@@ -14,13 +15,17 @@ export type MapProps = {
   overlay?: (fullscreen: boolean) => ReactNode;
   onCloseOverlay?: () => void;
 };
-// Use only persisted categories; never infer a restaurant/cafe/etc. from its name.
-export function markerAppearance(category?: string): { icon: IconName; color: string; label: string } {
-  switch (category) {
-    case 'food': return { icon: 'food', color: tokens.color.accentInk, label: 'Hrana' };
-    case 'nightlife': return { icon: 'nightlife', color: tokens.color.text, label: 'Izlasci' };
-    default: return { icon: 'pin', color: tokens.color.primaryInk, label: 'Mjesto' };
-  }
+export const fullscreenMapBottomPadding = 200;
+const appearances: Record<PlaceCategory, { icon: IconName; color: string; label: string }> = {
+  place: { icon: 'pin', color: tokens.color.primaryInk, label: 'Mjesto' },
+  food: { icon: 'food', color: tokens.color.accentInk, label: 'Hrana' },
+  nightlife: { icon: 'nightlife', color: tokens.color.text, label: 'Izlasci' },
+  accommodation: { icon: 'bed', color: '#58438D', label: 'Smještaj' },
+};
+export const categoryOptions = placeCategories.map(category => [category, category === 'place' ? 'Mjesta' : appearances[category].label] as const);
+
+export function markerAppearance(category?: string) {
+  return placeCategories.includes(category as PlaceCategory) ? appearances[category as PlaceCategory] : appearances.place;
 }
 
 // Fixed application-owned paths only; saved names/notes never enter SVG markup.

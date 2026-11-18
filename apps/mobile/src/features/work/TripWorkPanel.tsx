@@ -36,6 +36,10 @@ import { calendarDate, dateValue, displayDate, tripDays } from "../../ui/dates";
 import { Icon } from "../../ui/Icon";
 import { tokens, ui } from "../../ui/theme";
 import { actionError } from "../../core/actionError";
+import { planPlaceIds } from "../../core/placesExport";
+import { markerAppearance } from "../places/mapPresentation";
+import { PlacesExport } from "../places/PlacesExport";
+import { PlanPlacesMap } from "./PlanPlacesMap";
 export type WorkSection = "plan" | "packing" | "expense" | "memory";
 type Props = {
   db: LocalDatabase;
@@ -79,13 +83,14 @@ function editable(entry: Entry, p: Props) {
   );
 }
 function remove(entry: Entry, p: Props, done: () => void) {
+  const linkedPlace = entry.feature === "plan" && !!entry.data.placeId;
   Alert.alert(
-    "Obrisati zapis?",
+    linkedPlace ? "Ukloniti mjesto iz rasporeda?" : "Obrisati zapis?",
     entry.feature === "budget" ? "Budžet" : entry.data.title,
     [
       { text: "Odustani", style: "cancel" },
       {
-        text: "Obriši zapis",
+        text: linkedPlace ? "Ukloni iz rasporeda" : "Obriši zapis",
         style: "destructive",
         onPress: () => {
           if (p.mutate(() => deleteEntry(p.db, entry.id, p.actor, randomUUID)))
@@ -175,6 +180,8 @@ export function TripWorkPanel(p: Props) {
 }
 function PlanPanel(p: Props) {
   const today = dateValue(new Date());
+  const [view, setView] = useState<"schedule" | "map">("schedule");
+  const [picking, setPicking] = useState(false);
   const [day, setDay] = useState(
     today >= p.trip.startDate && today <= p.trip.endDate
       ? today
@@ -191,7 +198,7 @@ function PlanPanel(p: Props) {
   });
   const [input, setInput] = useState<PlanData>(() =>
     p.planPlace
-      ? { ...blank(), title: p.planPlace.name, placeId: p.planPlace.id }
+      ? { ...blank(), title: p.planPlace.name, placeId: p.planPlace.id, category: p.planPlace.category === "accommodation" ? "stay" : "activity" }
       : blank(),
   );
   const [editing, setEditing] = useState<string>();
@@ -211,6 +218,24 @@ function PlanPanel(p: Props) {
   const selected = records.find((e) => e.id === detail);
   const days = tripDays(p.trip.startDate, p.trip.endDate);
   const shown = records.filter((e) => e.data.date === day);
+  const savedPlaces = p.places.places.filter(place => place.tripId === p.trip.id && !place.deleted);
+  const placesById = new Map(savedPlaces.map(place => [place.id, place]));
+  const scheduledIds = planPlaceIds(shown, p.trip.id, day);
+  const available = savedPlaces.filter(place => !scheduledIds.has(place.id));
+  const selectedPlace = selected?.data.placeId ? placesById.get(selected.data.placeId) : undefined;
+
+  function addPlace(place: Place) {
+    if (scheduledIds.has(place.id)) return;
+    const data: PlanData = {
+      ...blank(),
+      title: place.name,
+      category: place.category === "accommodation" ? "stay" : "activity",
+      placeId: place.id,
+    };
+    if (commit(p, setError, () => saveEntry(p.db, p.trip.id, "plan", data, p.actor, randomUUID))) {
+      setPicking(false);
+    }
+  }
   function close() {
     setForm(false);
     p.onSeedUsed?.();
@@ -246,169 +271,203 @@ function PlanPanel(p: Props) {
         </Text>
         <Text style={ui.muted}>Vrijeme vrijedi za odredište putovanja.</Text>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={ui.row}>
-          {days.map((date, index) => (
-            <Pressable
-              key={date}
-              accessibilityRole="tab"
-              accessibilityLabel={`Dan ${displayDate(date)}`}
-              accessibilityState={{ selected: day === date }}
-              onPress={() => setDay(date)}
-              style={{
-                minWidth: 64,
-                padding: 12,
-                borderRadius: 12,
-                backgroundColor:
-                  day === date ? tokens.color.primary : tokens.color.background,
-                alignItems: "center",
-                gap: 4,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: day === date ? tokens.color.onPrimary : tokens.color.muted,
-                }}
-              >
-                DAN {index + 1}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "700",
-                  color: day === date ? tokens.color.onPrimary : tokens.color.text,
-                }}
-              >
-                {calendarDate(date).getDate()}
-              </Text>
-              <Text
-                style={{
-                  fontSize: 12,
-                  color: day === date ? tokens.color.onPrimary : tokens.color.muted,
-                }}
-              >
-                {calendarDate(date).toLocaleDateString("hr-HR", {
-                  month: "short",
-                })}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
-      <View style={ui.between}>
-        <Text style={ui.subheading}>
-          {day ? displayDate(day) : "Neraspoređeno"}
-        </Text>
-        <Button
-          title="Neraspoređeno"
-          variant={day === "" ? "secondary" : "ghost"}
-          onPress={() => setDay("")}
-        />
-      </View>
-      {days.length === 366 ? (
-        <DateField
-          label="Prikaži drugi dan"
-          value={day}
-          minimum={p.trip.startDate}
-          maximum={p.trip.endDate}
-          onChange={setDay}
-        />
-      ) : null}
-      {!p.trip.accessRevoked ? (
-        <Button
-          title="Dodaj aktivnost"
-          icon="plus"
-          disabled={p.busy}
-          onPress={() => edit()}
-        />
-      ) : null}
-      {!shown.length ? (
-        <Empty
-          icon="calendar"
-          title="Prostor za nove doživljaje"
-          detail={
-            day
-              ? "Dodaj aktivnost za odabrani dan ili pogledaj neraspoređene stavke."
-              : "Ovdje su ideje kojima još nisi odabrao dan."
-          }
-        />
+      <Choice options={[["schedule", "Raspored"], ["map", "Karta plana"]] as const} value={view} onChange={setView} />
+      {view === "map" ? (
+        <PlanPlacesMap trip={p.trip} entries={records} places={savedPlaces} day={day} api={p.api} db={p.db} />
       ) : (
-        <View>
-          {shown.map((e) => (
-            <Pressable
-              key={e.id}
-              accessibilityRole="button"
-              accessibilityLabel={`Otvori aktivnost ${e.data.title}`}
-              onPress={() => setDetail(e.id)}
-              style={[ui.item, ui.row]}
-            >
-              <View
-                style={{
-                  width: 54,
-                  alignSelf: "stretch",
-                  borderRightWidth: 2,
-                  borderColor: tokens.color.primarySoft,
-                  paddingRight: 8,
-                }}
-              >
-                <Text style={[ui.subheading, { color: tokens.color.primaryInk }]}>
-                  {e.data.time || "—"}
-                </Text>
-              </View>
-              <View style={ui.flex}>
-                <Text
-                  style={[
-                    ui.subheading,
-                    e.data.done && {
-                      textDecorationLine: "line-through",
-                      color: tokens.color.muted,
-                    },
-                  ]}
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={ui.row}>
+              {days.map((date, index) => (
+                <Pressable
+                  key={date}
+                  accessibilityRole="tab"
+                  accessibilityLabel={`Dan ${displayDate(date)}`}
+                  accessibilityState={{ selected: day === date }}
+                  onPress={() => setDay(date)}
+                  style={{
+                    minWidth: 64,
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor:
+                      day === date ? tokens.color.primary : tokens.color.background,
+                    alignItems: "center",
+                    gap: 4,
+                  }}
                 >
-                  {e.data.title}
-                </Text>
-                <Text style={ui.muted}>
-                  {e.data.category === "stay"
-                    ? "Smještaj"
-                    : e.data.category === "transport"
-                      ? "Prijevoz"
-                      : "Aktivnost"}
-                  {e.data.done ? " · Dovršeno" : ""}
-                </Text>
-                <Status entry={e} p={p} />
-              </View>
-              <Icon name="next" size={18} />
-            </Pressable>
-          ))}
-        </View>
-      )}
-      {records.some(
-        (e) =>
-          e.data.date &&
-          (e.data.date < p.trip.startDate || e.data.date > p.trip.endDate),
-      ) ? (
-        <View style={ui.errorBox}>
-          <Text style={ui.error}>
-            Neke aktivnosti su izvan datuma putovanja.
-          </Text>
-          {records
-            .filter(
-              (e) =>
-                e.data.date &&
-                (e.data.date < p.trip.startDate ||
-                  e.data.date > p.trip.endDate),
-            )
-            .map((e) => (
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: day === date ? tokens.color.onPrimary : tokens.color.muted,
+                    }}
+                  >
+                    DAN {index + 1}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      fontWeight: "700",
+                      color: day === date ? tokens.color.onPrimary : tokens.color.text,
+                    }}
+                  >
+                    {calendarDate(date).getDate()}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: day === date ? tokens.color.onPrimary : tokens.color.muted,
+                    }}
+                  >
+                    {calendarDate(date).toLocaleDateString("hr-HR", {
+                      month: "short",
+                    })}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+          <View style={ui.between}>
+            <Text style={ui.subheading}>
+              {day ? displayDate(day) : "Neraspoređeno"}
+            </Text>
+            <Button
+              title="Neraspoređeno"
+              variant={day === "" ? "secondary" : "ghost"}
+              onPress={() => setDay("")}
+            />
+          </View>
+          {days.length === 366 ? (
+            <DateField
+              label="Prikaži drugi dan"
+              value={day}
+              minimum={p.trip.startDate}
+              maximum={p.trip.endDate}
+              onChange={setDay}
+            />
+          ) : null}
+          {!p.trip.accessRevoked ? (
+            <>
               <Button
-                key={e.id}
-                title={`Prilagodi: ${e.data.title}`}
-                variant="ghost"
-                onPress={() => setDetail(e.id)}
+                title="Dodaj aktivnost"
+                icon="plus"
+                disabled={p.busy}
+                onPress={() => edit()}
               />
-            ))}
-        </View>
-      ) : null}
+              <Button title="Dodaj spremljeno mjesto" icon="pin" variant="secondary" disabled={p.busy}
+                onPress={() => { setError(""); setPicking(true); }} />
+            </>
+          ) : null}
+          {!shown.length ? (
+            <Empty
+              icon="calendar"
+              title="Prostor za nove doživljaje"
+              detail={
+                day
+                  ? "Dodaj aktivnost za odabrani dan ili pogledaj neraspoređene stavke."
+                  : "Ovdje su ideje kojima još nisi odabrao dan."
+              }
+            />
+          ) : (
+            <View>
+              {shown.map((e) => {
+                const place = e.data.placeId ? placesById.get(e.data.placeId) : undefined;
+                const appearance = place ? markerAppearance(place.category) : undefined;
+                return (
+                  <Pressable
+                    key={e.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Otvori aktivnost ${e.data.title}`}
+                    onPress={() => setDetail(e.id)}
+                    style={[ui.item, ui.row]}
+                  >
+                    <View
+                      style={{
+                        width: 54,
+                        alignSelf: "stretch",
+                        borderRightWidth: 2,
+                        borderColor: tokens.color.primarySoft,
+                        paddingRight: 8,
+                      }}
+                    >
+                      <Text style={[ui.subheading, { color: tokens.color.primaryInk }]}>
+                        {e.data.time || "—"}
+                      </Text>
+                    </View>
+                    <Icon name={appearance?.icon ?? (e.data.category === "stay" ? "bed" : e.data.category === "transport" ? "clock" : "calendar")}
+                      color={appearance?.color} />
+                    <View style={ui.flex}>
+                      <Text
+                        style={[
+                          ui.subheading,
+                          e.data.done && {
+                            textDecorationLine: "line-through",
+                            color: tokens.color.muted,
+                          },
+                        ]}
+                      >
+                        {e.data.title}
+                      </Text>
+                      <Text style={ui.muted}>
+                        {appearance?.label ?? (e.data.category === "stay"
+                          ? "Smještaj"
+                          : e.data.category === "transport"
+                            ? "Prijevoz"
+                            : "Aktivnost")}
+                        {e.data.done ? " · Dovršeno" : ""}
+                      </Text>
+                      {place && place.name !== e.data.title ? <Text style={ui.caption}>{place.name}</Text> : null}
+                      <Status entry={e} p={p} />
+                    </View>
+                    <Icon name="next" size={18} />
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+          {records.some(
+            (e) =>
+              e.data.date &&
+              (e.data.date < p.trip.startDate || e.data.date > p.trip.endDate),
+          ) ? (
+            <View style={ui.errorBox}>
+              <Text style={ui.error}>
+                Neke aktivnosti su izvan datuma putovanja.
+              </Text>
+              {records
+                .filter(
+                  (e) =>
+                    e.data.date &&
+                    (e.data.date < p.trip.startDate ||
+                      e.data.date > p.trip.endDate),
+                )
+                .map((e) => (
+                  <Button
+                    key={e.id}
+                    title={`Prilagodi: ${e.data.title}`}
+                    variant="ghost"
+                    onPress={() => setDetail(e.id)}
+                  />
+                ))}
+            </View>
+          ) : null}
+          {!p.trip.accessRevoked ? (
+            <PlacesExport db={p.db} scope={{ kind: "day", tripId: p.trip.id, date: day }}
+              title={day ? "Izvezi mjesta za odabrani dan" : "Izvezi neraspoređena mjesta"}
+              description={day ? `Spremljena mjesta u planu za ${displayDate(day)}` : "Spremljena mjesta povezana s neraspoređenim aktivnostima."}
+            />
+          ) : null}
+        </>
+      )}
+      <FormSheet title="Dodaj spremljeno mjesto" visible={picking && !p.trip.accessRevoked}
+        onClose={() => setPicking(false)} busy={p.busy} error={error || p.error}>
+        <Text style={ui.subheading}>{day ? displayDate(day) : "Neraspoređeno"}</Text>
+        {available.length ? available.map(place => (
+          <Button key={place.id} title={place.name} icon={markerAppearance(place.category).icon}
+            variant="secondary" disabled={p.busy} onPress={() => addPlace(place)} />
+        )) : (
+          <Text style={ui.muted}>{savedPlaces.length ? "Sva spremljena mjesta već su u ovom dijelu rasporeda." : "Prvo spremi mjesto u kartici Mjesta."}</Text>
+        )}
+      </FormSheet>
       <FormSheet
         title={editing ? "Uredi aktivnost" : "Nova aktivnost"}
         visible={form && !p.trip.accessRevoked}
@@ -500,9 +559,7 @@ function PlanPanel(p: Props) {
             {selected.data.placeId ? (
               <Text style={ui.muted}>
                 Mjesto:{" "}
-                {p.places.places.find(
-                  (v) => v.id === selected.data.placeId && !v.deleted,
-                )?.name ?? "Obrisano ili nije dostupno"}
+                {selectedPlace?.name ?? "Obrisano ili nije dostupno"}
               </Text>
             ) : null}
             <Status entry={selected} p={p} />
@@ -537,7 +594,7 @@ function PlanPanel(p: Props) {
                   onPress={() => edit(selected)}
                 />
                 <Button
-                  title="Obriši aktivnost"
+                  title={selected.data.placeId ? "Ukloni iz rasporeda" : "Obriši aktivnost"}
                   variant="danger"
                   disabled={p.busy}
                   onPress={() =>

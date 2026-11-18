@@ -230,10 +230,14 @@ try {
       assert.equal((await api('/api/places/push', tokens.accessToken, { operationId: randomUUID(), tripId: savedTrip.id, placeId, kind: 'place.create', baseVersion: 0,
         data: { category: 'place', name: 'Synthetic marker', notes: '', address: '', link: '', visited: false,
           location: { latitude: 45.8, longitude: 16, displayName: 'Synthetic marker', provider: 'osm', providerId: 'N999' } } })).status, 200);
-      for (const [category, label, latitude] of [['food', 'Synthetic dining', 45.801], ['nightlife', 'Synthetic evening', 45.799]]) {
+      for (const [category, label, latitude, providerId] of [
+        ['food', 'Synthetic dining', 45.801, 'N1000'],
+        ['nightlife', 'Synthetic evening', 45.799, 'N1001'],
+        ['accommodation', 'Synthetic hotel', 45.82, 'N1002'],
+      ]) {
         assert.equal((await api('/api/places/push', tokens.accessToken, { operationId: randomUUID(), tripId: savedTrip.id, placeId: randomUUID(), kind: 'place.create', baseVersion: 0,
           data: { category, name: label, notes: '', address: '', link: '', visited: false,
-            location: { latitude, longitude: 16.002, displayName: label, provider: 'osm', providerId: category === 'food' ? 'N1000' : 'N1001' } } })).status, 200);
+            location: { latitude, longitude: 16.002, displayName: label, provider: 'osm', providerId } } })).status, 200);
       }
       // Render real Leaflet controls/markers using synthetic tiles; no external service calls.
       await context.route('https://tile.openstreetmap.org/**', route => route.fulfill({ status: 200, contentType: 'image/png',
@@ -248,8 +252,12 @@ try {
       await page.getByRole('button', { name: 'Otvori kartu preko cijelog zaslona', exact: true }).click();
       assert.equal(await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).count(), 1);
       assert.equal(await page.getByTestId('fullscreen-map-frame').evaluate(element => element.style.paddingTop), 'env(safe-area-inset-top, 0px)', 'CSS safe-area padding survives native/web style adapters');
-      assert.deepEqual((await page.locator('.leaflet-marker-icon [data-icon]').evaluateAll(nodes => nodes.map(n => n.dataset.icon))).sort(), ['food', 'nightlife', 'pin']);
-      for (const [category, icon, label] of [['Hrana', 'food', 'Hrana: Synthetic dining'], ['Izlasci', 'nightlife', 'Izlasci: Synthetic evening']]) {
+      assert.deepEqual((await page.locator('.leaflet-marker-icon [data-icon]').evaluateAll(nodes => nodes.map(n => n.dataset.icon))).sort(), ['bed', 'food', 'nightlife', 'pin']);
+      for (const [category, icon, label] of [
+        ['Hrana', 'food', 'Hrana: Synthetic dining'],
+        ['Izlasci', 'nightlife', 'Izlasci: Synthetic evening'],
+        ['Smještaj', 'bed', 'Smještaj: Synthetic hotel'],
+      ]) {
         await page.getByLabel('Kategorije mjesta', { exact: true }).getByRole('tab', { name: category, exact: true }).click();
         assert.equal(await page.locator('.leaflet-marker-icon [data-icon]').getAttribute('data-icon'), icon);
         await page.getByRole('button', { name: label, exact: true }).press(icon === 'food' ? 'Enter' : 'Space');
@@ -273,8 +281,8 @@ try {
         assert.ok(searchBox.x + searchBox.width <= closeBox.x, 'search and close never overlap');
         assert.ok(closeBox.width >= 44 && closeBox.height >= 44, 'accessible close target');
         assert.equal(await close.innerText(), '', 'close has only an icon');
-        for (const title of ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Sve', 'Za posjetiti', 'Posjećeno']) {
-          const group = ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci'].includes(title) ? 'Kategorije mjesta' : 'Status posjeta';
+        for (const title of ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Smještaj', 'Sve', 'Za posjetiti', 'Posjećeno']) {
+          const group = ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Smještaj'].includes(title) ? 'Kategorije mjesta' : 'Status posjeta';
           const tab = page.getByLabel(group, { exact: true }).getByRole('tab', { name: title, exact: true });
           await tab.scrollIntoViewIfNeeded();
           const box = await tab.boundingBox();
@@ -315,6 +323,69 @@ try {
       await page.locator('.leaflet-marker-icon').waitFor();
       pass(name + ': actual Leaflet map/tiles, retained fullscreen/viewport after details/edit, category icons/selection and live filters');
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).click();
+      const click = (title, scope = page) => scope.getByRole('button', { name: title, exact: true }).click();
+      const tab = title => page.getByRole('tab', { name: title, exact: true }).click();
+      async function downloadPlaces(title, kind, expected) {
+        await click(title);
+        for (const [label, extension] of [['Izvezi popis (JSON)', '.json'], ['Izvezi oznake karte (GeoJSON)', '.geojson']]) {
+          const [download] = await Promise.all([page.waitForEvent('download'), click(label)]);
+          assert.ok(download.suggestedFilename().endsWith(extension));
+          const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
+          assert.equal(exported.scope.kind, kind);
+          const names = exported.features?.map(feature => feature.properties.name) ?? exported.places.map(place => place.name);
+          assert.deepEqual(names.sort(), [...expected].sort());
+        }
+        await click('Zatvori obrazac');
+      }
+      const allSaved = ['Synthetic dining', 'Synthetic evening', 'Synthetic hotel', 'Synthetic marker'];
+      await downloadPlaces('Izvezi mjesta putovanja', 'trip', allSaved);
+      await tab('Plan');
+      for (const date of ['Dan 1. 6. 2027.', 'Dan 2. 6. 2027.']) {
+        await tab(date);
+        await click('Dodaj spremljeno mjesto');
+        await click('Synthetic hotel');
+        const row = page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true });
+        await row.getByText('Smještaj', { exact: true }).waitFor();
+        assert.equal(await row.locator('svg path[d^="M3 18V5"]').count(), 1);
+      }
+      await click('Dodaj spremljeno mjesto');
+      await click('Synthetic dining');
+      await downloadPlaces('Izvezi mjesta za odabrani dan', 'day', ['Synthetic dining', 'Synthetic hotel']);
+      await tab('Karta plana');
+      await page.getByRole('button', { name: 'Smještaj: Synthetic hotel', exact: true }).waitFor();
+      assert.equal(await page.locator('.leaflet-marker-icon').count(), 2);
+      await downloadPlaces('Izvezi mjesta iz plana', 'plan', ['Synthetic dining', 'Synthetic hotel']);
+      await click('Otvori kartu preko cijelog zaslona');
+      await tab('1. 6. 2027.');
+      assert.equal(await page.locator('.leaflet-marker-icon').count(), 1);
+      await click('Smještaj: Synthetic hotel');
+      await page.getByRole('heading', { name: 'Detalji mjesta', exact: true }).waitFor();
+      await click('Zatvori obrazac');
+      await page.setViewportSize({ width: 320, height: 568 });
+      await tab('2. 6. 2027.');
+      assert.equal(await page.locator('.leaflet-marker-icon').count(), 2);
+      const planMap = await page.getByRole('region', { name: 'Karta spremljenih mjesta', exact: true }).boundingBox();
+      assert.ok(planMap.width <= 320 && planMap.height >= 450);
+      const filterRow = await page.getByLabel('Dani na karti plana', { exact: true }).boundingBox();
+      for (const marker of await page.locator('.leaflet-marker-icon').all()) {
+        const box = await marker.boundingBox();
+        assert.ok(box.y >= planMap.y && box.y + box.height <= filterRow.y, 'both markers fit above the filters');
+      }
+      await page.screenshot({ path: join(artifacts, name + '-plan-map.png') });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await click('Zatvori kartu');
+      await tab('Raspored');
+      await tab('Dan 1. 6. 2027.');
+      await click('Otvori aktivnost Synthetic hotel');
+      await click('Ukloni iz rasporeda');
+      await click('Ukloni iz rasporeda', page.getByRole('alertdialog'));
+      await page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true }).waitFor({ state: 'detached' });
+      await tab('Dan 2. 6. 2027.');
+      await page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true }).waitFor();
+      await tab('Pregled');
+      await click('Sva putovanja');
+      await downloadPlaces('Izvezi sva spremljena mjesta', 'all', allSaved);
+      pass(name + ': repeat saved hotel across days, remove one visit, fullscreen plan filters and JSON/GeoJSON downloads across all scopes');
       await context.setOffline(true); await page.reload();
       await page.getByRole('button', { name: 'Otvori putovanje PWA local conflict ' + name, exact: true }).click();
       await page.getByRole('tab', { name: 'Mjesta', exact: true }).click();

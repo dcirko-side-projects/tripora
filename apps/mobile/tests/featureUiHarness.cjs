@@ -36,6 +36,7 @@ async function featureHarness(kind, options = {}) {
     removed: [],
     confirm: null,
     shareFailure: false,
+    exported: [],
     linkFailure: false,
     requests: async () => ({}),
     ...options,
@@ -99,6 +100,14 @@ async function featureHarness(kind, options = {}) {
       return control.requests(path, body);
     },
   };
+  const exportFiles = new Map();
+  class ExportFile {
+    constructor(directory, name) { this.uri = `${directory.uri}/${name}`; }
+    get exists() { return exportFiles.has(this.uri); }
+    create() { exportFiles.set(this.uri, ""); }
+    write(contents) { exportFiles.set(this.uri, contents); }
+    delete() { exportFiles.delete(this.uri); }
+  }
   const load = require("./uiHarness.cjs").loader({
     "react-native": native,
     "react-native-svg": {
@@ -114,6 +123,22 @@ async function featureHarness(kind, options = {}) {
       default: "DateTimePicker",
     },
     "expo-crypto": { randomUUID },
+    "expo-file-system": {
+      Paths: { cache: "synthetic://cache" },
+      Directory: class {
+        constructor(cache, name) { this.uri = `${cache}/${name}`; }
+        create() {}
+        list() { return []; }
+      },
+      File: ExportFile,
+    },
+    "expo-sharing": {
+      async isAvailableAsync() { return true; },
+      async shareAsync(uri, options) {
+        if (control.shareFailure) throw Error("Synthetic share failure");
+        control.exported.push({ uri, options, data: JSON.parse(exportFiles.get(uri)) });
+      },
+    },
     "@maplibre/maplibre-react-native": {
       Map: "NativeMap", Camera: "MapCamera", Marker: "MapMarker",
       TransformRequestManager: { addHeader() {}, removeHeader() {} },

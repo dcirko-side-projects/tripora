@@ -319,7 +319,7 @@ try {
   }
   assert.ok(persistedPlaces.length >= 104);
   assert.ok(persistedPlaces.every(p => p.deleted));
-  assert.equal(new Set(persistedPlaces.map(p => p.category)).size, 3);
+  assert.deepEqual([...new Set(persistedPlaces.map(p => p.category))].sort(), ['accommodation', 'food', 'nightlife', 'place']);
   pass('API restart preserves all place categories, deletion markers and paginated cursor data');
   const restartedPhoto = await request('/api/media/' + workRestart.mediaId, a.accessToken);
   assert.equal(restartedPhoto.status, 200); assert.equal(restartedPhoto.data.sha256, workRestart.sha256);

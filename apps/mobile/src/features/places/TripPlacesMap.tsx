@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Linking, Modal, Text, View } from 'react-native';
 import type * as MapLibre from '@maplibre/maplibre-react-native';
-import { markerAppearance, MapProps } from './mapPresentation';
+import { fullscreenMapBottomPadding, markerAppearance, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
@@ -9,7 +9,7 @@ import { FullscreenMapFrame } from './FullscreenMapFrame';
 import { Icon } from '../../ui/Icon';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 
-export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
+export function TripPlacesMap({ places, scopeKey, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
   const [config, setConfig] = useState<Config>();
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -30,15 +30,15 @@ export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch
   let native: typeof MapLibre;
   try { native = require('@maplibre/maplibre-react-native'); }
   catch { return <View>{filters}<Text style={ui.muted}>Za kartu treba nova instalacijska verzija aplikacije. Spremljeni popis i dalje radi.</Text>{overlay?.(false)}</View>; }
-  return <NativePlacesMap filters={filters} fullscreenSearch={fullscreenSearch} fullscreenFilters={fullscreenFilters} overlay={overlay} onCloseOverlay={onCloseOverlay} native={native} config={config} places={located} onSelect={onSelect} onError={() => setError('Podloga karte nije dostupna. Spremljeni popis ostaje dostupan.')} />;
+  return <NativePlacesMap scopeKey={scopeKey} filters={filters} fullscreenSearch={fullscreenSearch} fullscreenFilters={fullscreenFilters} overlay={overlay} onCloseOverlay={onCloseOverlay} native={native} config={config} places={located} onSelect={onSelect} onError={() => setError('Podloga karte nije dostupna. Spremljeni popis ostaje dostupan.')} />;
 }
 
-function NativePlacesMap({ native, config, places, onSelect, onError, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: Omit<MapProps, 'api'> & { native: typeof MapLibre; config: Config; onError: () => void }) {
+function NativePlacesMap({ native, config, places, scopeKey, onSelect, onError, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: Omit<MapProps, 'api'> & { native: typeof MapLibre; config: Config; onError: () => void }) {
   const { Map, Camera, Marker, TransformRequestManager } = native;
   const [networkReady, setNetworkReady] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
-  const viewport = useRef<MapLibre.InitialViewState | undefined>(undefined);
+  const viewport = useMemo(() => ({ current: undefined as MapLibre.InitialViewState | undefined }), [scopeKey]);
   const selectPlace = (id: string) => { setSelectedId(id); onSelect(id); };
   const coordinates = places.map(p => [p.location!.longitude, p.location!.latitude]);
   const xs = coordinates.map(c => c[0]), ys = coordinates.map(c => c[1]);
@@ -51,7 +51,7 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
   }, [TransformRequestManager]);
   if (!networkReady) return <Loading />;
   const mapFilters = <>{filters}{!places.length ? <Text style={ui.muted}>Nema mjesta s položajem za odabrane filtre.</Text> : null}</>;
-  const map = <Map key={places.map(p => p.id + ':' + p.location!.latitude + ':' + p.location!.longitude).join('|') + config.tileUrl}
+  const map = <Map key={(scopeKey ?? '') + '|' + places.map(p => p.id + ':' + p.location!.latitude + ':' + p.location!.longitude).join('|') + config.tileUrl}
       style={fullscreen ? { flex: 1 } : { height: 380, borderRadius: 16, overflow: 'hidden' }}
       mapStyle={{ version: 8, sources: { osm: { type: 'raster', tiles: [config.tileUrl], tileSize: 256, maxzoom: 19, attribution: config.attribution } }, layers: [{ id: 'base', type: 'raster', source: 'osm' }] }}
       attribution onDidFailLoadingMap={onError}
@@ -59,7 +59,7 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
       onRegionDidChange={event => { const { center, zoom, bearing, pitch } = event.nativeEvent; viewport.current = { center, zoom, bearing, pitch }; }}>
       <Camera maxZoom={19} initialViewState={viewport.current ?? (!places.length ? undefined : samePoint
         ? { center: [xs[0], ys[0]], zoom: 14 }
-        : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: fullscreen ? 160 : 48, left: 48, right: 48 } })} />
+        : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: fullscreen ? fullscreenMapBottomPadding : 48, left: 48, right: 48 } })} />
       {places.map((p) => {
         const appearance = markerAppearance(p.category), selected = p.id === selectedId;
         return <Marker key={p.id} id={p.id} selected={selected} style={{ zIndex: selected ? 1 : 0 }} lngLat={[p.location!.longitude, p.location!.latitude]} onPress={() => selectPlace(p.id)}>
@@ -84,7 +84,7 @@ function NativePlacesMap({ native, config, places, onSelect, onError, filters, f
         {map}
       </FullscreenMapFrame> : null}
     </Modal>
-    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci. Dodirni oznaku za detalje; prsten označava odabrano mjesto.</Text>
+    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci · krevet: smještaj. Dodirni oznaku za detalje; prsten označava odabrano mjesto.</Text>
     <Text style={ui.caption}>Karta treba internet. Mjesta bez položaja prikazana su samo u popisu.</Text>
     <Button title={config.attribution} variant="ghost" onPress={() => {
       if (config.attributionUrl.startsWith('https://')) void Linking.openURL(config.attributionUrl).catch(onError);

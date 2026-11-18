@@ -38,7 +38,7 @@ public static class PlaceSync
             return Results.Ok(new { items, cursor = items.Count == 0 ? cursor : items[^1].Version, hasMore = rows.Count > 100 });
         });
     }
-    private static bool Valid(PlaceData d) => d.Category is "place" or "food" or "nightlife" &&
+    private static bool Valid(PlaceData d) => d.Category is "place" or "food" or "nightlife" or "accommodation" &&
         !string.IsNullOrWhiteSpace(d.Name) && d.Name.Trim().Length <= 120 && d.Notes is { Length: <= 2000 } &&
         d.Address is { Length: <= 300 } && d.Link is { Length: <= 1000 } &&
         (d.Link.Length == 0 || (Uri.TryCreate(d.Link, UriKind.Absolute, out var uri) && uri.Scheme is "https" or "http")) && ValidLocation(d.Location);

@@ -2,6 +2,20 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Places in the daily plan and file exports — 2026-11-18
+
+Daily plan entries reference the existing saved place by `placeId`. A place
+can have entries on several days. Each entry can be removed independently.
+The plan reuses the Places map, details, category/status/search filters and
+fullscreen frame, with an additional date scope and one pin per distinct place.
+The new `accommodation` category uses a bed icon and defaults to activity
+type `stay` when added from saved places. Storage schemas remain compatible.
+
+JSON and GeoJSON are built locally from accessible account snapshots, with
+scopes for all accessible trips, one trip, the whole plan or one day. JSON
+includes places without coordinates. GeoJSON contains map points. Browsers
+download directly and native sharing uses Expo Sharing.
+
 ## Category icon markers - 2026-11-16
 
 Markers use the application's outline SVG icons instead of initials: pin for

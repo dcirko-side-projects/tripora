@@ -21,7 +21,7 @@ export async function verifyWork({mobile,other,local,request,client,tokenA,token
  const syncA=(api=mobile)=>synchronizeAccount(owner,api,{actor:ownerActor,media:ioA});
  const syncB=()=>synchronizeAccount(member,other,{actor:memberActor,media:ioB});
  trips.saveAccountTrip(owner,input,randomUUID);const tripId=trips.accountSnapshot(owner).trips.find(t=>t.name===input.name).id;
- places.savePlace(owner,tripId,{category:'place',name:'Synthetic landmark',notes:'',address:'Test street',link:'',visited:false},randomUUID);
+ places.savePlace(owner,tripId,{category:'accommodation',name:'Synthetic hotel',notes:'',address:'Test street',link:'',visited:false},randomUUID);
  const placeId=places.placeSnapshot(owner).places[0].id;
  records.saveEntry(owner,tripId,'plan',{...activity,placeId},ownerActor,randomUUID);
  records.saveEntry(owner,tripId,'packing',{title:'Owner jacket',packed:false},ownerActor,randomUUID);
@@ -30,10 +30,19 @@ export async function verifyWork({mobile,other,local,request,client,tokenA,token
  records.saveEntry(owner,tripId,'memory',{title:'Text memory',notes:'Offline memory',placeId,mediaId:null},ownerActor,randomUUID);
  await syncA();assert.equal(records.entrySnapshot(owner).pending.length,0);
  const path=`/api/trips/${tripId}`;const invite=await mobile.request(path+'/invitations',{email:emailB});await other.request('/api/invitations/accept',{token:invite.token});await syncB();
+ assert.equal(places.placeSnapshot(member).places.find(place=>place.id===placeId).category,'accommodation');
+ records.saveEntry(member,tripId,'plan',{...activity,date:'2026-11-03',category:'stay',placeId},memberActor,randomUUID);
+ const extraVisit=records.entrySnapshot(member).entries.find(e=>e.feature==='plan'&&e.data.date==='2026-11-03');
+ await syncB();await syncB();await syncA();
+ assert.deepEqual(records.entrySnapshot(owner).entries.filter(e=>e.tripId===tripId&&e.feature==='plan'&&e.data.placeId===placeId&&!e.deleted).map(e=>e.data.date).sort(),['2026-11-02','2026-11-03']);
+ assert.equal((await request('/api/entries/push',null,op(tripId,'plan',{...activity,placeId}))).status,401);
+ records.deleteEntry(member,extraVisit.id,memberActor,randomUUID);await syncB();await syncA();
+ assert.equal(records.entrySnapshot(owner).entries.some(e=>e.id===extraVisit.id&&!e.deleted),false);
+ assert.equal(places.placeSnapshot(owner).places.filter(place=>place.id===placeId&&!place.deleted).length,1);
  assert.ok(!records.entrySnapshot(member).entries.some(e=>e.feature==='packing'&&e.authorId===ownerActor.id));
  records.saveEntry(member,tripId,'packing',{title:'Member jacket',packed:true},memberActor,randomUUID);
  records.saveEntry(member,tripId,'expense',expense('Member snack','20'),memberActor,randomUUID);
- let plan=records.entrySnapshot(member).entries.find(e=>e.tripId===tripId&&e.feature==='plan');
+ let plan=records.entrySnapshot(member).entries.find(e=>e.tripId===tripId&&e.feature==='plan'&&!e.deleted);
  records.saveEntry(member,tripId,'plan',{...plan.data,category:'transport',title:'Shared bus'},memberActor,randomUUID,plan.id);await syncB();await syncA();
  assert.equal(records.tripTotals(owner,tripId).spent,'30');assert.equal(records.tripTotals(member,tripId).spent,'30');
  const memberPacking=records.entrySnapshot(member).entries.find(e=>e.tripId===tripId&&e.feature==='packing');
@@ -44,7 +53,7 @@ export async function verifyWork({mobile,other,local,request,client,tokenA,token
  const memberExpense=records.entrySnapshot(owner).entries.find(e=>e.tripId===tripId&&e.feature==='expense'&&e.authorId===memberActor.id);
  records.saveEntry(owner,tripId,'expense',{...memberExpense.data,notes:'Owner moderated'},ownerActor,randomUUID,memberExpense.id);await syncA();await syncB();
  assert.equal(records.entrySnapshot(member).entries.find(e=>e.id===memberExpense.id).authorId,memberActor.id);
- pass('phase 6/7: shared referenced plan, personal packing privacy, exact pending money, immutable authors and owner moderation');
+ pass('phase 6/7: shared accommodation across days, independent removal, personal packing privacy and expense ownership');
  const budget=records.entrySnapshot(owner).entries.find(e=>e.id===tripId);
  assert.equal((await request('/api/entries/push',tokenB,op(tripId,'budget',{currency:'EUR',budgetMinor:'20000'},'update',tripId,budget.version))).status,403);
  assert.equal((await request('/api/entries/push',tokenA,op(tripId,'budget',{currency:'USD',budgetMinor:'10000'},'update',tripId,budget.version))).status,400);
@@ -52,7 +61,7 @@ export async function verifyWork({mobile,other,local,request,client,tokenA,token
  const currentTrip=trips.accountSnapshot(owner).trips.find(t=>t.id===tripId);
  assert.equal((await request('/api/sync/push',tokenA,{operationId:randomUUID(),tripId,kind:'trip.update',baseVersion:currentTrip.version,data:{...input,endDate:'2026-11-01'}})).status,409);
  pass('phase 6/7: invalid calendar range, fractional minor units, foreign budget edits and currency changes rejected');
- plan=records.entrySnapshot(owner).entries.find(e=>e.tripId===tripId&&e.feature==='plan');
+ plan=records.entrySnapshot(owner).entries.find(e=>e.tripId===tripId&&e.feature==='plan'&&!e.deleted);
  records.saveEntry(owner,tripId,'plan',{...plan.data,title:'Owner revision'},ownerActor,randomUUID,plan.id);
  records.saveEntry(member,tripId,'plan',{...plan.data,title:'Member revision',notes:'Keep this offline note'},memberActor,randomUUID,plan.id);
  await syncA();await syncB();let pending=records.entrySnapshot(member).pending.find(p=>p.operation.entryId===plan.id);assert.ok(pending.conflict);

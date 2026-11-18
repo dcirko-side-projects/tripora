@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import * as L from 'leaflet';
-import { markerAppearance, markerSvg, MapProps } from './mapPresentation';
+import { fullscreenMapBottomPadding, markerAppearance, markerSvg, MapProps } from './mapPresentation';
 import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
@@ -50,13 +50,13 @@ function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: 
     });
     if (viewport.current) map.setView(viewport.current.center, viewport.current.zoom);
     else if (bounds.length && bounds.every(c => c[0] === bounds[0][0] && c[1] === bounds[0][1])) map.setView(bounds[0], 14);
-    else if (bounds.length) map.fitBounds(bounds, { paddingTopLeft: [40,40], paddingBottomRight: [40, fullscreen ? 160 : 40], maxZoom: 16 });
+    else if (bounds.length) map.fitBounds(bounds, { paddingTopLeft: [40,40], paddingBottomRight: [40, fullscreen ? fullscreenMapBottomPadding : 40], maxZoom: 16 });
     if (!bounds.length && !viewport.current) map.setView([0, 0], 2);
     const remember = () => { viewport.current = { center: map.getCenter(), zoom: map.getZoom() }; };
     map.on('moveend zoomend', remember);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(container.current);
     return () => { remember(); observer.disconnect(); markers.current.clear(); map.off('moveend zoomend', remember); map.remove(); };
-  }, [key, config, fullscreen]);
+  }, [key, config, fullscreen, viewport]);
   useEffect(() => {
     for (const [id, { marker, ring }] of markers.current) {
       const selected = id === selectedId;
@@ -65,14 +65,14 @@ function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: 
       marker.setZIndexOffset(selected ? 1000 : 0);
       marker.getElement()?.setAttribute('aria-pressed', String(selected));
     }
-  }, [selectedId, key, config, fullscreen]);
+  }, [selectedId, key, config, fullscreen, viewport]);
   return <View style={fullscreen ? { flex: 1, minHeight: 0 } : undefined}>
     {failed ? <Text accessibilityRole="alert" style={ui.error}>Dio karte nije dostupan. Provjeri internet; spremljeni popis ostaje dostupan.</Text> : null}
     <div ref={container} role="region" aria-label="Karta spremljenih mjesta" style={{ height: fullscreen ? '100%' : 380, minHeight: fullscreen ? 0 : 200, flex: 1, borderRadius: fullscreen ? 0 : 16, isolation: 'isolate' }} />
   </View>;
 }
-export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
-  const viewport = useRef<{ center: L.LatLng; zoom: number } | undefined>(undefined);
+export function TripPlacesMap({ places, scopeKey, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
+  const viewport = useMemo(() => ({ current: undefined as { center: L.LatLng; zoom: number } | undefined }), [scopeKey]);
   const [config, setConfig] = useState<Config>();
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -102,7 +102,7 @@ export function TripPlacesMap({ places, api, onSelect, filters, fullscreenSearch
         <WebMap viewport={viewport} places={located} config={config} fullscreen selectedId={selectedId} onSelect={select} />
       </FullscreenMapFrame> : null}
     </Modal>
-    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci. Dodirni oznaku za detalje; prsten označava odabrano mjesto. Karta treba internet.</Text>
+    <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci · krevet: smještaj. Dodirni oznaku za detalje; prsten označava odabrano mjesto. Karta treba internet.</Text>
     {config.attributionUrl.startsWith('https://') ? <a href={config.attributionUrl} target="_blank" rel="noopener noreferrer">{config.attribution}</a> : <Text>{config.attribution}</Text>}
   </View>;
 }

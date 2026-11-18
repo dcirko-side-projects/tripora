@@ -43,15 +43,15 @@ test('place coordinates survive offline reopen and immutable follow-up; invalid 
   } finally { c?.close(); rmSync(folder, { recursive: true, force: true }); }
 });
 
-test('place validation accepts all three categories and rejects unsafe/invalid fields without writes', () => {
+test('place validation accepts all four categories and rejects unsafe/invalid fields without writes', () => {
   const c = connect();
   try {
     seed(c.db);
-    for (const category of ['place', 'food', 'nightlife']) places.savePlace(c.db, 'trip', { ...data, category }, randomUUID);
-    assert.equal(places.placeSnapshot(c.db).places.length, 3);
+    for (const category of ['place', 'food', 'nightlife', 'accommodation']) places.savePlace(c.db, 'trip', { ...data, category }, randomUUID);
+    assert.equal(places.placeSnapshot(c.db).places.length, 4);
     for (const changes of [{ category: 'other' }, { name: ' ' }, { name: 'x'.repeat(121) }, { link: 'javascript:alert(1)' }, { link: '/relative' }, { link: 'ftp://example.test' }, { notes: 'x'.repeat(2001) }, { visited: 'yes' }])
       assert.throws(() => places.savePlace(c.db, 'trip', { ...data, ...changes }, randomUUID));
-    assert.equal(places.placeSnapshot(c.db).pending.length, 3);
+    assert.equal(places.placeSnapshot(c.db).pending.length, 4);
     assert.equal(places.validatePlace({ ...data, name: ' Literal SQL; -- ', link: '' }).name, 'Literal SQL; --');
   } finally { c.close(); }
 });

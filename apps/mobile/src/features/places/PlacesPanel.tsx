@@ -1,6 +1,6 @@
 import { Alert } from "../../ui/alert";
 import { useEffect, useRef, useState } from "react";
-import { Keyboard, Linking, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { Keyboard, Linking, Platform, Pressable, Text, View } from "react-native";
 import { LocalDatabase } from "../../core/localStore";
 import {
   Place,
@@ -18,13 +18,10 @@ import { ui } from "../../ui/theme";
 import { actionError } from "../../core/actionError";
 import { ApiClient, ApiError } from "../../core/sync";
 import { TripPlacesMap } from "./TripPlacesMap";
-import { CompactMapFilters } from "./CompactMapFilters";
-const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("hr").replace(/đ/g, "d").trim();
-const categories = [
-  ["place", "Mjesta"],
-  ["food", "Hrana"],
-  ["nightlife", "Izlasci"],
-] as const;
+import { PlaceDetails } from "./PlaceDetails";
+import { PlacesExport } from "./PlacesExport";
+import { categoryOptions as categories, markerAppearance } from "./mapPresentation";
+import { usePlaceFilters } from "./usePlaceFilters";
 const empty = (category: PlaceCategory): PlaceInput => ({
   category,
   name: "",
@@ -55,16 +52,14 @@ export function PlacesPanel({
   api,
   destination = "",
 }: Props) {
-  const [category, setCategory] = useState<PlaceCategory | 'all'>("all");
+  const filters = usePlaceFilters("Pretraži spremljena mjesta");
   const [view, setView] = useState<'list' | 'map'>('list');
-  const [mapQuery, setMapQuery] = useState("");
   const [city, setCity] = useState(destination);
   const [results, setResults] = useState<PlaceLocation[]>([]);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const searchGeneration = useRef(0);
   useEffect(() => () => { searchGeneration.current++; }, []);
-  const [filter, setFilter] = useState<"all" | "planned" | "visited">("all");
   const [input, setInput] = useState(empty("place"));
   const [editing, setEditing] = useState<string>();
   const [form, setForm] = useState(false);
@@ -75,15 +70,13 @@ export function PlacesPanel({
     (p) =>
       p.tripId === tripId &&
       !p.deleted &&
-      (category === 'all' || p.category === category) &&
-      (filter === "all" || p.visited === (filter === "visited")) &&
-      normalize([p.name, p.address, p.location?.displayName ?? ""].join(" ")).includes(normalize(mapQuery)),
+      filters.matches(p),
   );
   const selected = snapshot.places.find((p) => p.id === detail && !p.deleted);
   function edit(place?: Place) {
     searchGeneration.current++;
     setSearching(false); setResults([]); setSearched(false); setCity(destination);
-    setInput(place ?? empty(category === 'all' ? 'place' : category));
+    setInput(place ?? empty(filters.category === 'all' ? 'place' : filters.category));
     setEditing(place?.id);
     setError("");
     setAdvanced(!!place);
@@ -128,8 +121,8 @@ export function PlacesPanel({
     ) {
       searchGeneration.current++; setSearching(false);
       setForm(false);
-      setCategory(input.category);
-      setFilter("all");
+      filters.setCategory(input.category);
+      filters.setStatus("all");
     }
   }
   function remove(place: Place) {
@@ -266,29 +259,7 @@ export function PlacesPanel({
       >
         {selected ? (
           <>
-            <Text style={ui.eyebrow}>
-              {categories.find(([key]) => key === selected.category)?.[1]}
-            </Text>
-            <Text style={ui.title}>{selected.name}</Text>
-            <Text style={ui.muted}>
-              {selected.visited ? "Posjećeno" : "Za posjetiti"}
-            </Text>
-            {selected.location ? <>
-              <Text style={ui.body}>{selected.location.displayName}</Text>
-              <Text style={ui.caption}>Podaci o položaju: © OpenStreetMap contributors</Text>
-              <Button title="Otvori navigaciju" variant="secondary" onPress={() => {
-                const p = selected.location!;
-                void Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${p.latitude},${p.longitude}`).catch(() => setError('Navigacija nije otvorena. Provjeri internet.'));
-              }} />
-            </> : <Text style={ui.muted}>Položaj još nije potvrđen. Odaberi „Uredi mjesto” pa „Pronađi mjesto”.</Text>}
-            {selected.address ? (
-              <Text selectable style={ui.body}>
-                {selected.address}
-              </Text>
-            ) : null}
-            {selected.notes ? (
-              <Text style={ui.body}>{selected.notes}</Text>
-            ) : null}
+            <PlaceDetails place={selected} onError={setError} />
             <Text style={ui.caption}>
               {queued
                 ? (queued.error ?? "Spremljeno na uređaju · čeka slanje")
@@ -296,19 +267,6 @@ export function PlacesPanel({
                   ? "Prethodno preuzeto"
                   : "Sinkronizirano"}
             </Text>
-            {selected.link ? (
-              <Button
-                title="Otvori poveznicu"
-                variant="secondary"
-                onPress={() => {
-                  void Linking.openURL(selected.link).catch(() =>
-                    setError(
-                      "Poveznica nije otvorena. Provjeri vezu s internetom.",
-                    ),
-                  );
-                }}
-              />
-            ) : null}
             {!readOnly ? (
               <Button
                 title="Dodaj u dnevni plan"
@@ -363,18 +321,6 @@ export function PlacesPanel({
         ) : null}
       </FormSheet>
   );
-  const filters = <View style={{ gap: 8 }}>
-    <Field label="Filtriraj grad, naziv ili adresu" value={mapQuery} onChangeText={setMapQuery} maxLength={300} />
-    <Choice options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
-    <Choice options={[["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const} value={filter} onChange={setFilter} />
-  </View>;
-  const fullscreenSearch = <TextInput accessibilityLabel="Pretraži spremljena mjesta" placeholder="Pretraži mjesta"
-    value={mapQuery} onChangeText={setMapQuery} maxLength={300} returnKeyType="search"
-    onSubmitEditing={() => Keyboard.dismiss()} style={[ui.input, { minHeight: 48, paddingVertical: 10 }]} />;
-  const fullscreenFilters = <>
-    <CompactMapFilters label="Kategorije mjesta" options={[["all", "Sve kategorije"], ...categories] as const} value={category} onChange={setCategory} />
-    <CompactMapFilters label="Status posjeta" options={[["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const} value={filter} onChange={setFilter} />
-  </>;
   return (
     <View style={ui.panel}>
       <View>
@@ -384,7 +330,7 @@ export function PlacesPanel({
         </Text>
       </View>
       <Choice options={[["list", "Popis"], ["map", "Karta"]] as const} value={view} onChange={setView} />
-      {view === "list" ? filters : null}
+      {view === "list" ? filters.inline : null}
       {!readOnly ? (
         <Button
           title="Dodaj mjesto"
@@ -397,7 +343,7 @@ export function PlacesPanel({
           Preuzeta kopija · pristup za izmjene je uklonjen.
         </Text>
       )}
-      {view === 'map' ? <TripPlacesMap places={records} api={api} filters={filters} fullscreenSearch={fullscreenSearch} fullscreenFilters={fullscreenFilters} overlay={selected ? details : form && !readOnly ? editor : undefined} onCloseOverlay={closeMapSheet} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
+      {view === 'map' ? <TripPlacesMap places={records} api={api} filters={filters.inline} fullscreenSearch={filters.fullscreenSearch} fullscreenFilters={filters.fullscreenFilters} overlay={selected ? details : form && !readOnly ? editor : undefined} onCloseOverlay={closeMapSheet} onSelect={(id) => { setDetail(id); setError(''); }} /> : !records.length ? (
         <Empty
           icon="pin"
           title="Ovdje počinje istraživanje"
@@ -416,6 +362,7 @@ export function PlacesPanel({
               }}
               style={[ui.item, ui.between]}
             >
+              <Icon name={markerAppearance(place.category).icon} color={markerAppearance(place.category).color} />
               <View style={ui.flex}>
                 <Text style={ui.subheading}>{place.name}</Text>
                 <Text style={ui.muted}>
@@ -438,6 +385,10 @@ export function PlacesPanel({
       )}
       {view === "list" ? editor() : null}
       {view === "list" ? details() : null}
+      {!readOnly ? (
+        <PlacesExport db={db} scope={{ kind: "trip", tripId }} title="Izvezi mjesta putovanja"
+          description="Sva spremljena mjesta ovog putovanja, uključujući mjesta izvan plana." />
+      ) : null}
     </View>
   );
 }

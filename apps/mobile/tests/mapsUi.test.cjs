@@ -1,11 +1,77 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { featureHarness, places } = require('./featureUiHarness.cjs');
+const { featureHarness, places, entries, trip } = require('./featureUiHarness.cjs');
+const { randomUUID } = require('node:crypto');
 const { mkdtempSync, rmSync } = require('node:fs');
 const { join } = require('node:path');
 const { tmpdir } = require('node:os');
 const point = { latitude: 45.81, longitude: 15.98, displayName: 'Synthetic cafe, QA island', provider: 'osm', providerId: 'N123' };
 const config = { tileUrl: 'https://tile.example.test/{z}/{x}/{y}.png', attribution: 'Synthetic attribution', attributionUrl: 'https://example.test/copyright' };
+
+test('linked accommodation persists on two days, supports fullscreen day filtering and exports the chosen day', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'tripora-plan-'));
+  const options = { databaseFile: join(folder, 'account.sqlite'), requests: async () => config };
+  let h;
+  try {
+    h = await featureHarness('places', options);
+    await h.press('Dodaj mjesto');
+    await h.fill('Naziv mjesta', 'Synthetic hotel');
+    const editor = h.root.findByType('Modal');
+    await h.run(() => editor.findAllByType('Pressable').find(node => node.props.accessibilityLabel === 'Smještaj').props.onPress());
+    await h.press('Spremi mjesto');
+    const [hotel] = places.placeSnapshot(h.db).places;
+    assert.equal(hotel.category, 'accommodation');
+    places.savePlace(h.db, trip.id, { ...hotel, location: { ...point, displayName: 'Synthetic hotel' } }, randomUUID, hotel.id);
+    await h.close(); h = undefined;
+
+    h = await featureHarness('work', options);
+    for (const date of ['Dan 1. 11. 2026.', 'Dan 2. 11. 2026.']) {
+      await h.press(date);
+      await h.press('Dodaj spremljeno mjesto');
+      await h.press('Synthetic hotel');
+      const row = h.button('Otvori aktivnost Synthetic hotel');
+      assert.ok(row.findAll(node => node.type?.name === 'Icon').some(icon => icon.props.name === 'bed'));
+    }
+    assert.deepEqual(entries.entrySnapshot(h.db).entries.map(e => e.data.placeId), [hotel.id, hotel.id]);
+    await h.close(); h = undefined;
+    h = await featureHarness('work', options);
+    await h.press('Karta plana');
+    assert.equal(h.root.findAllByType('MapMarker').length, 1);
+    await h.press('Otvori kartu preko cijelog zaslona');
+    await h.press('3. 11. 2026.');
+    assert.equal(h.root.findAllByType('MapMarker').length, 0);
+    await h.press('2. 11. 2026.');
+    await h.press('Smještaj');
+    await h.run(() => h.root.findByType('MapMarker').props.onPress());
+    assert.match(h.text(), /Otvori navigaciju/);
+    await h.press('Zatvori obrazac');
+    await h.press('Zatvori kartu');
+
+    await h.press('Izvezi mjesta za odabrani dan');
+    h.control.shareFailure = true;
+    await h.press('Izvezi popis (JSON)');
+    assert.match(h.text(), /Datoteku nije moguće izvesti/);
+    h.control.shareFailure = false;
+    await h.press('Izvezi popis (JSON)');
+    await h.press('Izvezi oznake karte (GeoJSON)');
+    const [json, geo] = h.control.exported;
+    assert.match(json.uri, /tripora-mjesta-2026-11-02\.json$/);
+    assert.equal(json.options.mimeType, 'application/json');
+    assert.deepEqual(json.data.places[0].plan.map(visit => visit.date), ['2026-11-02']);
+    assert.deepEqual(geo.data.features[0].geometry.coordinates, [point.longitude, point.latitude]);
+    await h.press('Zatvori obrazac');
+    await h.press('Raspored');
+    await h.press('Dan 1. 11. 2026.');
+    await h.press('Otvori aktivnost Synthetic hotel');
+    await h.press('Ukloni iz rasporeda');
+    await h.confirm();
+    assert.deepEqual(entries.entrySnapshot(h.db).entries.filter(e => !e.deleted).map(e => e.data.date), ['2026-11-02']);
+    assert.equal(places.placeSnapshot(h.db).places.find(p => p.id === hotel.id).deleted, false);
+  } finally {
+    await h?.close();
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
 
 test('unknown or missing place category uses the neutral location icon', () => {
   const { loader } = require('./uiHarness.cjs');

@@ -33,6 +33,7 @@ import { MembershipPanel } from "./src/features/membership/MembershipPanel";
 import { AccountAccessPanel } from "./src/features/account/AccountAccessPanel";
 import { DeleteAccountPanel } from "./src/features/account/DeleteAccountPanel";
 import { PlacesPanel } from "./src/features/places/PlacesPanel";
+import { PlacesExport } from "./src/features/places/PlacesExport";
 import {
   Place,
   PlaceSnapshot,
@@ -907,6 +908,10 @@ function Home() {
                       <Text style={ui.subheading}>Prošla putovanja</Text>
                       {past.map(tripCard)}
                     </View>
+                  ) : null}
+                  {connection.current && snapshot.trips.some(t => !t.accessRevoked) ? (
+                    <PlacesExport db={connection.current.db} scope={{ kind: "all" }} title="Izvezi sva spremljena mjesta"
+                      description="Spremljena mjesta svih dostupnih putovanja na ovom uređaju." />
                   ) : null}
                 </>
               ) : null}
