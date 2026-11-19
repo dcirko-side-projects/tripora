@@ -2,6 +2,28 @@
 
 Updated: 2026-11-19. Development branch: codex/offline-foundation.
 
+## Offline audit update released — 2026-11-19
+
+Source `cbfe3bf3078e776ff882bdff8a966c6eadd923b5` was pushed to
+`codex/offline-foundation`. Both [GitHub CI jobs](https://github.com/dcirko-side-projects/tripora/actions/runs/44579782099)
+passed, including Chromium and Linux WebKit. The
+[Render deploy](https://dashboard.render.com/web/srv-dbj16huc6qcc73b6e3a0/deploys/dep-dbvjavqfngtc73cfbsdg)
+for that exact source is Live. Public liveness and DB readiness passed.
+The public worker cached the new bundle `index-1299fcb631e4cb269cd11641d22b9b1e.js`.
+An isolated public Chromium profile reopened the login shell offline and
+confirmed that API and auth responses were outside the service-worker cache.
+Existing iPhone PWA users can check for an update or open
+https://tripora-l4c7.onrender.com/?update=20261119 in Safari.
+
+Android Release `local-data/hosted-beta/Tripora-19.apk` is signed with the
+same certificate as beta 18. Package `local.tripora.beta` has versionCode 19,
+versionName `0.1.0-beta19` and four ABIs. APK SHA-256
+`dc96da726c15829fe387043921ef3799f684e70990240a4fe1f2fa8bc3536517`.
+The embedded Hermes bundle contains the schema v4 change and the public API URL.
+ADB installed it over beta 18 on the Samsung at 18:44 CET, confirmed the
+original first-install timestamp, and cold-launched it with `Status: ok`.
+The shared physical Android/iPhone acceptance journey remains deferred.
+
 ## Audit follow-up — 2026-11-19
 
 Implemented audit findings 1–4 and 6–10 locally. SQLite schema v4 preserves
@@ -32,8 +54,7 @@ The user deferred the physical Android/iPhone acceptance (finding 5). The
 next device round uses one shared synthetic trip to check airplane mode,
 cold restart, queued trip edits, local photo and the return to connectivity.
 Check large text, keyboard, map filters and platform file sharing separately.
-See the [iPhone acceptance plan](IPHONE_PWA_PLAN.md). No commit, push or
-deployment was made for these changes.
+See the [iPhone acceptance plan](IPHONE_PWA_PLAN.md).
 
 ## Daily plan and saved-place exports released — 2026-11-18
 
