@@ -58,7 +58,7 @@ test('money arithmetic is exact for comma/dot input, pending edits, deletion and
 
 test('v2 to v3 migration preserves queues, invalidates old readiness and records survive restart',()=>{const root=folder();let c;try{const file=path.join(root,'account.sqlite');c=connect(file);seed(c.db);account.saveAccountTrip(c.db,{...trip,name:'Pending trip'},randomUUID,'trip');const before=account.accountSnapshot(c.db);
  c.db.run('UPDATE account_trips SET body=? WHERE id=?',[JSON.stringify({...before.trips[0],offlinePreparedAt:'2026-10-01T00:00:00Z'}),'trip']);
- c.db.exec('DROP TABLE pending_entries;DROP TABLE account_entries;DROP TABLE entry_meta;DROP TABLE local_media;PRAGMA user_version=2');account.initAccountStore(c.db);assert.deepEqual(account.accountSnapshot(c.db),before);
+ c.db.exec('DROP TABLE pending_entries;DROP TABLE account_entries;DROP TABLE entry_meta;DROP TABLE local_media;ALTER TABLE pending_mutations DROP COLUMN followup_id;PRAGMA user_version=2');account.initAccountStore(c.db);assert.deepEqual(account.accountSnapshot(c.db),before);
  entries.saveEntry(c.db,'trip','packing',{title:'Offline jacket',packed:false},a,randomUUID);const row=entries.entrySnapshot(c.db).entries[0];entries.saveEntry(c.db,'trip','packing',{title:'Offline jacket',packed:true},a,randomUUID,row.id);const state=entries.entrySnapshot(c.db);c.close();c=connect(file);assert.deepEqual(entries.entrySnapshot(c.db),state);assert.ok(state.pending[0].followupId);
 }finally{c?.close();clean(root);}});
 

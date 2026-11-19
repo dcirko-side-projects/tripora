@@ -33,7 +33,7 @@ function authServer() {
   return { send, calls };
 }
 
-test('account store survives restart, preserves immutable outbox and isolates another account', () => {
+test('account store survives restart with two offline edits and a deletion, preserving its immutable create and account isolation', async () => {
   const folder = mkdtempSync(join(tmpdir(), 'tripora-account-'));
   let a; let b;
   try {
@@ -43,9 +43,26 @@ test('account store survives restart, preserves immutable outbox and isolates an
     a.close(); a = connect(path); b = connect(join(folder, 'b.sqlite'));
     assert.deepEqual(store.accountSnapshot(a.db), first);
     assert.equal(store.accountSnapshot(b.db).trips.length, 0);
-    assert.throws(() => store.saveAccountTrip(a.db, input, randomUUID, first.trips[0].id), /Prvo/);
-    assert.throws(() => store.deleteAccountTrip(a.db, first.trips[0].id, randomUUID), /Prvo/);
-    assert.deepEqual(store.accountSnapshot(a.db), first);
+    const id = first.trips[0].id;
+    const original = first.pending[0].operation;
+    store.saveAccountTrip(a.db, { ...input, name: 'First correction' }, randomUUID, id);
+    store.saveAccountTrip(a.db, { ...input, name: 'Latest correction' }, randomUUID, id);
+    assert.equal(store.accountSnapshot(a.db).trips[0].name, 'Latest correction');
+    store.deleteAccountTrip(a.db, id, randomUUID);
+    a.close(); a = connect(path);
+    assert.deepEqual(store.accountSnapshot(a.db).trips, []);
+    assert.deepEqual(store.accountSnapshot(a.db).pending[0].operation, original);
+    const sent = [];
+    await synchronize(a.db, { async request(path, body) {
+      if (!body) return { items: [remote(id, 2, { deleted: true })], cursor: 2, hasMore: false };
+      sent.push(body);
+      return remote(id, sent.length, { deleted: body.kind === 'trip.delete' });
+    } });
+    assert.deepEqual(sent[0], original);
+    assert.equal(sent[1].kind, 'trip.delete');
+    assert.equal(sent[1].baseVersion, 1);
+    assert.deepEqual(store.accountSnapshot(a.db).pending, []);
+    assert.deepEqual(store.accountSnapshot(a.db).trips, []);
   } finally { a?.close(); b?.close(); rmSync(folder, { recursive: true, force: true }); }
 });
 
@@ -57,31 +74,41 @@ test('account outbox failure rolls back local data and future migration keeps pe
     assert.equal(store.accountSnapshot(c.db).trips.length, 0);
     c.db.exec('DROP TRIGGER fail'); store.saveAccountTrip(c.db, input, randomUUID);
     store.initAccountStore(c.db); assert.equal(store.accountSnapshot(c.db).pending.length, 1);
-    c.db.exec('PRAGMA user_version = 4'); assert.throws(() => store.initAccountStore(c.db), /noviju/);
+    const before = store.accountSnapshot(c.db);
+    c.db.exec('ALTER TABLE pending_mutations DROP COLUMN followup_id; PRAGMA user_version = 3');
+    store.initAccountStore(c.db);
+    assert.deepEqual(store.accountSnapshot(c.db), before);
+    c.db.exec('PRAGMA user_version = 5'); assert.throws(() => store.initAccountStore(c.db), /noviju/);
     assert.equal(store.accountSnapshot(c.db).pending.length, 1);
   } finally { c.close(); }
 });
 
-test('lost acknowledgement retries exact operation and overlapping sync shares one run', async () => {
+test('lost acknowledgement retries the exact create before the latest edit and overlapping sync shares one run', async () => {
   const c = connect();
   try {
     store.saveAccountTrip(c.db, input, randomUUID);
     const op = store.accountSnapshot(c.db).pending[0].operation;
-    let pushes = 0; let lost = true;
+    let pushes = 0;
     const api = { async request(path, body) {
       await new Promise(resolve => setImmediate(resolve));
       if (path.endsWith('/push')) {
-        pushes++; assert.deepEqual(body, op);
-        if (lost) { lost = false; throw new Error('lost ack'); }
-        return remote(op.tripId);
+        pushes++;
+        if (pushes < 3) assert.deepEqual(body, op);
+        if (pushes === 1) throw new Error('lost ack');
+        if (pushes === 2) return remote(op.tripId);
+        assert.equal(body.kind, 'trip.update');
+        assert.equal(body.baseVersion, 1);
+        assert.equal(body.data.name, 'Edited while acknowledgement was unknown');
+        return remote(op.tripId, 2, body.data);
       }
-      return { items: [remote(op.tripId)], cursor: 1, hasMore: false };
+      return { items: [remote(op.tripId, 2, { name: 'Edited while acknowledgement was unknown' })], cursor: 2, hasMore: false };
     } };
     await assert.rejects(synchronize(c.db, api), /lost ack/);
+    store.saveAccountTrip(c.db, { ...input, name: 'Edited while acknowledgement was unknown' }, randomUUID, op.tripId);
     assert.deepEqual(store.accountSnapshot(c.db).pending[0].operation, op);
     const p1 = synchronize(c.db, api); const p2 = synchronize(c.db, api);
     assert.equal(p1, p2); await Promise.all([p1, p2]);
-    assert.equal(pushes, 2); assert.equal(store.accountSnapshot(c.db).pending.length, 0);
+    assert.equal(pushes, 3); assert.equal(store.accountSnapshot(c.db).pending.length, 0);
     assert.equal(store.accountSnapshot(c.db).trips.length, 1);
   } finally { c.close(); }
 });
@@ -93,15 +120,16 @@ test('dirty pull and conflicts survive restart; deliberate local resolution uses
     store.applyPage(c.db, [remote('trip')], 1);
     store.saveAccountTrip(c.db, { ...input, name: 'Local' }, randomUUID, 'trip');
     const op = store.accountSnapshot(c.db).pending[0].operation;
+    store.saveAccountTrip(c.db, { ...input, name: 'Latest local' }, randomUUID, 'trip');
     store.applyPage(c.db, [remote('trip', 2, { name: 'Server' })], 2);
     c.close(); c = connect(path);
     let state = store.accountSnapshot(c.db);
-    assert.equal(state.trips[0].name, 'Local'); assert.equal(state.pending[0].conflict.name, 'Server');
+    assert.equal(state.trips[0].name, 'Latest local'); assert.equal(state.pending[0].conflict.name, 'Server');
     store.resolveConflict(c.db, op.operationId, 'local', randomUUID);
     state = store.accountSnapshot(c.db);
     assert.notEqual(state.pending[0].operation.operationId, op.operationId);
     assert.equal(state.pending[0].operation.baseVersion, 2);
-    assert.equal(state.pending[0].operation.data.name, 'Local');
+    assert.equal(state.pending[0].operation.data.name, 'Latest local');
     assert.equal(state.pending[0].conflict, null);
   } finally { c?.close(); rmSync(folder, { recursive: true, force: true }); }
 });

@@ -2,6 +2,20 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Offline preparation and audit follow-up — 2026-11-19
+
+Account SQLite v4 preserves the first queued trip operation and stages the
+latest local edit or deletion for acknowledgement. Existing queues and v3
+readiness timestamps migrate in place. The app records offline readiness
+after metadata pulls and reports media cleanup separately. Trip status shows
+last download, local photos and pending work. Photo preparation can overlap
+network sync, with account changes blocked until the local action finishes.
+The initial roster request waits for active sync to finish.
+
+Fullscreen map details manage keyboard focus on web and filter rows indicate
+overflow. The daily picker searches saved place names and addresses locally.
+GeoJSON has an optional notes-free variant with coordinates and visit dates.
+
 ## Places in the daily plan and file exports — 2026-11-18
 
 Daily plan entries reference the existing saved place by `placeId`. A place

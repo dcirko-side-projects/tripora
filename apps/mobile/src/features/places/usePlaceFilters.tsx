@@ -8,6 +8,10 @@ import { categoryOptions } from "./mapPresentation";
 
 const normalize = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .toLocaleLowerCase("hr").replace(/đ/g, "d").trim();
+export function placeTextFilter(query: string) {
+  const needle = normalize(query);
+  return (place: Place) => !needle || normalize([place.name, place.address, place.location?.displayName ?? ""].join(" ")).includes(needle);
+}
 const categories = [["all", "Sve kategorije"], ...categoryOptions] as const;
 const statuses = [["all", "Sve"], ["planned", "Za posjetiti"], ["visited", "Posjećeno"]] as const;
 
@@ -15,14 +19,14 @@ export function usePlaceFilters(searchLabel: string) {
   const [category, setCategory] = useState<PlaceCategory | "all">("all");
   const [status, setStatus] = useState<typeof statuses[number][0]>("all");
   const [query, setQuery] = useState("");
-  const needle = normalize(query);
+  const matchesText = placeTextFilter(query);
 
   return {
     category, setCategory, setStatus,
     matches: (place: Place) =>
       (category === "all" || place.category === category) &&
       (status === "all" || place.visited === (status === "visited")) &&
-      (!needle || normalize([place.name, place.address, place.location?.displayName ?? ""].join(" ")).includes(needle)),
+      matchesText(place),
     inline: (
       <View style={{ gap: 8 }}>
         <Field label="Filtriraj grad, naziv ili adresu" value={query} onChangeText={setQuery} maxLength={300} />

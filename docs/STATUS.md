@@ -1,6 +1,94 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-17. Development branch: codex/offline-foundation.
+Updated: 2026-11-19. Development branch: codex/offline-foundation.
+
+## Audit follow-up — 2026-11-19
+
+Implemented audit findings 1–4 and 6–10 locally. SQLite schema v4 preserves
+existing queues and accepts a later offline trip edit or deletion while the
+first operation remains immutable. The app records metadata readiness before
+media cleanup, displays last download and local photo counts, and allows
+local photo selection and cancellation while sync waits. The participant
+roster starts automatically after sync releases the online action.
+
+Fullscreen map details now enter and restore keyboard focus. Compact filter
+rows indicate overflow, the daily plan picker searches by saved name or
+address, and GeoJSON offers a choice of full export or export without place
+and visit notes.
+
+Local verification passed TypeScript, 92 mobile tests, Android/iOS/web
+exports, Release API build and liveness, 52 PostgreSQL/HTTP scenarios and
+15 Chromium PWA checkpoints. The browser verifies the offline edit via the
+real API, delayed cleanup returning 503, roster loading, keyboard focus
+restoration, all four export scopes and category fit at 320 px.
+The legacy PWA update check passed in Chromium and WebKit. A focused
+Windows WebKit run in a temporary browser context passed nine checkpoints
+for offline edits, delayed cleanup, roster loading, conflicts, maps and
+exports. The full persistent WebKit run timed out. In the temporary
+context, the full run stopped when IndexedDB rejected the photo Blob write.
+Chromium passed photo durability, restart and upload retry.
+
+The user deferred the physical Android/iPhone acceptance (finding 5). The
+next device round uses one shared synthetic trip to check airplane mode,
+cold restart, queued trip edits, local photo and the return to connectivity.
+Check large text, keyboard, map filters and platform file sharing separately.
+See the [iPhone acceptance plan](IPHONE_PWA_PLAN.md). No commit, push or
+deployment was made for these changes.
+
+## Daily plan and saved-place exports released — 2026-11-18
+
+Feature commit `ae4afa7` and the PWA test timing follow-up `6603cac` were
+pushed to `codex/offline-foundation`. Both jobs in
+[GitHub CI](https://github.com/dcirko-side-projects/tripora/actions/runs/44376922975)
+passed, including Chromium and WebKit. The follow-up waits for the final
+metadata pull before simulating loss of connectivity in the browser test.
+
+[Render deploy](https://dashboard.render.com/web/srv-dbj16huc6qcc73b6e3a0/deploys/dep-dbuvg2cipgvc73d2h2jg)
+is Live for `6603cacf1e1035edf42d72ab733a620ce8fe34bf`. Public HTTPS opened
+the login screen with bundle `index-3742dd0cf33586bf05d9f1e0cc30b40c.js`.
+Public liveness and database readiness both responded successfully. The
+existing Safari/Home Screen app can use the version check or open
+https://tripora-l4c7.onrender.com/?update=20261118 in Safari.
+
+The local signed Android APK is `local-data/hosted-beta/Tripora-18.apk`
+(129,230,651 bytes, SHA-256
+`e29c288901c6115fcd9e0308e3de5e8b20631ceeb478dc9ed49fcc32c28e6df7`).
+Gradle Release passed. Package `local.tripora.beta`, versionCode 18,
+versionName `0.1.0-beta18`, all four ABIs and the same signing certificate as
+beta17 were verified. The embedded bundle targets the public API and the
+manifest includes the Expo Sharing file provider.
+
+On the user's request, installed over beta17 on the connected Samsung via
+`adb install -r --user 0`. ADB returned Success. The package manager
+confirmed versionCode 18, versionName `0.1.0-beta18`, update time
+2026-11-18 21:41 CET and the original first-install timestamp. The launcher
+resolved from the installed package started the app cold with Status: ok.
+Next: verify the plan, map and file sharing on both phones.
+
+## Saved places in the daily plan and file exports — 2026-11-18
+
+The day picker adds an existing saved place through a regular plan entry. The
+same place can appear on several days. Removing a visit affects that entry.
+The shared map supports all plan places, date and unscheduled scopes, and the
+existing search, category, visit status, details and fullscreen controls.
+Smještaj is available in the place editor and filters. The bed icon also appears
+in the schedule. Client and API reuse the existing storage and sync contracts.
+
+The trips list, Places and Plan expose JSON and GeoJSON exports covering all
+accessible trips, one trip, its whole plan or a selected day. JSON also covers
+places without coordinates. GeoJSON contains points for mapping tools. Both use
+the account's local snapshot, including pending work. Web downloads the file.
+Native opens the operating system share sheet through Expo Sharing.
+
+Clean dependency installs, typecheck, 92 mobile tests, Android/iOS/web Expo
+exports, Release API build/liveness, 52 HTTP/PostgreSQL scenarios and 14 Chromium
+PWA checkpoints passed. Test coverage includes local reopen, shared repeated
+visits, independent removal, restart persistence of all four categories,
+markers above fullscreen filters at 320 px and real downloads of both formats
+in all four scopes. Local Windows WebKit exited during browser launch
+(3236495362). Physical devices and the native system share sheet remain to be
+verified. Next: test file sharing with synthetic places on Android and iPhone
+and coordinate rollout of the API and new clients.
 
 ## Safari stale shell / explicit PWA updates - 2026-11-17
 
@@ -47,6 +135,32 @@ Next: companion saves her form and opens the recovery link in the same Safari;
 close other Tripora tabs if the storage/update guard requests it, then confirm
 fullscreen map and category icons on the physical phone. No Safari storage clearing
 or reinstall. Existing beta16/beta17 working documentation is preserved separately.
+
+## Android beta17 retaining upgrade installed - 2026-11-16
+
+User connected the Samsung and authorized preparing/installing the update over
+the existing app. Built the current mobile source (checkout 34dfb1e, mobile source
+identical to CI-verified 613b8f7) in the existing ignored native workspace.
+All 49 source/assets were copied and byte-compared; dependency lockfiles match,
+native npm ci and offline Gradle Release pass: 438 tasks, 3m 37s. Package remains
+local.tripora.beta, now versionCode 17 / 0.1.0-beta17, four Android ABIs.
+APK: local-data/hosted-beta/Tripora-17.apk, 129,191,083 bytes; SHA-256
+`3d467247f8f39e5ed8d688e543827e7c47406b82b5d68186cf64046b59d71771`.
+apksigner verification passes and its certificate SHA-256 matches beta16:
+`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`.
+The actual APK Hermes bundle contains the public API origin, fullscreen frame
+and new category icon paths; local QA origins are absent. Build log is ignored:
+local-data/hosting-setup/tripora17-build.log. No APK/key/generated output is tracked.
+
+ADB install -r --user 0 returns Success on Samsung SM-S936B. Package manager
+confirms version 17, update time 2026-11-16 18:15:02 and unchanged original
+first-install time 2026-10-31 17:44:27. Cold launch reports Status: ok and the
+app process is running. No uninstall, clear-data, logout or trip mutation was
+performed. This is retaining installation/launch evidence, not physical visual
+acceptance or an inspection of the user's saved travel data. Existing automated
+source validation is recorded below; the full suite was not rerun for this
+packaging-only step. Next: user reviews retained trips, fullscreen search/X,
+category icons/selection and return from details on the phone.
 
 ## Category icon markers publication verified - 2026-11-16
 
@@ -166,6 +280,26 @@ No physical-device test or new native APK/installation is claimed. Native users
 need a retaining Android upgrade to receive this UI; web/PWA uses Render deploy.
 Next: publish the reviewed commit to the existing branch, deploy that exact SHA
 to the existing Free Render service and verify public shell/readiness.
+
+## Android beta16 APK prepared - 2026-11-11
+
+Prepared the requested retaining Android upgrade from the published map/startup
+source. Ignored isolated native workspace received current mobile source/assets
+(hash-compared) and matching dependency lockfile; npm ci and local Gradle Release
+build pass (438 tasks, 5m 59s). APK: `local-data/hosted-beta/Tripora-16.apk`,
+129,187,323 bytes, package `local.tripora.beta`, versionCode 16,
+versionName `0.1.0-beta16`, four Android ABIs. SHA-256:
+`0855e0794fbc5e7d263d91465bb3000e1126cca2ce5603079fafb389fb7c6f81`.
+apksigner verification passes; certificate SHA-256 matches beta15:
+`fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`.
+Actual Hermes bundle contains the public API origin, new map filter and
+background-sync message; no local QA TLS origin. No APK, key, generated build
+output or dependency tree is tracked. On the user's explicit request, installed
+on the connected Samsung SM-S936B using `adb install -r --user 0`: Success.
+Package manager confirms versionCode 16 / 0.1.0-beta16 and unchanged original
+first-install time (2026-10-31); no uninstall or data clearing performed.
+Physical UI/data acceptance was not tested. Next: user opens Tripora and verifies
+retained trips and map return/filter/labels on the device.
 
 ## Published map/startup changes - verified 2026-11-11
 

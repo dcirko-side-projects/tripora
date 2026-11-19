@@ -1,5 +1,5 @@
 import { LocalDatabase } from './localStore';
-import { ACCESS_REMOVED, accountSnapshot, acknowledge, applyPage, markSyncError, SyncedTrip, TripAccess } from './accountStore';
+import { ACCESS_REMOVED, accountSnapshot, acknowledge, applyPage, markSyncError, pendingTripChanges, SyncedTrip, TripAccess } from './accountStore';
 export class ApiError extends Error {
   constructor(public status: number, public body: { code?: string; current?: SyncedTrip | import('./placeStore').Place | import('./entryStore').Entry } = {}) {
     super(status === 401 ? 'Prijava je istekla. Prijavi se ponovno; lokalne promjene su sačuvane.' :
@@ -24,8 +24,11 @@ export function synchronize(db: LocalDatabase, api: ApiClient): Promise<{ confli
   return task;
 }
 async function runSynchronization(db: LocalDatabase, api: ApiClient): Promise<{ conflicts: number; errors: number }> {
-  for (const pending of accountSnapshot(db).pending) {
-    if (pending.conflict || pending.error === ACCESS_REMOVED) continue;
+  const attempted = new Set<string>();
+  for (let count = 0; count < 200; count++) {
+    const pending = pendingTripChanges(db).find(p => !attempted.has(p.operation.operationId) && !p.conflict && p.error !== ACCESS_REMOVED);
+    if (!pending) break;
+    attempted.add(pending.operation.operationId);
     try {
       const remote = await api.request<SyncedTrip>('/api/sync/push', pending.operation);
       acknowledge(db, pending.operation.operationId, remote);

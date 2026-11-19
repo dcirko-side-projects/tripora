@@ -58,6 +58,12 @@ test("JSON and GeoJSON export only eligible places, retaining repeated visits an
     assert.equal(hotel.properties.category, "accommodation");
     assert.deepEqual(hotel.geometry, { type: "Point", coordinates: [15.98, 45.81] });
     assert.deepEqual(hotel.properties.plan.map(visit => visit.date), dates);
+    const withoutNotes = JSON.parse(serializePlaces(data, "geojson", false)).features[0];
+    assert.equal(hotel.properties.notes, "Prijava u 15 h");
+    assert.equal(withoutNotes.properties.notes, undefined);
+    assert.ok(withoutNotes.properties.plan.every(visit => !("notes" in visit)));
+    assert.deepEqual(withoutNotes.geometry, hotel.geometry);
+    assert.equal(withoutNotes.properties.address, hotel.properties.address);
   }
   assert.deepEqual(collectPlaces(trips, places, entries, { kind: "trip", tripId: "revoked" }).places, []);
 });

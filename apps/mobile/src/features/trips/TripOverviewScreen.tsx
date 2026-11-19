@@ -18,6 +18,32 @@ export type TripSection =
   | "memory"
   | "members"
   | "settings";
+export function TripOfflineStatus({ trip, summary, onSync, syncing, disabled, error }: {
+  trip: SyncedTrip;
+  summary: Pick<ReturnType<typeof tripOverview>, "photos" | "localPhotos" | "pending" | "attention">;
+  onSync: () => void;
+  syncing?: boolean;
+  disabled?: boolean;
+  error?: string;
+}) {
+  const preparedAt = trip.offlinePreparedAt && new Date(trip.offlinePreparedAt);
+  return <View style={ui.card}>
+    <Text style={ui.subheading}>Dostupnost bez interneta</Text>
+    <Text style={ui.muted} accessibilityLiveRegion="polite">
+      {preparedAt && Number.isFinite(preparedAt.getTime())
+        ? `Zadnje preuzimanje podataka: ${preparedAt.toLocaleString("hr-HR", { dateStyle: "medium", timeStyle: "short" })}`
+        : "Lokalni zapisi su dostupni. Potpuno preuzimanje još nije potvrđeno."}
+    </Text>
+    <Text style={ui.body}>Fotografije na uređaju: {summary.localPhotos} od {summary.photos}</Text>
+    {summary.localPhotos < summary.photos ? <Text style={ui.caption}>Preostale fotografije preuzmi u Uspomenama.</Text> : null}
+    <Text style={ui.caption}>Na čekanju: {summary.pending} · treba pažnju: {summary.attention}</Text>
+    <Text style={ui.caption}>Podloga karte i traženje lokacija trebaju internet.</Text>
+    {error && !trip.accessRevoked ? <Text accessibilityRole="alert" style={ui.error}>{error}</Text> : null}
+    {!trip.accessRevoked ? <Button title={syncing ? "Preuzimanje i sinkronizacija…" : "Pripremi za offline"} icon="download"
+      variant="secondary" disabled={syncing || disabled} onPress={onSync} /> : null}
+  </View>;
+}
+
 export function TripOverviewScreen({
   trip,
   actorId,
@@ -27,6 +53,9 @@ export function TripOverviewScreen({
   media,
   onNavigate,
   onSync,
+  syncing,
+  syncDisabled,
+  syncError,
 }: {
   trip: SyncedTrip;
   actorId: string;
@@ -36,6 +65,9 @@ export function TripOverviewScreen({
   media: LocalMedia[];
   onNavigate: (section: TripSection) => void;
   onSync: () => void;
+  syncing?: boolean;
+  syncDisabled?: boolean;
+  syncError?: string;
 }) {
   const summary = tripOverview(
     trip.id,
@@ -144,26 +176,7 @@ export function TripOverviewScreen({
           onPress={() => onNavigate("members")}
         />
       </View>
-      <View style={ui.card}>
-        <Text style={ui.subheading}>Dostupnost bez interneta</Text>
-        <Text style={ui.muted}>
-          {trip.offlinePreparedAt
-            ? "Metapodaci putovanja su preuzeti. Fotografije preuzimaš zasebno u uspomenama."
-            : "Lokalni zapisi su sačuvani. Potpuno preuzimanje još nije potvrđeno."}
-        </Text>
-        <Text style={ui.caption}>
-          Na čekanju za ovo putovanje: {summary.pending} · treba pažnju:{" "}
-          {summary.attention}
-        </Text>
-        {!trip.accessRevoked ? (
-          <Button
-            title="Pripremi za offline"
-            icon="download"
-            variant="secondary"
-            onPress={onSync}
-          />
-        ) : null}
-      </View>
+      <TripOfflineStatus trip={trip} summary={summary} onSync={onSync} syncing={syncing} disabled={syncDisabled} error={syncError} />
     </View>
   );
 }

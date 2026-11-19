@@ -51,14 +51,18 @@ export function collectPlaces(trips: SyncedTrip[], places: Place[], entries: Ent
 
 export type PlacesExportFormat = "json" | "geojson";
 
-export function serializePlaces(data: ReturnType<typeof collectPlaces>, format: PlacesExportFormat) {
+export function serializePlaces(data: ReturnType<typeof collectPlaces>, format: PlacesExportFormat, includeNotes = true) {
   if (format === "json") return JSON.stringify(data, null, 2);
   const { places, ...metadata } = data;
-  const features = places.flatMap(({ location, ...properties }) => location ? [{
+  const features = places.flatMap(({ location, notes, plan, ...properties }) => location ? [{
     type: "Feature",
     id: properties.id,
     geometry: { type: "Point", coordinates: [location.longitude, location.latitude] },
-    properties: { ...properties, displayName: location.displayName, provider: location.provider, providerId: location.providerId },
+    properties: {
+      ...properties,
+      ...(includeNotes ? { notes, plan } : { plan: plan.map(({ notes: _notes, ...visit }) => visit) }),
+      displayName: location.displayName, provider: location.provider, providerId: location.providerId,
+    },
   }] : []);
   return JSON.stringify({
     type: "FeatureCollection",

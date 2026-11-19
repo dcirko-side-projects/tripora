@@ -73,6 +73,7 @@ import { dateValue, displayDate } from "./src/ui/dates";
 import { tokens, ui } from "./src/ui/theme";
 import {
   TripOverviewScreen,
+  TripOfflineStatus,
   TripSection,
 } from "./src/features/trips/TripOverviewScreen";
 const globalTabs = [
@@ -120,6 +121,7 @@ function Home() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [ready, setReady] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [register, setRegister] = useState(false);
@@ -133,6 +135,7 @@ function Home() {
     null,
   );
   const locked = useRef(false);
+  const localTask = useRef<Promise<void> | null>(null);
   const mounted = useRef(true);
   const activeSync = useRef<Promise<unknown> | null>(null);
 
@@ -166,6 +169,7 @@ function Home() {
     setSection("overview");
     setPlanPlace(undefined);
     setReauthHidden(false);
+    setSyncError("");
   }
   function fail(cause: unknown) {
     if (cause instanceof ApiError && cause.status === 401) {
@@ -175,13 +179,15 @@ function Home() {
     setError(actionError(cause));
   }
   async function syncNow() {
-    if (locked.current || !connection.current || reauth) return;
+    if (locked.current || localTask.current || !connection.current || reauth) return;
     locked.current = true;
     setSyncing(true);
     setError("");
+    setSyncError("");
     const task = synchronize(connection.current.db, sessionClient, {
       actor: account ?? undefined,
       media: mediaIO.current ?? undefined,
+      onPrepared: () => { if (mounted.current) reload(); },
     });
     activeSync.current = task;
     try {
@@ -200,9 +206,13 @@ function Home() {
               ? "Dio promjena još čeka slanje."
               : "Podaci putovanja su sinkronizirani.",
         );
+        if (result.cleanupFailed) setSyncError("Podaci su preuzeti. Čišćenje fotografija čeka ponovni pokušaj.");
       }
     } catch (cause) {
-      if (mounted.current) fail(cause);
+      if (mounted.current) {
+        setSyncError(actionError(cause));
+        fail(cause);
+      }
     } finally {
       activeSync.current = null;
       locked.current = false;
@@ -228,8 +238,8 @@ function Home() {
       mounted.current = false;
       const opened = connection.current;
       connection.current = null;
-      if (activeSync.current)
-        void activeSync.current.finally(() => opened?.close()).catch(() => {});
+      if (activeSync.current || localTask.current)
+        void Promise.allSettled([activeSync.current, localTask.current]).then(() => opened?.close()).catch(() => {});
       else opened?.close();
     };
   }, []);
@@ -249,7 +259,7 @@ function Home() {
     };
   }, [account, reauth]);
   async function authenticate() {
-    if (locked.current) return;
+    if (locked.current || localTask.current) return;
     locked.current = true;
     setBusy(true);
     setError("");
@@ -276,7 +286,7 @@ function Home() {
     }
   }
   async function logout(deletedScope?: string, mediaCleanupPending = 0) {
-    if (locked.current) return;
+    if (locked.current || localTask.current) return;
     locked.current = true;
     setBusy(true);
     setError("");
@@ -299,6 +309,7 @@ function Home() {
       setSnapshot(emptySnapshot);
       setPassword("");
       setReauth(false);
+      setSyncError("");
       setPlaces({ places: [], pending: [], cursor: 0 });
       setEntries({ entries: [], pending: [], cursor: 0 });
       setMedia([]);
@@ -328,19 +339,22 @@ function Home() {
     action: () => Promise<void>,
     requiresOnline = true,
   ): Promise<boolean> {
-    if (locked.current || (reauth && requiresOnline)) return false;
-    locked.current = true;
+    if (localTask.current || (locked.current && (requiresOnline || !activeSync.current)) || (reauth && requiresOnline)) return false;
+    if (requiresOnline) locked.current = true;
     setBusy(true);
     setError("");
     setMessage("");
     try {
-      await action();
+      const task = requiresOnline ? action() : Promise.resolve().then(action);
+      if (!requiresOnline) localTask.current = task;
+      await task;
       return true;
     } catch (cause) {
       fail(cause);
       return false;
     } finally {
-      locked.current = false;
+      if (requiresOnline) locked.current = false;
+      else localTask.current = null;
       if (mounted.current) {
         reload();
         setBusy(false);
@@ -361,7 +375,7 @@ function Home() {
     if (accepted) void syncNow();
   }
   function localAction(action: () => void, success: string) {
-    if ((locked.current && !activeSync.current) || !connection.current) return false;
+    if (localTask.current || (locked.current && !activeSync.current) || !connection.current) return false;
     setError("");
     setMessage("");
     try {
@@ -925,6 +939,9 @@ function Home() {
                   media={media}
                   onNavigate={navigate}
                   onSync={() => void syncNow()}
+                  syncing={syncing}
+                  syncDisabled={busy || reauth}
+                  syncError={syncError}
                 />
               ) : null}
               {trip && section === "places" && connection.current ? (
@@ -1001,7 +1018,7 @@ function Home() {
                     key={account.scope + trip.id}
                     tripId={trip.id}
                     api={sessionClient}
-                    busy={busy}
+                    busy={busy || syncing}
                     error={error}
                     perform={onlineAction}
                   />
@@ -1035,10 +1052,7 @@ function Home() {
                       {displayDate(trip.startDate)} –{" "}
                       {displayDate(trip.endDate)}
                     </Text>
-                    {owner &&
-                    !snapshot.pending.some(
-                      (p) => p.operation.tripId === trip.id,
-                    ) ? (
+                    {owner ? (
                       <Button
                         title="Uredi putovanje"
                         variant="secondary"
@@ -1047,22 +1061,8 @@ function Home() {
                       />
                     ) : null}
                   </View>
-                  <View style={ui.inset}>
-                    <Text style={ui.subheading}>Offline podaci</Text>
-                    <Text style={ui.muted}>
-                      {trip.offlinePreparedAt
-                        ? "Metapodaci su preuzeti. Fotografije preuzimaš u uspomenama."
-                        : "Potpuno preuzimanje još nije potvrđeno."}
-                    </Text>
-                    {!trip.accessRevoked ? (
-                      <Button
-                        title="Pripremi za offline"
-                        icon="download"
-                        disabled={busy || reauth}
-                        onPress={() => void syncNow()}
-                      />
-                    ) : null}
-                  </View>
+                  <TripOfflineStatus trip={trip} summary={tripOverview(trip.id, account.id, snapshot, places, entries, media)}
+                    onSync={() => void syncNow()} syncing={syncing} disabled={busy || reauth} error={syncError} />
                   {owner ? (
                     <>
                       <Text style={ui.caption}>
@@ -1072,12 +1072,7 @@ function Home() {
                       <Button
                         title="Obriši putovanje"
                         variant="danger"
-                        disabled={
-                          busy ||
-                          snapshot.pending.some(
-                            (p) => p.operation.tripId === trip.id,
-                          )
-                        }
+                        disabled={busy}
                         onPress={() => remove(trip)}
                       />
                     </>
@@ -1166,7 +1161,7 @@ function Home() {
                   <Button
                     title="Sinkroniziraj"
                     icon="sync"
-                    disabled={busy || reauth}
+                    disabled={busy || syncing || reauth}
                     onPress={() => void syncNow()}
                   />
                   {!attention ? (
@@ -1196,9 +1191,9 @@ function Home() {
                         <Text style={styles.error}>{p.error}</Text>
                         <Text style={styles.body}>
                           Tvoja promjena:{" "}
-                          {p.operation.kind === "trip.delete"
+                          {(p.desired ?? p.operation).kind === "trip.delete"
                             ? "Brisanje putovanja"
-                            : `${p.operation.data?.name} · ${p.operation.data?.destination} · ${p.operation.data?.startDate} — ${p.operation.data?.endDate}`}
+                            : `${(p.desired ?? p.operation).data?.name} · ${(p.desired ?? p.operation).data?.destination} · ${(p.desired ?? p.operation).data?.startDate} — ${(p.desired ?? p.operation).data?.endDate}`}
                         </Text>
                         {p.conflict && p.error !== ACCESS_REMOVED ? (
                           <>

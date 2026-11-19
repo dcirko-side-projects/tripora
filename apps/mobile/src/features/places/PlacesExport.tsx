@@ -22,7 +22,7 @@ export function PlacesExport({ db, scope, title, description }: {
   const data = open ? collectPlaces(accountSnapshot(db).trips, placeSnapshot(db).places, entrySnapshot(db).entries, scope) : undefined;
   const mappable = data?.places.filter(place => place.location).length ?? 0;
 
-  async function exportFile(format: PlacesExportFormat) {
+  async function exportFile(format: PlacesExportFormat, includeNotes = true) {
     if (!data || exporting.current) return;
     exporting.current = true;
     setBusy(true);
@@ -30,7 +30,8 @@ export function PlacesExport({ db, scope, title, description }: {
     try {
       const suffix = scope.kind === "day" ? scope.date || "nerasporedeno" : scope.kind;
       const mime = format === "json" ? "application/json" : "application/geo+json";
-      await sharePlacesFile(`tripora-mjesta-${suffix}.${format}`, mime, serializePlaces(data, format));
+      const privacySuffix = includeNotes ? "" : "-bez-biljeski";
+      await sharePlacesFile(`tripora-mjesta-${suffix}${privacySuffix}.${format}`, mime, serializePlaces(data, format, includeNotes));
     } catch {
       setError("Datoteku nije moguće izvesti. Pokušaj ponovno.");
     } finally {
@@ -51,7 +52,9 @@ export function PlacesExport({ db, scope, title, description }: {
         <Button title="Izvezi popis (JSON)" disabled={busy || !data?.places.length} onPress={() => void exportFile("json")} />
         <Button title="Izvezi oznake karte (GeoJSON)" variant="secondary" disabled={busy || !mappable}
           onPress={() => void exportFile("geojson")} />
-        <Text style={ui.caption}>JSON uključuje bilješke i mjesta bez položaja. GeoJSON možeš otvoriti u kompatibilnom alatu za karte.</Text>
+        <Button title="Izvezi GeoJSON bez bilješki" variant="secondary" disabled={busy || !mappable}
+          onPress={() => void exportFile("geojson", false)} />
+        <Text style={ui.caption}>Izvoz može sadržavati adrese, datume i plan posjeta. JSON uključuje i mjesta bez položaja. Verzija GeoJSON bez bilješki zadržava lokacije i raspored.</Text>
       </FormSheet>
     </>
   );

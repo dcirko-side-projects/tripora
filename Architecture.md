@@ -3,6 +3,29 @@
 Status: planning, personal packing, expenses and memories checkpoint 2026-10-22. Read docs/STATUS.md for verification and remaining boundaries.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
+## Offline preparation and audit follow-up — 2026-11-19
+
+Account SQLite schema v4 adds a follow-up ID to each pending trip mutation.
+The first operation stays immutable across retries. Further edits or deletion
+are saved in the local trip record and queued against the acknowledged server
+version. Conflict resolution uses the latest local draft. Server tombstones
+prevent resurrection. The additive migration from v3 keeps queued operations
+and existing offline readiness timestamps. Schema v4 is local to the client
+and uses the existing API sync contract.
+
+Readiness is recorded after all metadata pulls finish and before media cleanup.
+Local and remote cleanup failures have their own status and can retry on the
+next sync. The trip overview and settings show the last download, local photo
+count and pending work. Local photo preparation and cancellation can run during
+an active sync. Account switches wait until these local actions finish.
+Membership screens defer their initial online roster request during sync.
+
+In PWA fullscreen maps, place details move keyboard focus into the dialog
+and return it on close. Map filters keep the selected option in view and mark
+overflow. The daily picker searches local place name and address, including
+the resolved location label. The optional notes-free GeoJSON export omits
+place and visit notes, while preserving coordinates, addresses and visit dates.
+
 ## Places in the daily plan and file exports — 2026-11-18
 
 The daily picker creates a regular plan entry with a calendar date and a

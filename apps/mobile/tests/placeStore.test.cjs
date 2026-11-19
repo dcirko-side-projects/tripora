@@ -63,7 +63,7 @@ test('v1 upgrade preserves queued trips; offline places, later edits and immutab
     account.saveAccountTrip(c.db, trip, randomUUID);
     const before = account.accountSnapshot(c.db);
     // Reconstruct the exact pre-places v1 schema, preserving a queued trip as an upgrade fixture.
-    c.db.exec('DROP TABLE pending_entries; DROP TABLE account_entries; DROP TABLE entry_meta; DROP TABLE local_media; DROP TABLE pending_places; DROP TABLE account_places; DROP TABLE place_meta; PRAGMA user_version=1');
+    c.db.exec('DROP TABLE pending_entries; DROP TABLE account_entries; DROP TABLE entry_meta; DROP TABLE local_media; DROP TABLE pending_places; DROP TABLE account_places; DROP TABLE place_meta; ALTER TABLE pending_mutations DROP COLUMN followup_id; PRAGMA user_version=1');
     account.initAccountStore(c.db); assert.deepEqual(account.accountSnapshot(c.db), before);
     const id = before.trips[0].id; places.savePlace(c.db, id, data, randomUUID);
     let p = places.placeSnapshot(c.db); const original = p.pending[0].operation;

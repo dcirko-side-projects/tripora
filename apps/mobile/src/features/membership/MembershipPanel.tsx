@@ -44,8 +44,10 @@ export function MembershipPanel({ tripId, api, busy, error, perform }: Props) {
   }
   useEffect(() => {
     if (!busy && !requested) {
-      setRequested(true);
-      void perform(load);
+      void perform(async () => {
+        setRequested(true);
+        await load();
+      });
     }
   }, [busy, requested]);
   function invite() {

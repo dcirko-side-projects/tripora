@@ -32,6 +32,7 @@ const env = { ...process.env, ASPNETCORE_ENVIRONMENT: 'Testing', ASPNETCORE_URLS
 const dll = join(root, 'services/api/bin/Release/net10.0/Tripora.Api.dll');
 let started = false, server, browser, base, upstreamBase, proxy, checks = 0;
 let dropNextUpload = false, uploadCalls = 0, acknowledgeLost, pauseApi = false;
+let interceptCleanup;
 let serverOutput = '';
 const pass = message => { checks++; console.log('PASS ' + message); };
 const watchdog = setTimeout(() => { console.error('PWA suite timeout'); process.exit(1); }, 240000);
@@ -61,6 +62,16 @@ try {
   // worker, which browser routing cannot reliably intercept. Never use this in production.
   proxy = createHttpServer((req, res) => {
     if (pauseApi && req.url.startsWith('/api/')) { req.socket.destroy(); return; }
+    if (interceptCleanup && req.url === '/api/media/cleanup') {
+      const finish = () => {
+        if (res.writableEnded) return;
+        res.writeHead(503, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ code: 'synthetic_cleanup_failure' }));
+      };
+      interceptCleanup(finish); interceptCleanup = undefined;
+      setTimeout(finish, 45000).unref();
+      return;
+    }
     const upload = req.method === 'POST' && req.url === '/api/media/push';
     if (upload) uploadCalls++;
     const drop = upload && dropNextUpload; if (drop) dropNextUpload = false;
@@ -90,6 +101,7 @@ try {
     const context = await engine.launchPersistentContext(join(folder, 'browser-' + name), { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
     browser = context.browser();
     let page = await context.newPage();
+    page.setDefaultTimeout(30000);
     const errors = []; page.on('pageerror', error => { errors.push(error.message); console.error(error.stack); });
     if (process.env.TRIPORA_PWA_DEBUG) page.on('requestfailed', request => console.log(name + ' failed request: ' + new URL(request.url()).pathname + ' ' + request.failure()?.errorText));
     page.on('response', response => { if (response.status() >= 500) console.log(name + ' HTTP ' + response.status() + ' ' + new URL(response.url()).pathname); });
@@ -104,7 +116,7 @@ try {
       await page.getByLabel('Lozinka', { exact: true }).fill(loginPassword);
       await page.getByRole('button', { name: 'Prijavi se', exact: true }).click();
       await page.getByRole('button', { name: 'Novo putovanje', exact: true }).waitFor();
-      await page.evaluate(async () => { await navigator.serviceWorker.ready; });
+      await page.waitForFunction(async () => Boolean((await navigator.serviceWorker.getRegistration())?.active));
       pass(name + ': actual SQLite bootstrap, persistent login and service worker installed');
       const second = await context.newPage(); await second.goto(base);
       await second.getByText('Tripora je već otvorena', { exact: false }).waitFor(); await second.close();
@@ -128,17 +140,54 @@ try {
       assert.equal(await page.getByLabel('Naziv putovanja', { exact: true }).inputValue(), 'PWA Offline ' + name);
       await page.getByRole('button', { name: 'Spremi putovanje', exact: true }).click();
       await page.getByRole('button', { name: /Otvori putovanje PWA Offline/ }).waitFor();
+      const openOfflineTrip = () => page.getByRole('button', { name: /Otvori putovanje PWA Offline/ }).click();
+      await openOfflineTrip();
+      await page.getByRole('tab', { name: 'Više', exact: true }).click();
+      await page.getByRole('button', { name: 'Postavke putovanja', exact: true }).click();
+      assert.equal(await page.getByRole('button', { name: 'Obriši putovanje', exact: true }).isEnabled(), true);
+      await page.getByRole('button', { name: 'Uredi putovanje', exact: true }).click();
+      await page.getByLabel('Destinacija', { exact: true }).fill('Ispravljena sintetička destinacija');
+      await page.getByRole('button', { name: 'Spremi putovanje', exact: true }).click();
       await page.reload();
       await page.getByRole('button', { name: /PWA Offline/ }).waitFor();
-      pass(name + ': offline shell/session reload, create and durable entity/outbox after reload');
+      pass(name + ': offline shell/session reload, create, edit and durable entity/outbox');
+      let cleanupHeld = false;
+      const cleanupStarted = new Promise(resolve => {
+        interceptCleanup = finish => { cleanupHeld = true; resolve(finish); };
+      });
       await context.setOffline(false);
       await page.getByRole('tab', { name: 'Sinkronizacija', exact: true }).click();
-      await page.getByRole('button', { name: 'Sinkroniziraj', exact: true }).click();
+      const syncButton = page.getByRole('button', { name: 'Sinkroniziraj', exact: true });
+      if (await syncButton.isEnabled()) {
+        try { await syncButton.click({ timeout: 3000 }); }
+        catch (error) { if (!cleanupHeld) throw error; }
+      }
+      const finishCleanup = await cleanupStarted;
       await page.getByText('0 na čekanju', { exact: true }).waitFor();
       const pull = await api('/api/sync/pull', tokens.accessToken);
       assert.equal(pull.data.items.filter(t => t.name === 'PWA Offline ' + name).length, 1);
-      pass(name + ': real API sends persisted offline mutation exactly once');
       const savedTrip = pull.data.items.find(t => t.name === 'PWA Offline ' + name);
+      assert.equal(savedTrip.destination, 'Ispravljena sintetička destinacija');
+      pass(name + ': real API applies the persisted immutable create and follow-up edit to one trip');
+      await page.getByRole('tab', { name: 'Putovanja', exact: true }).click();
+      await openOfflineTrip();
+      await page.getByText('Zadnje preuzimanje podataka:', { exact: false }).waitFor();
+      await page.getByRole('button', { name: 'Preuzimanje i sinkronizacija…', exact: true }).waitFor();
+      await page.getByRole('button', { name: 'Uspomene', exact: true }).click();
+      await page.getByRole('button', { name: 'Dodaj uspomenu', exact: true }).click();
+      const duringSync = page.waitForEvent('filechooser');
+      await page.getByRole('button', { name: 'Dodaj fotografiju', exact: true }).click();
+      await (await duringSync).setFiles([]);
+      await page.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
+      await page.getByRole('tab', { name: 'Više', exact: true }).click();
+      await page.getByRole('button', { name: 'Sudionici', exact: true }).click();
+      await page.getByText('Učitaj sudionike', { exact: true }).waitFor();
+      finishCleanup();
+      await page.getByText('Članovi · 0', { exact: true }).waitFor();
+      await page.getByRole('tab', { name: 'Pregled', exact: true }).click();
+      await page.getByText('Zadnje preuzimanje podataka:', { exact: false }).waitFor();
+      await page.getByText('Podaci su preuzeti. Čišćenje fotografija čeka ponovni pokušaj.', { exact: true }).waitFor();
+      pass(name + ': offline readiness and local photo picker work during stalled cleanup; member roster resumes automatically');
       await context.setOffline(true);
       await page.reload();
       await page.getByRole('button', { name: /Otvori putovanje PWA Offline/ }).click();
@@ -283,6 +332,15 @@ try {
         assert.ok(searchBox.x + searchBox.width <= closeBox.x, 'search and close never overlap');
         assert.ok(closeBox.width >= 44 && closeBox.height >= 44, 'accessible close target');
         assert.equal(await close.innerText(), '', 'close has only an icon');
+        if (size.width === 320) {
+          const categoryRow = page.getByLabel('Kategorije mjesta', { exact: true });
+          const row = await categoryRow.boundingBox();
+          for (const category of await categoryRow.getByRole('tab').all()) {
+            const box = await category.boundingBox();
+            assert.ok(box.x >= row.x - 1 && box.x + box.width <= row.x + row.width + 1,
+              `category fits on screen at 320px: ${await category.getAttribute('aria-label')} ${JSON.stringify({ row, box })}`);
+          }
+        }
         for (const title of ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Smještaj', 'Sve', 'Za posjetiti', 'Posjećeno']) {
           const group = ['Sve kategorije', 'Mjesta', 'Hrana', 'Izlasci', 'Smještaj'].includes(title) ? 'Kategorije mjesta' : 'Status posjeta';
           const tab = page.getByLabel(group, { exact: true }).getByRole('tab', { name: title, exact: true });
@@ -312,6 +370,16 @@ try {
       assert.equal(await page.locator('.leaflet-marker-icon').getAttribute('aria-pressed'), 'true');
       const markerPosition = () => page.locator('.leaflet-marker-icon').getAttribute('style');
       const beforeDetails = await markerPosition();
+      const mapMarker = page.locator('.leaflet-marker-icon');
+      await mapMarker.focus();
+      await page.keyboard.press('Enter');
+      const details = page.getByRole('dialog', { name: 'Detalji mjesta', exact: true });
+      await details.waitFor();
+      assert.equal(await details.evaluate(node => node.contains(document.activeElement)), true);
+      await page.keyboard.press('Shift+Tab');
+      assert.equal(await details.evaluate(node => node.contains(document.activeElement)), true);
+      await details.getByRole('button', { name: 'Zatvori obrazac', exact: true }).click();
+      assert.equal(await mapMarker.evaluate(node => node === document.activeElement), true);
       await page.locator('.leaflet-marker-icon').click();
       await page.getByRole('heading', { name: 'Detalji mjesta', exact: true }).waitFor();
       await page.getByRole('button', { name: 'Uredi mjesto', exact: true }).click();
@@ -329,13 +397,16 @@ try {
       const tab = title => page.getByRole('tab', { name: title, exact: true }).click();
       async function downloadPlaces(title, kind, expected) {
         await click(title);
-        for (const [label, extension] of [['Izvezi popis (JSON)', '.json'], ['Izvezi oznake karte (GeoJSON)', '.geojson']]) {
+        for (const [label, extension] of [['Izvezi popis (JSON)', '.json'], ['Izvezi oznake karte (GeoJSON)', '.geojson'], ['Izvezi GeoJSON bez bilješki', '-bez-biljeski.geojson']]) {
           const [download] = await Promise.all([page.waitForEvent('download'), click(label)]);
           assert.ok(download.suggestedFilename().endsWith(extension));
           const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
           assert.equal(exported.scope.kind, kind);
           const names = exported.features?.map(feature => feature.properties.name) ?? exported.places.map(place => place.name);
           assert.deepEqual(names.sort(), [...expected].sort());
+          if (extension.startsWith('-bez-biljeski')) {
+            assert.ok(exported.features.every(({ properties }) => !('notes' in properties) && properties.plan.every(visit => !('notes' in visit))));
+          }
         }
         await click('Zatvori obrazac');
       }
@@ -345,6 +416,8 @@ try {
       for (const date of ['Dan 1. 6. 2027.', 'Dan 2. 6. 2027.']) {
         await tab(date);
         await click('Dodaj spremljeno mjesto');
+        await page.getByRole('textbox', { name: 'Pretraži mjesta za dodavanje', exact: true }).fill('synthetic hotel');
+        assert.equal(await page.getByRole('button', { name: 'Synthetic dining', exact: true }).count(), 0);
         await click('Synthetic hotel');
         const row = page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true });
         await row.getByText('Smještaj', { exact: true }).waitFor();

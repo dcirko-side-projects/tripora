@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useId } from "react";
 import {
   ActivityIndicator,
   Keyboard,
@@ -174,17 +174,20 @@ export function MenuRow({
   icon,
   onPress,
   disabled = false,
+  accessibilityDetail,
 }: {
   title: string;
   detail?: string;
   icon: IconName;
   onPress: () => void;
   disabled?: boolean;
+  accessibilityDetail?: string;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={title}
+      accessibilityHint={accessibilityDetail}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
@@ -220,6 +223,32 @@ export function FormSheet({
   children: ReactNode;
   error?: string;
 }) {
+  const dialogId = useId();
+  useEffect(() => {
+    if (Platform.OS !== "web" || !embedded || !visible) return;
+    const dialog = document.getElementById(dialogId);
+    if (!dialog) return;
+    const previous = document.activeElement;
+    const focusable = () => Array.from(dialog.querySelectorAll<HTMLElement>(
+      'button, a[href], input, textarea, select, [tabindex]',
+    )).filter(node => node.tabIndex >= 0 && !node.matches(':disabled, [aria-disabled="true"]') && node.getClientRects().length);
+    (focusable()[0] ?? dialog).focus({ preventScroll: true });
+    function keepFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab" || document.querySelector('[aria-modal="true"][role="alertdialog"]')) return;
+      const targets = focusable();
+      const current = targets.findIndex(node => node === document.activeElement);
+      const direction = event.shiftKey ? -1 : 1;
+      const next = current < 0 ? (event.shiftKey ? targets.length - 1 : 0) : (current + direction + targets.length) % targets.length;
+      event.preventDefault();
+      event.stopPropagation();
+      (targets[next] ?? dialog)?.focus();
+    }
+    document.addEventListener("keydown", keepFocus, true);
+    return () => {
+      document.removeEventListener("keydown", keepFocus, true);
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus({ preventScroll: true });
+    };
+  }, [dialogId, embedded, title, visible]);
   if (!visible) return null;
   const content = (
       <SafeAreaView style={ui.safe}>
@@ -257,7 +286,7 @@ export function FormSheet({
         </KeyboardAvoidingView>
       </SafeAreaView>
   );
-  if (embedded) return <View role="dialog" aria-modal accessibilityLabel={title} accessibilityViewIsModal onAccessibilityEscape={() => { if (!busy) onClose(); }} style={{ position: "absolute", inset: 0, zIndex: 10, backgroundColor: c.surface }}>{content}</View>;
+  if (embedded) return <View nativeID={dialogId} tabIndex={-1} role="dialog" aria-modal accessibilityLabel={title} accessibilityViewIsModal onAccessibilityEscape={() => { if (!busy) onClose(); }} style={{ position: "absolute", inset: 0, zIndex: 10, backgroundColor: c.surface }}>{content}</View>;
   return (
     <Modal
       visible

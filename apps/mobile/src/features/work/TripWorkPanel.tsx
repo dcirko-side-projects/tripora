@@ -30,7 +30,7 @@ import {
   downloadPhoto,
 } from "../../core/mediaQueue";
 import { ApiClient } from "../../core/sync";
-import { Button, Choice, Empty, Field, FormSheet } from "../../ui/components";
+import { Button, Choice, Empty, Field, FormSheet, MenuRow } from "../../ui/components";
 import { DateField } from "../../ui/DateField";
 import { calendarDate, dateValue, displayDate, tripDays } from "../../ui/dates";
 import { Icon } from "../../ui/Icon";
@@ -39,6 +39,7 @@ import { actionError } from "../../core/actionError";
 import { planPlaceIds } from "../../core/placesExport";
 import { markerAppearance } from "../places/mapPresentation";
 import { PlacesExport } from "../places/PlacesExport";
+import { placeTextFilter } from "../places/usePlaceFilters";
 import { PlanPlacesMap } from "./PlanPlacesMap";
 export type WorkSection = "plan" | "packing" | "expense" | "memory";
 type Props = {
@@ -182,6 +183,7 @@ function PlanPanel(p: Props) {
   const today = dateValue(new Date());
   const [view, setView] = useState<"schedule" | "map">("schedule");
   const [picking, setPicking] = useState(false);
+  const [placeQuery, setPlaceQuery] = useState("");
   const [day, setDay] = useState(
     today >= p.trip.startDate && today <= p.trip.endDate
       ? today
@@ -222,6 +224,7 @@ function PlanPanel(p: Props) {
   const placesById = new Map(savedPlaces.map(place => [place.id, place]));
   const scheduledIds = planPlaceIds(shown, p.trip.id, day);
   const available = savedPlaces.filter(place => !scheduledIds.has(place.id));
+  const matchingPlaces = picking ? available.filter(placeTextFilter(placeQuery)) : [];
   const selectedPlace = selected?.data.placeId ? placesById.get(selected.data.placeId) : undefined;
 
   function addPlace(place: Place) {
@@ -354,7 +357,7 @@ function PlanPanel(p: Props) {
                 onPress={() => edit()}
               />
               <Button title="Dodaj spremljeno mjesto" icon="pin" variant="secondary" disabled={p.busy}
-                onPress={() => { setError(""); setPicking(true); }} />
+                 onPress={() => { setError(""); setPlaceQuery(""); setPicking(true); }} />
             </>
           ) : null}
           {!shown.length ? (
@@ -461,10 +464,14 @@ function PlanPanel(p: Props) {
       <FormSheet title="Dodaj spremljeno mjesto" visible={picking && !p.trip.accessRevoked}
         onClose={() => setPicking(false)} busy={p.busy} error={error || p.error}>
         <Text style={ui.subheading}>{day ? displayDate(day) : "Neraspoređeno"}</Text>
-        {available.length ? available.map(place => (
-          <Button key={place.id} title={place.name} icon={markerAppearance(place.category).icon}
-            variant="secondary" disabled={p.busy} onPress={() => addPlace(place)} />
-        )) : (
+         {available.length ? <>
+           <Field label="Pretraži mjesta za dodavanje" value={placeQuery} onChangeText={setPlaceQuery} maxLength={300} />
+           {matchingPlaces.length ? matchingPlaces.map(place => {
+             const address = place.address || place.location?.displayName;
+             return <MenuRow key={place.id} title={place.name} detail={address} accessibilityDetail={address}
+               icon={markerAppearance(place.category).icon} disabled={p.busy} onPress={() => addPlace(place)} />;
+           }) : <Text style={ui.muted}>Nema mjesta koja odgovaraju pretrazi.</Text>}
+         </> : (
           <Text style={ui.muted}>{savedPlaces.length ? "Sva spremljena mjesta već su u ovom dijelu rasporeda." : "Prvo spremi mjesto u kartici Mjesta."}</Text>
         )}
       </FormSheet>
