@@ -517,8 +517,11 @@ try {
       await click('Otvori aktivnost Synthetic hotel');
       await click('Ukloni iz rasporeda');
       await click('Ukloni iz rasporeda', page.getByRole('alertdialog'));
+      // The underlying schedule is hidden from role queries until the activity sheet closes.
+      await page.getByRole('heading', { name: 'Aktivnost', exact: true, includeHidden: true }).waitFor({ state: 'detached' });
       await page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true }).waitFor({ state: 'detached' });
       await tab('Dan 2. 6. 2027.');
+      await page.getByText('2. 6. 2027.', { exact: true }).waitFor();
       await page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true }).waitFor();
       await tab('Pregled');
       const coverImage = () => page.getByRole('img', { name: 'Naslovna fotografija putovanja' });
