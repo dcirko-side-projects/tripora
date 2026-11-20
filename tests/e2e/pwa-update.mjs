@@ -66,7 +66,12 @@ try {
       await page.getByText('Zatvori ostale Tripora kartice i prozore pa pokušaj ponovno.', { exact: true }).waitFor();
       await other.close();
       await page.getByRole('button', { name: 'Ažuriraj Triporu', exact: true }).click();
-      await page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click();
+      // The previous document can show the check button while the worker activates.
+      // Wait for the app's reload before starting a separate offline navigation.
+      await Promise.all([
+        page.waitForEvent('load'),
+        page.getByRole('button', { name: 'Ažuriraj sada', exact: true }).click(),
+      ]);
       await page.getByRole('button', { name: 'Provjeri novu verziju', exact: true }).waitFor();
       assert.equal(await page.evaluate(() => localStorage.getItem('synthetic-upgrade-proof')), 'retain');
       await context.setOffline(true); await page.goto(base);
