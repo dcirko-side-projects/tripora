@@ -9,6 +9,7 @@ export type IconName =
   | "trips"
   | "calendar"
   | "pin"
+  | "locate"
   | "wallet"
   | "more"
   | "back"
@@ -33,6 +34,7 @@ export const iconPaths: Record<IconName, string> = {
   trips: "M8 6V4h8v2M4 7h16v13H4zM8 7v13M16 7v13",
   calendar: "M4 5h16v15H4zM4 10h16M8 3v4M16 3v4M8 14h2M14 14h2",
   pin: "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z",
+  locate: "M12 2v4m0 12v4M2 12h4m12 0h4M12 5a7 7 0 1 0 0 14 7 7 0 1 0 0-14ZM12 12h.01",
   wallet: "M4 5h15v15H4zM4 5V3h13M15 10h6v6h-6z",
   more: "M5 12h.01M12 12h.01M19 12h.01",
   back: "m14 5-7 7 7 7",

@@ -5,8 +5,9 @@ import { SyncedTrip } from "../../core/accountStore";
 import { displayDate } from "../../ui/dates";
 import { Icon } from "../../ui/Icon";
 import { tokens, ui } from "../../ui/theme";
+import { DurableImage } from "../../ui/DurableImage";
 
-export function TripHero({ trip, children }: { trip: SyncedTrip; children?: ReactNode }) {
+export function TripHero({ trip, coverUri, children }: { trip: SyncedTrip; coverUri?: string; children?: ReactNode }) {
   return (
     <View style={styles.ticket}>
       <View pointerEvents="none" accessible={false} style={styles.landscape}>
@@ -17,6 +18,8 @@ export function TripHero({ trip, children }: { trip: SyncedTrip; children?: Reac
           <Path d="M200 260C200 207 330 242 330 170S270 140 290 98" fill="none" stroke="#FFFFFF" strokeWidth={2} strokeDasharray="5 7" opacity={0.35} />
         </Svg>
       </View>
+      {coverUri ? <DurableImage key={coverUri} accessibilityLabel="Naslovna fotografija putovanja"
+        source={{ uri: coverUri }} resizeMode="cover" style={styles.cover} /> : null}
       <View style={styles.ticketTop}>
         <View style={styles.badge}><Icon name="trips" size={18} color={tokens.color.surface} /><Text style={styles.badgeText}>PUTOVANJE ZA PAMĆENJE</Text></View>
       </View>
@@ -50,6 +53,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   landscape: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0 },
+  cover: { width: "100%", aspectRatio: 2.2, maxHeight: 248, borderRadius: 14 },
   ticketTop: { flexDirection: "row", flexWrap: "wrap" },
   badge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#FFFFFF18", padding: 10, borderRadius: 12 },
   badgeText: { color: tokens.color.surface, fontSize: 11, fontWeight: "700", letterSpacing: 1, flexShrink: 1 },

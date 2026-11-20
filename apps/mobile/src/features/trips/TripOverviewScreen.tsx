@@ -8,6 +8,7 @@ import { Button, MenuRow } from "../../ui/components";
 import { dateValue, displayDate } from "../../ui/dates";
 import { ui } from "../../ui/theme";
 import { TripHero } from "./TripHero";
+import { tripCover } from "./tripCover";
 export type TripSection =
   | "overview"
   | "plan"
@@ -56,6 +57,8 @@ export function TripOverviewScreen({
   syncing,
   syncDisabled,
   syncError,
+  coverDisabled,
+  onChangeCover,
 }: {
   trip: SyncedTrip;
   actorId: string;
@@ -68,7 +71,10 @@ export function TripOverviewScreen({
   syncing?: boolean;
   syncDisabled?: boolean;
   syncError?: string;
+  coverDisabled?: boolean;
+  onChangeCover?: (remove: boolean) => void;
 }) {
+  const cover = tripCover(trip.id, entries.entries, media);
   const summary = tripOverview(
     trip.id,
     actorId,
@@ -99,7 +105,13 @@ export function TripOverviewScreen({
       style={ui.panel}
       accessibilityLabel={`Pregled putovanja ${trip.name}`}
     >
-      <TripHero trip={trip} />
+      <TripHero trip={trip} coverUri={trip.accessRevoked ? undefined : cover.image?.uri} />
+      {onChangeCover ? <View style={ui.wrap}>
+        <Button title={cover.id ? "Promijeni naslovnu fotografiju" : "Dodaj naslovnu fotografiju"} icon="photo"
+          variant="secondary" disabled={coverDisabled} onPress={() => onChangeCover(false)} />
+        {cover.id ? <Button title="Ukloni naslovnu fotografiju" variant="ghost"
+          disabled={coverDisabled} onPress={() => onChangeCover(true)} /> : null}
+      </View> : null}
       {trip.accessRevoked ? (
         <View style={ui.errorBox}>
           <Text style={ui.error}>

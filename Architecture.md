@@ -3,6 +3,36 @@
 Status: planning, personal packing, expenses and memories checkpoint 2026-10-22. Read docs/STATUS.md for verification and remaining boundaries.
 Product requirements: PRD.md. Quick rules: Architecture-essentials.md.
 
+## Map location, external exports and trip covers — 2026-11-20
+
+The user approved routes and Google My Maps CSV, Apple Maps support and
+private cover synchronization. The shared Places and Plan map UI uses a
+foreground Expo Location subscription on native and browser geolocation on
+web. Tracking starts from the center control, persists when switching
+fullscreen and stops when the map closes. Updates move the blue dot, while a
+tap moves the camera. Fixes live only in component memory and are excluded
+from exports, sync and storage. The existing map layer still loads tiles for
+the current viewport. The web shell allows its own origin to request location.
+
+External map links and CSV reuse existing local export scopes. Positions use
+coordinates or the saved address. The plan orders unique stops by their
+earliest visit in scope. Both links are capped at five stops and 2,048 URL
+characters. Apple's multistop URLs use the unified Maps format available
+from iOS 18.4 and macOS 15.4. The CSV exports only names and positions, with
+1,999 places plus a header per file, for import into Google My Maps on a
+computer. Records with no position or address remain in JSON.
+
+Each trip has one versioned `cover` entry. Client and server derive its key
+from the trip ID so competing first edits use the regular conflict flow.
+Only the owner changes this reference. Removing the cover writes a null
+reference, which allows a later selection under the same key. Clients use the
+existing bounded image preparation, private upload queue and authenticated
+download endpoint. Active participants automatically cache full and thumbnail
+copies after metadata sync. A failed image download can retry without losing
+metadata readiness. Replaced or removed images lose shared access unless
+another live record still references them. Unreferenced bytes follow the
+existing orphan cleanup policy. SQLite and PostgreSQL schemas stay compatible.
+
 ## Offline preparation and audit follow-up — 2026-11-19
 
 Account SQLite schema v4 adds a follow-up ID to each pending trip mutation.
@@ -246,6 +276,7 @@ Avoid generic repository, CQRS/MediatR, event sourcing and an empty multi-projec
 | PackingItem | Trip, author, label, checked state; personal per participant, explicitly selected 2026-10-22 |
 | Expense | Trip, exact amount, currency, date, category, author, optional payer, version |
 | Memory | Trip, author, caption, optional place, media references, version |
+| Trip cover | Trip, owner, optional private media reference, version |
 | MediaAsset | Trip, author, private object key, content type, size, upload state |
 | PendingOperation | Local operation ID, record ID, base version, payload, dependencies, retry state |
 | ChangeRecord | Server sequence, trip, record ID/type, version, deletion marker |

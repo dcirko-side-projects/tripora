@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tripora.Api.Data;
 
@@ -75,8 +74,11 @@ public static class MediaEndpoints
             await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(81724031)");
             var id = Actor(actor); var media = await db.MediaAssets.SingleOrDefaultAsync(m => m.Id == mediaId);
             if (media is null || media.PendingDeletion || !await db.Trips.AnyAsync(t => t.Id == media.TripId && !t.Deleted && (t.OwnerId == id || db.TripMembers.Any(m => m.TripId == t.Id && m.UserId == id && m.Active)))) return Results.NotFound();
-            var memories = await db.Entries.Where(e => e.TripId == media.TripId && e.Feature == "memory" && !e.Deleted).ToListAsync();
-            if (media.AuthorId != id && !memories.Any(e => JsonSerializer.Deserialize<MemoryData>(e.DataJson, EntryRules.Json)?.MediaId == mediaId)) return Results.NotFound();
+            if (media.AuthorId != id)
+            {
+                var published = await db.Entries.Where(e => e.TripId == media.TripId && (e.Feature == "memory" || e.Feature == "cover") && !e.Deleted).ToListAsync();
+                if (!published.Any(e => EntryRules.ReferencedMedia(e) == mediaId)) return Results.NotFound();
+            }
             try { var bytes = await files.Read(mediaId, thumbnail == true); await tx.CommitAsync(); return Results.Ok(new { base64 = Convert.ToBase64String(bytes), sha256 = Digest(bytes) }); }
             catch (FileNotFoundException) { return Results.NotFound(); }
         });
@@ -84,10 +86,10 @@ public static class MediaEndpoints
             var id = Actor(actor); await using var tx = await db.Database.BeginTransactionAsync();
             await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(81724031)");
             var candidates = await db.MediaAssets.Where(m => m.PendingDeletion || m.AuthorId == id || db.Trips.Any(t => t.Id == m.TripId && t.OwnerId == id)).ToListAsync();
-            var live = await db.Entries.Where(e => e.Feature == "memory" && !e.Deleted).ToListAsync();
-            var referenced = live.Select(e => JsonSerializer.Deserialize<MemoryData>(e.DataJson, EntryRules.Json)?.MediaId).ToHashSet();
-            var deleted = await db.Entries.Where(e => e.Feature == "memory" && e.Deleted && (e.AuthorId == id || db.Trips.Any(t => t.Id == e.TripId && t.OwnerId == id))).ToListAsync();
-            var deletedMedia = deleted.Select(e => JsonSerializer.Deserialize<MemoryData>(e.DataJson, EntryRules.Json)?.MediaId).ToHashSet();
+            var live = await db.Entries.Where(e => (e.Feature == "memory" || e.Feature == "cover") && !e.Deleted).ToListAsync();
+            var referenced = live.Select(EntryRules.ReferencedMedia).ToHashSet();
+            var deleted = await db.Entries.Where(e => (e.Feature == "memory" || e.Feature == "cover") && e.Deleted && (e.AuthorId == id || db.Trips.Any(t => t.Id == e.TripId && t.OwnerId == id))).ToListAsync();
+            var deletedMedia = deleted.Select(EntryRules.ReferencedMedia).ToHashSet();
             var removed = 0;
             foreach (var media in candidates)
             {

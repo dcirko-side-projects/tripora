@@ -11,7 +11,7 @@ public static class WebApp
             context.Response.Headers["Cross-Origin-Embedder-Policy"] = "require-corp";
             context.Response.Headers["X-Content-Type-Options"] = "nosniff";
             context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-            context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+            context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
             context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; worker-src 'self' blob:; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'";
             if (context.Request.Path == "/sw.js") context.Response.Headers["Service-Worker-Allowed"] = "/";
             await next();

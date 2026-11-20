@@ -2,6 +2,12 @@
 
 Status: executable prototype started 2026-09-28. Architecture.md is authoritative; update both when decisions change.
 
+## Map location, external exports and trip covers — 2026-11-20
+
+- Places and Plan render a blue device-location marker on inline and fullscreen maps. The center control starts foreground access on demand and explicitly moves the camera. Later fixes update the marker; leaving the map ends the subscription. Tripora keeps fixes in memory. The web shell permits its own geolocation, subject to browser and OS permissions.
+- Export reuses the local place scopes. Google Maps and Apple Maps URLs open one place or a route of up to five stops. Plan routes order unique saved places by their first visit in the selected scope. Google My Maps CSV holds names and coordinates or addresses, with at most 1,999 places plus a header per file.
+- A trip cover is an owner-managed, versioned record in the existing entry store. The private photo queue makes full and thumbnail copies durable on the device, uploads before publication and downloads both copies after metadata sync for active participants. An empty cover reference removes the image.
+
 ## Offline preparation and audit follow-up — 2026-11-19
 
 Account SQLite v4 preserves the first queued trip operation and stages the

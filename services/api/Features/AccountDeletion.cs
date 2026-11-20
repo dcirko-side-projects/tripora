@@ -84,6 +84,7 @@ public static class AccountDeletion
             "packing" => new PackingData("Obrisano", false),
             "budget" => new BudgetData(currency, null),
             "expense" => new ExpenseData("Obrisano", "", "2000-01-01", "ostalo", "1", currency, ""),
+            "cover" => new CoverData(null),
             _ => new MemoryData("Obrisano", "", null, null)
         };
         return JsonSerializer.Serialize(data, EntryRules.Json);

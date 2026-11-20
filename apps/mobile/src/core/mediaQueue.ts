@@ -50,12 +50,14 @@ export async function attachPhoto(db: LocalDatabase, tripId: string, actor: Acto
     }
     return item;
 }
-function references(entries: Entry[], includeDeleted = false): Set<string> { return new Set(entries.filter(e => e.feature === 'memory' && (includeDeleted || !e.deleted)).flatMap(e => e.feature === 'memory' && e.data.mediaId ? [e.data.mediaId] : [])); }
+function references(entries: Entry[], includeDeleted = false): Set<string> {
+    return new Set(entries.flatMap(e => (includeDeleted || !e.deleted) && 'mediaId' in e.data && e.data.mediaId ? [e.data.mediaId] : []));
+}
 function pendingReferences(db: LocalDatabase): Set<string> {
     const snapshot = entrySnapshot(db);
     const result = references(snapshot.entries.filter(e => snapshot.pending.some(p => p.operation.entryId === e.id)), true);
     for (const p of snapshot.pending)
-        if (p.operation.feature === 'memory' && p.operation.data && 'mediaId' in p.operation.data && p.operation.data.mediaId)
+        if (p.operation.data && 'mediaId' in p.operation.data && p.operation.data.mediaId)
             result.add(p.operation.data.mediaId);
     return result;
 }
@@ -114,7 +116,7 @@ export async function synchronizeMedia(db: LocalDatabase, api: ApiClient, io?: M
 export function mediaReady(db: LocalDatabase, id: string | null): boolean { if (!id)
     return true; const item = mediaSnapshot(db).find(m => m.id === id); return !item || ((item.state === 'uploaded' || item.state === 'downloaded') && !item.error); }
 export async function downloadPhoto(db: LocalDatabase, entry: Entry, actor: Actor, api: ApiClient, io: MediaIO): Promise<void> {
-    if (entry.feature !== 'memory' || !entry.data.mediaId || entry.deleted)
+    if (!('mediaId' in entry.data) || !entry.data.mediaId || entry.deleted)
         throw new InputError('Fotografija nije dostupna.');
     const trip = readParent(db, entry.tripId);
     if (trip.accessRevoked || trip.deleted)
@@ -149,6 +151,23 @@ export async function downloadPhoto(db: LocalDatabase, entry: Entry, actor: Acto
         }
         throw error;
     }
+}
+export async function downloadTripCovers(db: LocalDatabase, actor: Actor, api: ApiClient, io: MediaIO): Promise<boolean> {
+    const available = new Set(mediaSnapshot(db).map(item => item.id));
+    let failed = false;
+    for (const entry of entrySnapshot(db).entries) {
+        if (entry.feature !== 'cover' || entry.deleted || !entry.data.mediaId || available.has(entry.data.mediaId)) continue;
+        const trip = readParent(db, entry.tripId);
+        if (trip.deleted || trip.accessRevoked) continue;
+        try { await downloadPhoto(db, entry, actor, api, io); }
+        catch (error) {
+            if (error instanceof ApiError && error.status === 401) throw error;
+            failed = true;
+            // Network and server outages should not trigger a separate timeout for every trip.
+            if (!(error instanceof ApiError) || error.status >= 500) break;
+        }
+    }
+    return failed;
 }
 export async function cleanupLocalMedia(db: LocalDatabase, io: MediaIO): Promise<void> {
     const all = entrySnapshot(db);

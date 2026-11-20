@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Linking, Modal, Text, View } from 'react-native';
 import type * as MapLibre from '@maplibre/maplibre-react-native';
 import { fullscreenMapBottomPadding, markerAppearance, MapProps } from './mapPresentation';
@@ -7,6 +7,8 @@ import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
 import { FullscreenMapFrame } from './FullscreenMapFrame';
 import { Icon } from '../../ui/Icon';
+import { locationColor } from './locationTypes';
+import { useMapLocation } from './useMapLocation';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 
 export function TripPlacesMap({ places, scopeKey, api, onSelect, filters, fullscreenSearch, fullscreenFilters, overlay, onCloseOverlay }: MapProps) {
@@ -39,6 +41,10 @@ function NativePlacesMap({ native, config, places, scopeKey, onSelect, onError, 
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
   const viewport = useMemo(() => ({ current: undefined as MapLibre.InitialViewState | undefined }), [scopeKey]);
+  const camera = useRef<MapLibre.CameraRef>(null);
+  const location = useMapLocation(point => camera.current?.easeTo({
+    center: [point.longitude, point.latitude], zoom: Math.max(15, viewport.current?.zoom ?? 0), duration: 300,
+  }));
   const selectPlace = (id: string) => { setSelectedId(id); onSelect(id); };
   const coordinates = places.map(p => [p.location!.longitude, p.location!.latitude]);
   const xs = coordinates.map(c => c[0]), ys = coordinates.map(c => c[1]);
@@ -57,7 +63,7 @@ function NativePlacesMap({ native, config, places, scopeKey, onSelect, onError, 
       attribution onDidFailLoadingMap={onError}
       onRegionIsChanging={event => { const { center, zoom, bearing, pitch } = event.nativeEvent; viewport.current = { center, zoom, bearing, pitch }; }}
       onRegionDidChange={event => { const { center, zoom, bearing, pitch } = event.nativeEvent; viewport.current = { center, zoom, bearing, pitch }; }}>
-      <Camera maxZoom={19} initialViewState={viewport.current ?? (!places.length ? undefined : samePoint
+      <Camera ref={camera} maxZoom={19} initialViewState={viewport.current ?? (!places.length ? undefined : samePoint
         ? { center: [xs[0], ys[0]], zoom: 14 }
         : { bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)], padding: { top: 48, bottom: fullscreen ? fullscreenMapBottomPadding : 48, left: 48, right: 48 } })} />
       {places.map((p) => {
@@ -73,13 +79,16 @@ function NativePlacesMap({ native, config, places, scopeKey, onSelect, onError, 
           </View>
         </Marker>;
       })}
+      {location.fix ? <Marker id="tripora-current-location" lngLat={[location.fix.longitude, location.fix.latitude]} style={{ zIndex: 2 }}>
+        <View accessibilityLabel="Moja lokacija" pointerEvents="none" style={{ width: 20, height: 20, borderRadius: 10, borderWidth: 3, borderColor: '#FFF', backgroundColor: locationColor }} />
+      </Marker> : null}
     </Map>;
   return <View style={{ gap: 8 }}>
     <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
-    {!fullscreen ? <>{mapFilters}<View>{map}{overlay?.(false)}</View></> : null}
+    {!fullscreen ? <>{mapFilters}{location.control}<View>{map}{overlay?.(false)}</View></> : null}
     <Modal visible={fullscreen} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => overlay ? onCloseOverlay?.() : setFullscreen(false)}>
       {fullscreen ?
-      <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!places.length}
+      <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!places.length} location={location}
         onClose={() => setFullscreen(false)} overlay={overlay?.(true)}>
         {map}
       </FullscreenMapFrame> : null}

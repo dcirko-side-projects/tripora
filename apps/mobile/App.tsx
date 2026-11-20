@@ -55,6 +55,7 @@ import { createNativeMediaIO, deleteNativeMediaScope } from "./src/core/nativeMe
 import { TripWorkPanel } from "./src/features/work/TripWorkPanel";
 import { tripOverview } from "./src/core/tripOverview";
 import { TripHero } from "./src/features/trips/TripHero";
+import { changeTripCover, tripCover } from "./src/features/trips/tripCover";
 import { actionError } from "./src/core/actionError";
 
 import {
@@ -207,6 +208,7 @@ function Home() {
               : "Podaci putovanja su sinkronizirani.",
         );
         if (result.cleanupFailed) setSyncError("Podaci su preuzeti. Čišćenje fotografija čeka ponovni pokušaj.");
+        if (result.coverDownloadFailed) setSyncError("Preuzimanje naslovne fotografije čeka ponovni pokušaj.");
       }
     } catch (cause) {
       if (mounted.current) {
@@ -487,6 +489,8 @@ function Home() {
         prefix +
         `${entry.data.title} · ${entry.data.date || "Neraspoređeno"} ${entry.data.time}\n${entry.data.notes}`
       );
+    if (entry.feature === "cover")
+      return entry.data.mediaId ? "Naslovna fotografija putovanja" : "Uklanjanje naslovne fotografije";
     return (
       prefix +
       `${entry.data.title}\n${entry.data.notes}${entry.data.mediaId ? "\nS fotografijom" : ""}`
@@ -548,6 +552,17 @@ function Home() {
     );
   }
   const trip = snapshot.trips.find((t) => t.id === tripId);
+  async function updateCover(remove: boolean) {
+    const db = connection.current?.db;
+    const io = mediaIO.current;
+    if (!trip || !account || !db || !io) return;
+    let changed = false;
+    const completed = await onlineAction(async () => {
+      changed = await changeTripCover(db, trip.id, account, io, remove);
+      if (changed) setMessage(remove ? "Naslovna fotografija je uklonjena." : "Naslovna fotografija je spremljena na uređaju.");
+    }, false);
+    if (completed && changed) void syncNow();
+  }
   const pendingCount =
     snapshot.pending.length +
     places.pending.length +
@@ -647,7 +662,7 @@ function Home() {
           { opacity: pressed ? 0.7 : 1 },
         ]}
       >
-        <TripHero trip={t}>
+        <TripHero trip={t} coverUri={t.accessRevoked ? undefined : tripCover(t.id, entries.entries, media).image?.thumbnailUri}>
           <View style={ui.wrap}>
             <Text style={[ui.caption, { color: tokens.color.surface }]}>
               {t.startDate <= today && t.endDate >= today
@@ -942,6 +957,8 @@ function Home() {
                   syncing={syncing}
                   syncDisabled={busy || reauth}
                   syncError={syncError}
+                  coverDisabled={busy}
+                  onChangeCover={owner ? (remove) => void updateCover(remove) : undefined}
                 />
               ) : null}
               {trip && section === "places" && connection.current ? (

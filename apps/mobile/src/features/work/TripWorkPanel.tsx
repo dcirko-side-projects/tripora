@@ -83,7 +83,7 @@ function editable(entry: Entry, p: Props) {
     (!pending?.error || pending.error.startsWith("Podaci nisu prihvaćeni."))
   );
 }
-function remove(entry: Entry, p: Props, done: () => void) {
+function remove(entry: Exclude<Entry, { feature: "cover" }>, p: Props, done: () => void) {
   const linkedPlace = entry.feature === "plan" && !!entry.data.placeId;
   Alert.alert(
     linkedPlace ? "Ukloniti mjesto iz rasporeda?" : "Obrisati zapis?",

@@ -6,19 +6,27 @@ import { Place } from '../../core/placeStore';
 import { Button, Loading } from '../../ui/components';
 import { tokens, ui } from '../../ui/theme';
 import { FullscreenMapFrame } from './FullscreenMapFrame';
+import { locationColor, type LocationFix } from './locationTypes';
+import { useMapLocation } from './useMapLocation';
 type Config = { tileUrl: string; attribution: string; attributionUrl: string };
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: { places: Place[]; config: Config; fullscreen: boolean; onSelect: (id: string) => void; selectedId?: string; viewport: { current: { center: L.LatLng; zoom: number } | undefined } }) {
+function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport, mapRef, fix }: {
+  places: Place[]; config: Config; fullscreen: boolean; onSelect: (id: string) => void; selectedId?: string;
+  viewport: { current: { center: L.LatLng; zoom: number } | undefined };
+  mapRef: { current: L.Map | null }; fix?: LocationFix;
+}) {
   const container = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   const select = useRef(onSelect); select.current = onSelect;
   const markers = useRef(new Map<string, { marker: L.Marker; ring: HTMLElement }>());
+  const locationMarker = useRef<L.CircleMarker>(null);
   const key = places.map(p => [p.id, p.name, p.category, p.location?.latitude, p.location?.longitude].join(':')).join('|');
   useEffect(() => {
     if (!container.current) return;
     setFailed(false);
     // ResizeObserver handles the actual map box, including orientation/keyboard changes.
     const map = L.map(container.current, { scrollWheelZoom: false, trackResize: false });
+    mapRef.current = map;
     L.tileLayer(config.tileUrl, { maxZoom: 19, crossOrigin: 'anonymous',
       attribution: escapeHtml(config.attribution) }).on('tileerror', () => setFailed(true)).addTo(map);
     const bounds: L.LatLngTuple[] = [];
@@ -55,8 +63,28 @@ function WebMap({ places, config, fullscreen, onSelect, selectedId, viewport }: 
     const remember = () => { viewport.current = { center: map.getCenter(), zoom: map.getZoom() }; };
     map.on('moveend zoomend', remember);
     const observer = new ResizeObserver(() => map.invalidateSize()); observer.observe(container.current);
-    return () => { remember(); observer.disconnect(); markers.current.clear(); map.off('moveend zoomend', remember); map.remove(); };
-  }, [key, config, fullscreen, viewport]);
+    return () => {
+      remember(); observer.disconnect(); markers.current.clear();
+      locationMarker.current = null; mapRef.current = null;
+      map.off('moveend zoomend', remember); map.remove();
+    };
+  }, [key, config, fullscreen, viewport, mapRef]);
+  useEffect(() => {
+    if (!fix || !mapRef.current) {
+      locationMarker.current?.remove();
+      locationMarker.current = null;
+      return;
+    }
+    const position: L.LatLngTuple = [fix.latitude, fix.longitude];
+    if (locationMarker.current) { locationMarker.current.setLatLng(position); return; }
+    const marker = L.circleMarker(position, {
+      radius: 8, color: '#FFF', weight: 3, fillColor: locationColor, fillOpacity: 1,
+      interactive: false, pane: 'markerPane', className: 'tripora-current-location',
+    }).addTo(mapRef.current);
+    marker.getElement()?.setAttribute('role', 'img');
+    marker.getElement()?.setAttribute('aria-label', 'Moja lokacija');
+    locationMarker.current = marker;
+  }, [fix, key, config, fullscreen, viewport, mapRef]);
   useEffect(() => {
     for (const [id, { marker, ring }] of markers.current) {
       const selected = id === selectedId;
@@ -78,6 +106,11 @@ export function TripPlacesMap({ places, scopeKey, api, onSelect, filters, fullsc
   const [attempt, setAttempt] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
   const [selectedId, setSelectedId] = useState<string>();
+  const mapRef = useRef<L.Map>(null);
+  const location = useMapLocation(point => {
+    const map = mapRef.current;
+    map?.setView([point.latitude, point.longitude], Math.max(15, map.getZoom()), { animate: false });
+  });
   const located = places.filter(p => !p.deleted && p.location);
   useEffect(() => {
     let active = true;
@@ -95,11 +128,11 @@ export function TripPlacesMap({ places, scopeKey, api, onSelect, filters, fullsc
   const select = (id: string) => { setSelectedId(id); onSelect(id); };
   return <View style={{ gap: 8 }}>
     <Button title="Otvori kartu preko cijelog zaslona" variant="secondary" icon="expand" onPress={() => setFullscreen(true)} />
-    {!fullscreen ? <>{mapFilters}<View><WebMap viewport={viewport} places={located} config={config} fullscreen={false} selectedId={selectedId} onSelect={select} />{overlay?.(false)}</View></> : null}
+    {!fullscreen ? <>{mapFilters}{location.control}<View><WebMap viewport={viewport} mapRef={mapRef} fix={location.fix} places={located} config={config} fullscreen={false} selectedId={selectedId} onSelect={select} />{overlay?.(false)}</View></> : null}
     <Modal visible={fullscreen} onRequestClose={() => overlay ? onCloseOverlay?.() : setFullscreen(false)}>
-      {fullscreen ? <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!located.length}
+      {fullscreen ? <FullscreenMapFrame search={fullscreenSearch} filters={fullscreenFilters} empty={!located.length} location={location}
         onClose={() => setFullscreen(false)} overlay={overlay?.(true)}>
-        <WebMap viewport={viewport} places={located} config={config} fullscreen selectedId={selectedId} onSelect={select} />
+        <WebMap viewport={viewport} mapRef={mapRef} fix={location.fix} places={located} config={config} fullscreen selectedId={selectedId} onSelect={select} />
       </FullscreenMapFrame> : null}
     </Modal>
     <Text style={ui.caption}>Pin: mjesta · pribor za jelo: hrana · čaša: izlasci · krevet: smještaj. Dodirni oznaku za detalje; prsten označava odabrano mjesto. Karta treba internet.</Text>

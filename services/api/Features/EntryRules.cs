@@ -10,10 +10,12 @@ public record PackingData(string Title, bool Packed);
 public record BudgetData(string Currency, string? BudgetMinor);
 public record ExpenseData(string Title, string Notes, string Date, string Category, string AmountMinor, string Currency, string Payer);
 public record MemoryData(string Title, string Notes, Guid? PlaceId, Guid? MediaId);
+public record CoverData(Guid? MediaId);
 public static class EntryRules
 {
     public static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
-    public static bool Feature(string value) => value is "plan" or "packing" or "budget" or "expense" or "memory";
+    public static bool Feature(string value) => value is "plan" or "packing" or "budget" or "expense" or "memory" or "cover";
+    public static Guid? ReferencedMedia(TripEntry entry) => JsonSerializer.Deserialize<CoverData>(entry.DataJson, Json)?.MediaId;
     private static bool Title(string? value) => !string.IsNullOrWhiteSpace(value) && value.Trim().Length <= 120;
     private static bool Notes(string? value) => value is { Length: <= 2000 };
     public static bool Currency(string? value) => value is "EUR" or "USD" or "GBP";
@@ -59,6 +61,12 @@ public static class EntryRules
                         if (media.AuthorId != actorId && oldMedia != id) return null;
                     }
                     return JsonSerializer.Serialize(memory with { Title = memory.Title.Trim(), Notes = memory.Notes.Trim() }, Json);
+                case "cover":
+                    var cover = raw.Deserialize<CoverData>(Json);
+                    if (cover is null || !raw.TryGetProperty("mediaId", out _)) return null;
+                    if (cover.MediaId is Guid coverId && !await db.MediaAssets.AnyAsync(m =>
+                        m.Id == coverId && m.TripId == trip.Id && m.AuthorId == actorId && !m.PendingDeletion)) return null;
+                    return JsonSerializer.Serialize(cover, Json);
                 default: return null;
             }
         }

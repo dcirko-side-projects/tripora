@@ -42,6 +42,11 @@ public static class EntrySync
         if (entry?.Feature == "packing" && entry.AuthorId != actorId) return Results.NotFound();
         if (entry is not null && entry.Feature is "expense" or "memory" && entry.AuthorId != actorId && trip.OwnerId != actorId) return Results.Json(new { code = "author_or_owner_required" }, statusCode: 403);
         if (op.Feature == "budget" && (op.EntryId != trip.Id || trip.OwnerId != actorId || op.Kind == "delete")) return Results.Json(new { code = "owner_required" }, statusCode: 403);
+        if (op.Feature == "cover")
+        {
+            if (trip.OwnerId != actorId) return Results.Json(new { code = "owner_required" }, statusCode: 403);
+            if (op.EntryId != CoverEntryId(trip.Id) || op.Kind == "delete") return Results.BadRequest(new { code = "invalid_entry" });
+        }
         var digest = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("entry:" + JsonSerializer.Serialize(op, EntryRules.Json))));
         var prior = await db.Receipts.FindAsync(actorId, op.OperationId);
         if (prior is not null) return prior.Digest == digest ? Results.Content(prior.ResponseJson, "application/json") : Results.Conflict(new { code = "operation_id_reused" });
@@ -64,5 +69,12 @@ public static class EntrySync
         var json = JsonSerializer.Serialize(EntryView.From(entry), EntryRules.Json);
         db.Receipts.Add(new MutationReceipt { ActorId = actorId, OperationId = op.OperationId, Digest = digest, ResponseJson = json });
         await db.SaveChangesAsync(); await tx.CommitAsync(); return Results.Content(json, "application/json");
+    }
+
+    private static Guid CoverEntryId(Guid tripId)
+    {
+        // Both clients of an offline trip edit the same record, including concurrent first edits.
+        var hex = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("tripora:cover:" + tripId.ToString("D"))));
+        return Guid.ParseExact(hex[..12] + "8" + hex[13..16] + "8" + hex[17..32], "N");
     }
 }

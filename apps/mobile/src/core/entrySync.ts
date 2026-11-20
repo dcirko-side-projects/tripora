@@ -30,7 +30,7 @@ export async function synchronizeEntries(db: LocalDatabase, api: ApiClient, acto
         }
         if (op.feature === 'expense' && entrySnapshot(db).pending.some(p => p.operation.tripId === op.tripId && p.operation.feature === 'budget'))
             continue;
-        if (op.feature === 'memory' && op.data && 'mediaId' in op.data && !mediaReady(db, op.data.mediaId))
+        if (op.data && 'mediaId' in op.data && !mediaReady(db, op.data.mediaId))
             continue;
         try {
             acknowledgeEntry(db, op.operationId, await api.request<Entry>('/api/entries/push', op));

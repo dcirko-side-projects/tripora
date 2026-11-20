@@ -87,6 +87,7 @@ try {
   base = 'http://127.0.0.1:' + proxy.address().port;
   const home = await fetch(base); assert.equal(home.status, 200); assert.match(await home.text(), /manifest.webmanifest/);
   assert.equal(home.headers.get('cross-origin-embedder-policy'), 'require-corp');
+  assert.match(home.headers.get('permissions-policy'), /geolocation=\(self\)/);
   assert.match(home.headers.get('content-security-policy'), /script-src 'self' 'wasm-unsafe-eval'/);
   assert.equal((await fetch(base + '/auth/me')).status, 401);
   assert.match((await fetch(base + '/auth/me')).headers.get('cache-control'), /no-store/);
@@ -99,6 +100,21 @@ try {
     const tokens = (await api('/auth/login?useCookies=false', null, { email, password: loginPassword })).data;
     // Use a persistent profile, as a regular/Home Screen user would.
     const context = await engine.launchPersistentContext(join(folder, 'browser-' + name), { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+    await context.addInitScript(() => {
+      let watched;
+      window.triporaTestGps = {
+        requests: 0, stopped: 0,
+        give(latitude, longitude) { watched?.success({ coords: { latitude, longitude } }); },
+        fail(code) { watched?.failure({ code }); },
+      };
+      Object.defineProperty(navigator, 'geolocation', { value: {
+        watchPosition(success, failure) {
+          watched = { success, failure };
+          return ++window.triporaTestGps.requests;
+        },
+        clearWatch() { watched = undefined; window.triporaTestGps.stopped++; },
+      } });
+    });
     browser = context.browser();
     let page = await context.newPage();
     page.setDefaultTimeout(30000);
@@ -391,6 +407,36 @@ try {
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).waitFor();
       await page.getByLabel('Pretraži spremljena mjesta', { exact: true }).fill('Synthetic marker');
       await page.locator('.leaflet-marker-icon').waitFor();
+      const locate = page.getByRole('button', { name: 'Centriraj na moju lokaciju', exact: true });
+      assert.equal(await page.evaluate(() => window.triporaTestGps.requests), 0);
+      await locate.click();
+      await page.evaluate(() => window.triporaTestGps.fail(1));
+      await page.getByText(/Dozvola za lokaciju je odbijena/).waitFor();
+      await locate.click();
+      await page.evaluate(() => window.triporaTestGps.fail(2));
+      await page.getByText(/Lokacija nije dostupna/).waitFor();
+      await locate.click();
+      await page.evaluate(() => window.triporaTestGps.give(45.81, 15.98));
+      const dot = page.locator('.tripora-current-location');
+      await dot.waitFor();
+      const markerBox = () => mapMarker.evaluate(node => {
+        const { x, y } = node.getBoundingClientRect();
+        return { x, y };
+      });
+      const beforeMove = await markerBox();
+      const beforeDot = await dot.getAttribute('d');
+      await page.evaluate(() => window.triporaTestGps.give(45.82, 15.99));
+      await page.waitForFunction(path => {
+        const marker = document.querySelector('.tripora-current-location');
+        return marker && marker.getAttribute('d') !== path;
+      }, beforeDot);
+      assert.deepEqual(await markerBox(), beforeMove);
+      await locate.click();
+      await page.waitForFunction(({ x, y }) => {
+        const position = document.querySelector('.leaflet-marker-icon')?.getBoundingClientRect();
+        return position && (Math.abs(position.x - x) > 10 || Math.abs(position.y - y) > 10);
+      }, beforeMove);
+      pass(name + ': location asks on tap, handles denial and unavailability, updates marker without moving the camera');
       pass(name + ': actual Leaflet map/tiles, retained fullscreen/viewport after details/edit, category icons/selection and live filters');
       await page.getByRole('button', { name: 'Zatvori kartu', exact: true }).click();
       const click = (title, scope = page) => scope.getByRole('button', { name: title, exact: true }).click();
@@ -408,11 +454,25 @@ try {
             assert.ok(exported.features.every(({ properties }) => !('notes' in properties) && properties.plan.every(visit => !('notes' in visit))));
           }
         }
+        const [csv] = await Promise.all([page.waitForEvent('download'), click('Izvezi CSV za Google My Maps')]);
+        assert.ok(csv.suggestedFilename().endsWith('.csv'));
+        const contents = await readFile(await csv.path(), 'utf8');
+        assert.match(contents, /^Name,Location\r\n/);
+        assert.ok(expected.every(item => contents.includes(item)));
+        if (kind === 'day') {
+          // Intercept browser handoff so the test never sends synthetic place data outside the local browser.
+          await page.evaluate(() => { window.open = url => { window.triporaTestMapsUrl = String(url); return null; }; });
+          await click('Otvori u Google Mapsu');
+          assert.equal(new URL(await page.evaluate(() => window.triporaTestMapsUrl)).hostname, 'www.google.com');
+          await click('Otvori u Apple Mapsu');
+          assert.equal(new URL(await page.evaluate(() => window.triporaTestMapsUrl)).pathname, '/directions');
+        }
         await click('Zatvori obrazac');
       }
       const allSaved = ['Synthetic dining', 'Synthetic evening', 'Synthetic hotel', 'Synthetic marker'];
       await downloadPlaces('Izvezi mjesta putovanja', 'trip', allSaved);
       await tab('Plan');
+      assert.equal(await page.evaluate(() => window.triporaTestGps.stopped), 3);
       for (const date of ['Dan 1. 6. 2027.', 'Dan 2. 6. 2027.']) {
         await tab(date);
         await click('Dodaj spremljeno mjesto');
@@ -429,6 +489,9 @@ try {
       await tab('Karta plana');
       await page.getByRole('button', { name: 'Smještaj: Synthetic hotel', exact: true }).waitFor();
       assert.equal(await page.locator('.leaflet-marker-icon').count(), 2);
+      await locate.click();
+      await page.evaluate(() => window.triporaTestGps.give(45.81, 15.98));
+      await dot.waitFor();
       await downloadPlaces('Izvezi mjesta iz plana', 'plan', ['Synthetic dining', 'Synthetic hotel']);
       await click('Otvori kartu preko cijelog zaslona');
       await tab('1. 6. 2027.');
@@ -458,7 +521,35 @@ try {
       await tab('Dan 2. 6. 2027.');
       await page.getByRole('button', { name: 'Otvori aktivnost Synthetic hotel', exact: true }).waitFor();
       await tab('Pregled');
+      const coverImage = () => page.getByRole('img', { name: 'Naslovna fotografija putovanja' });
+      async function chooseCover(title, png) {
+        const choosing = page.waitForEvent('filechooser');
+        await click(title);
+        await (await choosing).setFiles({ name: 'synthetic-cover.png', mimeType: 'image/png', buffer: png });
+        await coverImage().waitFor();
+        await page.getByRole('button', { name: 'Ukloni naslovnu fotografiju', exact: true }).waitFor();
+      }
+      await chooseCover('Dodaj naslovnu fotografiju', syntheticPhotoPng);
+      for (const width of [320, 390, 1440]) {
+        await page.setViewportSize({ width, height: 844 });
+        const image = await coverImage().boundingBox();
+        const title = await page.getByRole('heading', { name: 'PWA local conflict ' + name, exact: true }).boundingBox();
+        assert.ok(image.x >= 0 && image.x + image.width <= width && image.height > 40 && image.y + image.height <= title.y);
+      }
+      await page.setViewportSize({ width: 390, height: 844 });
       await click('Sva putovanja');
+      await coverImage().waitFor();
+      await context.setOffline(true);
+      await page.reload();
+      await coverImage().waitFor();
+      await click('Otvori putovanje PWA local conflict ' + name);
+      await chooseCover('Promijeni naslovnu fotografiju', syntheticPng);
+      await click('Ukloni naslovnu fotografiju');
+      await coverImage().waitFor({ state: 'detached' });
+      await page.reload();
+      assert.equal(await coverImage().count(), 0);
+      await context.setOffline(false);
+      pass(name + ': cover fits 320, 390 and 1440 px, persists offline and can be replaced or removed');
       await downloadPlaces('Izvezi sva spremljena mjesta', 'all', allSaved);
       pass(name + ': repeat saved hotel across days, remove one visit, fullscreen plan filters and JSON/GeoJSON downloads across all scopes');
       await context.setOffline(true); await page.reload();

@@ -1,5 +1,5 @@
 import { InputError, LocalDatabase, validateTrip } from './localStore';
-export type Feature = 'plan' | 'packing' | 'budget' | 'expense' | 'memory';
+export type Feature = 'plan' | 'packing' | 'budget' | 'expense' | 'memory' | 'cover';
 export type PlanData = {
     title: string;
     notes: string;
@@ -38,6 +38,7 @@ export type DataMap = {
     budget: BudgetData;
     expense: ExpenseData;
     memory: MemoryData;
+    cover: { mediaId: string | null };
 };
 export type EntryData = DataMap[Feature];
 export type Actor = {
@@ -190,6 +191,13 @@ export function validateEntry<F extends Feature>(db: LocalDatabase, tripId: stri
             result = { title: title(m.title), notes: notes(m.notes), placeId: m.placeId, mediaId: m.mediaId };
             break;
         }
+        case 'cover': {
+            const { mediaId } = raw as DataMap['cover'];
+            if (mediaId !== null && !/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(mediaId))
+                throw new InputError('Neispravna naslovna fotografija.');
+            result = { mediaId };
+            break;
+        }
         default: throw new InputError('Nepoznata vrsta zapisa.');
     }
     return result as DataMap[F];
@@ -207,7 +215,7 @@ export function canEditEntry(db: LocalDatabase, entry: Entry, actor: Actor): boo
     const owner = trip.ownerId ? trip.ownerId === actor.id : trip.role !== 'member';
     if (entry.feature === 'packing')
         return entry.authorId === actor.id;
-    if (entry.feature === 'budget')
+    if (entry.feature === 'budget' || entry.feature === 'cover')
         return owner;
     return entry.feature === 'plan' || entry.authorId === actor.id || owner;
 }
@@ -234,16 +242,17 @@ function stage(db: LocalDatabase, entry: Entry, actor: Actor, newId: () => strin
 export function saveEntry<F extends Feature>(db: LocalDatabase, tripId: string, feature: F, data: DataMap[F], actor: Actor, newId: () => string, id?: string): void {
     db.transaction(() => {
         const clean = validateEntry(db, tripId, feature, data);
+        if (feature === 'cover' && !id) throw new InputError('Nedostaje identifikator naslovnice.');
         const key = feature === 'budget' ? tripId : id;
         const old = key ? read(db, key) : undefined;
-        if ((id && !old) || (old && (old.tripId !== tripId || old.feature !== feature || old.deleted)))
+        if ((id && !old && feature !== 'cover') || (old && (old.tripId !== tripId || old.feature !== feature || old.deleted)))
             throw new InputError('Zapis nije dostupan.');
         const entry = { id: key ?? newId(), tripId, feature, data: clean, authorId: old?.authorId ?? actor.id, authorEmail: old?.authorEmail ?? actor.email, createdAt: old?.createdAt ?? new Date().toISOString(), version: old?.version ?? 0, deleted: false } as Entry;
         stage(db, entry, actor, newId, old ? 'update' : 'create');
     });
 }
 export function deleteEntry(db: LocalDatabase, id: string, actor: Actor, newId: () => string): void {
-    db.transaction(() => { const entry = read(db, id); if (!entry || entry.deleted || entry.feature === 'budget')
+    db.transaction(() => { const entry = read(db, id); if (!entry || entry.deleted || entry.feature === 'budget' || entry.feature === 'cover')
         throw new InputError('Zapis nije dostupan za brisanje.'); stage(db, { ...entry, deleted: true }, actor, newId, 'delete'); });
 }
 export function entrySnapshot(db: LocalDatabase): EntrySnapshot {

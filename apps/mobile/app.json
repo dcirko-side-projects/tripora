@@ -27,12 +27,17 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Dopusti Tripori odabir fotografije za uspomenu s putovanja.",
+          "photosPermission": "Dopusti Tripori odabir fotografija za naslovnice i uspomene s putovanja.",
           "cameraPermission": false,
           "microphonePermission": false
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      ["expo-location", {
+        "locationWhenInUsePermission": "Dopusti Tripori prikaz tvoje lokacije na otvorenoj karti.",
+        "locationAlwaysPermission": false,
+        "locationAlwaysAndWhenInUsePermission": false
+      }]
     ],
     "web": {
       "bundler": "metro",

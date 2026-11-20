@@ -1,6 +1,30 @@
 # Current status — mobile UX redesign and phase 9 preparation
 
-Updated: 2026-11-19. Development branch: codex/offline-foundation.
+Updated: 2026-11-20. Development branch: codex/offline-foundation.
+
+## Map location, external export and trip covers — 2026-11-20
+
+Places and Plan have an opt-in blue location marker and an explicit camera
+control in both map layouts. Google Maps and Apple Maps open individual
+places or routes of up to five stops. CSV files transfer larger selections
+to Google My Maps. Exports use existing all-trip, trip, plan and day scopes.
+The owner can add, replace or remove a private cover in the trip overview.
+Cover copies sync for active members and remain available offline after
+download. The trips list uses the thumbnail and the overview uses the full
+bounded image.
+
+Clean mobile and integration dependency installs, TypeScript, 94 mobile
+tests, Android/iOS/web exports, Release API build/liveness and 53
+PostgreSQL/HTTP integration scenarios passed. The cover integration covered
+owner authorization, concurrent first writes, upload and download retries,
+replacement and clearing shared access to the old photo. All 17 Chromium
+checkpoints passed, including GPS permission errors, manual recentering,
+route handoff and CSV downloads, plus offline cover replacement and removal.
+The focused WebKit run passed map GPS, route handoff, CSV downloads and
+cover choice and layout at 320, 390 and 1440 px. The full local Windows
+WebKit run stopped at the earlier offline PWA reload with an internal
+browser error. Next: verify physical-device GPS prompts, native map handoff
+and an actual Google My Maps import.
 
 ## Offline audit update released — 2026-11-19
 
