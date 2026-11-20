@@ -2,6 +2,35 @@
 
 Updated: 2026-11-20. Development branch: codex/offline-foundation.
 
+## GPS, map exports and trip covers released — 2026-11-20
+
+Source `db70df3c1f26d85ebcc81daaa7be199f7124d218` was pushed to
+`codex/offline-foundation`. Its [Render deployment](https://dashboard.render.com/web/srv-dbj16huc6qcc73b6e3a0/deploys/dep-dc030dvlk1mc73c8gbt0)
+went live at 12:34 CET. Public HTTPS liveness and DB readiness passed. The
+public worker installs the new `index-e2c81375c44cace28cfcaea5bed8383e.js`
+bundle, and an isolated Chromium session opened the login shell offline.
+The public update URL and new cache also passed in a WebKit iPhone 15 profile.
+The [iPhone PWA update link](https://tripora-l4c7.onrender.com/?update=20261120)
+is available. Opening the update on a physical iPhone awaits confirmation.
+
+Android Gradle Release produced `local-data/hosted-beta/Tripora-20.apk`
+(129,776,695 bytes, SHA-256
+`f82b8006d909be5687daaedd8b204264c344ea83c95b4d914cdf8d6a46c020d8`).
+The verified APK uses package `local.tripora.beta`, versionCode 20,
+versionName `0.1.0-beta20`, four ABIs and the beta 19 signing certificate.
+Its bundle targets the public API and the manifest requests foreground
+location permissions. ADB updated the Samsung in place at 12:39 CET,
+retained the original install timestamp and reported a successful cold start.
+Physical interaction with GPS, handoff to external maps and My Maps import
+remain acceptance checks.
+
+Test-only commit `1c23485` waits for the PWA's automatic reload before the
+test starts its offline navigation. The upgrade test then passed in
+Chromium and WebKit. Test-only commit `1ca09a9` waits for the activity
+sheet to close before changing the schedule day. Both jobs in the
+[follow-up CI run](https://github.com/dcirko-side-projects/tripora/actions/runs/44730372848)
+passed, including the full Chromium and Linux WebKit suites.
+
 ## Map location, external export and trip covers — 2026-11-20
 
 Places and Plan have an opt-in blue location marker and an explicit camera
